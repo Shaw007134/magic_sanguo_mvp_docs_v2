@@ -127,37 +127,49 @@ function createRuntimeCombatant(
   const initialRuntimeStates = new Map(
     (input.initialCardRuntimeStates ?? []).map((card) => [card.instanceId, card] as const)
   );
-  const cards = formation.slots
-    .filter((slot) => slot.cardInstanceId !== undefined)
-    .map((slot) => {
-      const cardInstance = input.cardInstancesById.get(slot.cardInstanceId!);
-      if (!cardInstance) {
-        return undefined;
-      }
+  const cards: CardRuntimeState[] = [];
 
-      const cardDefinition = input.cardDefinitionsById.get(cardInstance.definitionId);
-      if (!cardDefinition || cardDefinition.type !== "ACTIVE" || cardDefinition.cooldownTicks === undefined) {
-        return undefined;
-      }
+  for (const slot of formation.slots) {
+    if (!slot.cardInstanceId) {
+      continue;
+    }
 
-      const explicitRuntimeState = initialRuntimeStates.get(cardInstance.instanceId);
-      return {
-        instanceId: cardInstance.instanceId,
-        definitionId: cardInstance.definitionId,
-        ownerCombatantId: formation.id,
-        slotIndex: slot.slotIndex,
-        cooldownMaxTicks: explicitRuntimeState?.cooldownMaxTicks ?? cardDefinition.cooldownTicks,
-        cooldownRemainingTicks: explicitRuntimeState?.cooldownRemainingTicks ?? cardDefinition.cooldownTicks,
-        cooldownRecoveryRate: explicitRuntimeState?.cooldownRecoveryRate ?? 1,
-        disabled: explicitRuntimeState?.disabled ?? false,
-        silenced: explicitRuntimeState?.silenced ?? false,
-        frozen: explicitRuntimeState?.frozen ?? false,
-        activationCount: explicitRuntimeState?.activationCount ?? 0,
-        lastActivatedTick: explicitRuntimeState?.lastActivatedTick
-      } satisfies CardRuntimeState;
-    })
-    .filter((card): card is CardRuntimeState => card !== undefined)
-    .sort((a, b) => a.slotIndex - b.slotIndex || a.instanceId.localeCompare(b.instanceId));
+    const cardInstance = input.cardInstancesById.get(slot.cardInstanceId);
+    if (!cardInstance) {
+      continue;
+    }
+
+    const cardDefinition = input.cardDefinitionsById.get(cardInstance.definitionId);
+    if (!cardDefinition || cardDefinition.type !== "ACTIVE" || cardDefinition.cooldownTicks === undefined) {
+      continue;
+    }
+
+    const explicitRuntimeState = initialRuntimeStates.get(cardInstance.instanceId);
+    const runtimeCard: CardRuntimeState = {
+      instanceId: cardInstance.instanceId,
+      definitionId: cardInstance.definitionId,
+      ownerCombatantId: formation.id,
+      slotIndex: slot.slotIndex,
+      cooldownMaxTicks: explicitRuntimeState?.cooldownMaxTicks ?? cardDefinition.cooldownTicks,
+      cooldownRemainingTicks: explicitRuntimeState?.cooldownRemainingTicks ?? cardDefinition.cooldownTicks,
+      cooldownRecoveryRate: explicitRuntimeState?.cooldownRecoveryRate ?? 1,
+      disabled: explicitRuntimeState?.disabled ?? false,
+      silenced: explicitRuntimeState?.silenced ?? false,
+      frozen: explicitRuntimeState?.frozen ?? false,
+      activationCount: explicitRuntimeState?.activationCount ?? 0
+    };
+
+    if (explicitRuntimeState?.lastActivatedTick !== undefined) {
+      cards.push({
+        ...runtimeCard,
+        lastActivatedTick: explicitRuntimeState.lastActivatedTick
+      });
+    } else {
+      cards.push(runtimeCard);
+    }
+  }
+
+  cards.sort((a, b) => a.slotIndex - b.slotIndex || a.instanceId.localeCompare(b.instanceId));
 
   return {
     side,

@@ -97,3 +97,30 @@ Known issues:
 - Formation size validation checks size 2 placement when card instance and card definition lookup maps are provided.
 Next recommended task:
 - Phase 3: Basic CombatEngine without ResolutionStack.
+
+---
+
+Date: 2026-05-01
+Phase: 3
+Task: Implemented Basic CombatEngine without ResolutionStack.
+Files changed:
+- src/index.ts
+- src/combat/CombatEngine.ts
+- src/combat/CombatLog.ts
+- src/combat/CooldownSystem.ts
+- src/combat/TargetingSystem.ts
+- tests/combat/basicCombat.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/combat/basicCombat.test.ts
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- CombatEngine supports only direct `{ type: "DealDamage", amount: number }` active card effects.
+- No ResolutionStack, CombatCommand, Armor behavior, Burn behavior, triggers, ModifierSystem, or UI implemented yet.
+- Combat ends immediately when a combatant reaches 0 HP during ordered same-tick resolution.
+Next recommended task:
+- Phase 4: CombatCommand and ResolutionStack.

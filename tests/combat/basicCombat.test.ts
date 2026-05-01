@@ -127,6 +127,34 @@ describe("CombatEngine", () => {
     expect(activations).toEqual(["player-b", "player-a", "enemy-a"]);
   });
 
+  it("uses stable card instance id when same-side cards have the same slot index", () => {
+    const sharedSlotCard = createDamageCard("shared-slot-strike", 1, 1);
+    const cardInstances: CardInstance[] = [
+      { instanceId: "player-card-b", definitionId: "shared-slot-strike" },
+      { instanceId: "player-card-a", definitionId: "shared-slot-strike" }
+    ];
+
+    const result = new CombatEngine().simulate({
+      playerFormation: {
+        ...createFormation("player", "Player", 20, []),
+        slots: [
+          { slotIndex: 1, cardInstanceId: "player-card-b" },
+          { slotIndex: 1, cardInstanceId: "player-card-a" }
+        ]
+      },
+      enemyFormation: createFormation("enemy", "Enemy", 20, []),
+      cardInstancesById: new Map(cardInstances.map((card) => [card.instanceId, card])),
+      cardDefinitionsById: new Map([[sharedSlotCard.id, sharedSlotCard]]),
+      maxCombatTicks: 1
+    });
+
+    const activations = result.replayTimeline.events
+      .filter((event) => event.type === "CARD_ACTIVATED")
+      .map((event) => event.sourceId);
+
+    expect(activations).toEqual(["player-card-a", "player-card-b"]);
+  });
+
   it("ends combat when HP reaches 0", () => {
     const finishingCard = createDamageCard("finisher", 1, 20);
     const finishingInstance: CardInstance = {
