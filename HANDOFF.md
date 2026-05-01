@@ -1,0 +1,52 @@
+# HANDOFF
+
+Use this file when starting a new Codex chat.
+
+## Current Project State
+
+Magic Sanguo is a Bazaar-like ARPG-inspired roguelike formation card-builder.
+
+Current source of truth:
+
+```text
+docs/MVP_MASTER_DESIGN.md
+```
+
+Current implementation status:
+
+```text
+Phase 2 complete.
+TypeScript + pnpm + Vitest project skeleton exists.
+Core data model interfaces added.
+CardDefinition and FormationSnapshot validation helpers added.
+Smoke, model export, card validation, and formation validation tests pass.
+No combat simulation, ResolutionStack, commands, statuses, triggers, ModifierSystem, or UI implemented yet.
+```
+
+
+
+## Next Task
+
+Phase 3:
+
+```text
+Implement Basic CombatEngine without ResolutionStack.
+```
+
+## Rules For Next Agent
+
+```text
+1. Read docs/MVP_MASTER_DESIGN.md first.
+2. Implement only the requested phase from docs/MVP_BUILD_SEQUENCE.md.
+3. Do not build UI yet.
+4. Phase 3 may implement only the basic CombatEngine without ResolutionStack.
+5. Do not implement Barrier, Ward, Energy Shield, or absorb layers.
+6. Add tests when code is implemented.
+7. Update PROJECT_LOG.md.
+8. Update HANDOFF.md.
+9. Stop after task completion.
+```
+
+## Recommended First Prompt
+
+Use Phase 3 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
