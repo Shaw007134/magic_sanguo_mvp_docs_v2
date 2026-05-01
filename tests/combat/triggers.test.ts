@@ -1,0 +1,261 @@
+import { describe, expect, it } from "vitest";
+
+import { CombatEngine } from "../../src/combat/CombatEngine.js";
+import type { CardDefinition, CardInstance } from "../../src/model/card.js";
+import type { FormationSnapshot } from "../../src/model/formation.js";
+
+function createActiveCard(
+  id: string,
+  effects: CardDefinition["effects"],
+  tags: readonly string[] = [],
+  cooldownTicks = 1
+): CardDefinition {
+  return {
+    id,
+    name: id,
+    tier: "BRONZE",
+    type: "ACTIVE",
+    size: 1,
+    tags,
+    cooldownTicks,
+    effects,
+    description: "Active test card."
+  };
+}
+
+function createPassiveCard(id: string, triggers: CardDefinition["triggers"]): CardDefinition {
+  return {
+    id,
+    name: id,
+    tier: "BRONZE",
+    type: "PASSIVE",
+    size: 1,
+    tags: [],
+    triggers,
+    description: "Passive test card."
+  };
+}
+
+function createFormation(
+  id: string,
+  maxHp: number,
+  cardInstanceIds: readonly (string | undefined)[]
+): FormationSnapshot {
+  return {
+    id,
+    kind: id === "player" ? "PLAYER" : "MONSTER",
+    displayName: id,
+    level: 1,
+    maxHp,
+    startingArmor: 0,
+    slots: [1, 2, 3, 4].map((slotIndex, index) => ({
+      slotIndex,
+      cardInstanceId: cardInstanceIds[index]
+    })),
+    skills: [],
+    relics: []
+  };
+}
+
+function simulateWithCards(
+  playerCards: readonly CardDefinition[],
+  playerInstances: readonly CardInstance[],
+  playerSlots: readonly (string | undefined)[],
+  maxCombatTicks: number
+) {
+  return new CombatEngine().simulate({
+    playerFormation: createFormation("player", 40, playerSlots),
+    enemyFormation: createFormation("enemy", 40, []),
+    cardInstancesById: new Map(playerInstances.map((instance) => [instance.instanceId, instance])),
+    cardDefinitionsById: new Map(playerCards.map((card) => [card.id, card])),
+    initialCardRuntimeStates: playerInstances.map((instance, index) => ({
+      instanceId: instance.instanceId,
+      definitionId: instance.definitionId,
+      ownerCombatantId: "player",
+      slotIndex: index + 1,
+      cooldownMaxTicks: 1,
+      cooldownRemainingTicks: 1,
+      cooldownRecoveryRate: 1,
+      disabled: false,
+      silenced: false,
+      frozen: false,
+      activationCount: 0
+    })),
+    maxCombatTicks
+  });
+}
+
+describe("TriggerSystem", () => {
+  it("fires a passive trigger on OnStatusApplied", () => {
+    const active = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }]);
+    const passive = createPassiveCard("ember-rebuke", [
+      {
+        hook: "OnStatusApplied",
+        conditions: { status: "Burn", appliedByOwner: true },
+        effects: [{ command: "DealDamage", amount: 3 }]
+      }
+    ]);
+
+    const result = simulateWithCards(
+      [passive, active],
+      [
+        { instanceId: "passive", definitionId: passive.id },
+        { instanceId: "active", definitionId: active.id }
+      ],
+      ["passive", "active"],
+      1
+    );
+
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 1,
+      type: "TRIGGER_FIRED",
+      sourceId: "passive",
+      targetId: "enemy",
+      payload: {
+        hook: "OnStatusApplied",
+        triggerId: "passive:0"
+      }
+    });
+    expect(result.enemyFinalHp).toBe(37);
+  });
+
+  it("uses internal cooldown to prevent repeated trigger spam", () => {
+    const active = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 180 }]);
+    const passive = createPassiveCard("ember-rebuke", [
+      {
+        hook: "OnStatusApplied",
+        conditions: { status: "Burn", appliedByOwner: true },
+        internalCooldownTicks: 5,
+        effects: [{ command: "DealDamage", amount: 3 }]
+      }
+    ]);
+
+    const result = simulateWithCards(
+      [passive, active],
+      [
+        { instanceId: "passive", definitionId: passive.id },
+        { instanceId: "active", definitionId: active.id }
+      ],
+      ["passive", "active"],
+      2
+    );
+    const triggerEvents = result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED");
+
+    expect(triggerEvents).toHaveLength(1);
+    expect(triggerEvents[0]?.tick).toBe(1);
+  });
+
+  it("enforces maxTriggersPerTick", () => {
+    const firstActive = createActiveCard("flame-a", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }]);
+    const secondActive = createActiveCard("flame-b", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }]);
+    const passive = createPassiveCard("ember-rebuke", [
+      {
+        hook: "OnStatusApplied",
+        conditions: { status: "Burn", appliedByOwner: true },
+        maxTriggersPerTick: 1,
+        effects: [{ command: "DealDamage", amount: 3 }]
+      }
+    ]);
+
+    const result = simulateWithCards(
+      [passive, firstActive, secondActive],
+      [
+        { instanceId: "passive", definitionId: passive.id },
+        { instanceId: "active-a", definitionId: firstActive.id },
+        { instanceId: "active-b", definitionId: secondActive.id }
+      ],
+      ["passive", "active-a", "active-b"],
+      1
+    );
+
+    expect(result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED")).toHaveLength(1);
+  });
+
+  it("pushes trigger-created commands to ResolutionStack", () => {
+    const active = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }]);
+    const passive = createPassiveCard("guarded-flame", [
+      {
+        hook: "OnStatusApplied",
+        conditions: { status: "Burn" },
+        effects: [{ command: "GainArmor", amount: 4 }]
+      }
+    ]);
+
+    const result = simulateWithCards(
+      [passive, active],
+      [
+        { instanceId: "passive", definitionId: passive.id },
+        { instanceId: "active", definitionId: active.id }
+      ],
+      ["passive", "active"],
+      1
+    );
+
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 1,
+      type: "ARMOR_GAINED",
+      sourceId: "passive",
+      targetId: "player",
+      payload: {
+        command: "GainArmor",
+        amount: 4,
+        armor: 4
+      }
+    });
+  });
+
+  it("orders triggers deterministically by passive slot then instance id", () => {
+    const active = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }]);
+    const firstPassive = createPassiveCard("first-passive", [
+      { hook: "OnStatusApplied", conditions: { status: "Burn" }, effects: [{ command: "DealDamage", amount: 1 }] }
+    ]);
+    const secondPassive = createPassiveCard("second-passive", [
+      { hook: "OnStatusApplied", conditions: { status: "Burn" }, effects: [{ command: "DealDamage", amount: 2 }] }
+    ]);
+
+    const result = simulateWithCards(
+      [firstPassive, secondPassive, active],
+      [
+        { instanceId: "passive-b", definitionId: secondPassive.id },
+        { instanceId: "passive-a", definitionId: firstPassive.id },
+        { instanceId: "active", definitionId: active.id }
+      ],
+      ["passive-b", "passive-a", "active"],
+      1
+    );
+
+    const triggerSourceIds = result.replayTimeline.events
+      .filter((event) => event.type === "TRIGGER_FIRED")
+      .map((event) => event.sourceId);
+    const triggerDamageAmounts = result.replayTimeline.events
+      .filter((event) => event.type === "DAMAGE_DEALT" && event.sourceId?.startsWith("passive"))
+      .map((event) => event.payload?.amount);
+
+    expect(triggerSourceIds).toEqual(["passive-b", "passive-a"]);
+    expect(triggerDamageAmounts).toEqual([2, 1]);
+  });
+
+  it("does not trigger when no valid condition matches", () => {
+    const active = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }]);
+    const passive = createPassiveCard("cold-rebuke", [
+      {
+        hook: "OnStatusApplied",
+        conditions: { sourceHasTag: "ice" },
+        effects: [{ command: "DealDamage", amount: 3 }]
+      }
+    ]);
+
+    const result = simulateWithCards(
+      [passive, active],
+      [
+        { instanceId: "passive", definitionId: passive.id },
+        { instanceId: "active", definitionId: active.id }
+      ],
+      ["passive", "active"],
+      1
+    );
+
+    expect(result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED")).toHaveLength(0);
+    expect(result.enemyFinalHp).toBe(40);
+  });
+});

@@ -32,18 +32,21 @@ Tick order: card activations resolve before status updates; status damage can en
 Burn runtime status uses absolute tick fields: appliedAtTick, nextTickAt, expiresAtTick.
 Burn first ticks at appliedAtTick + 60, stacks as one merged additive Burn status, and expires by integer tick duration.
 MVP rule: Burn goes through DamageCalculator but ignores Armor so DOT keeps a clear tactical role.
-Smoke, model export, validation, basic combat, ResolutionStack, and Armor/Burn tests pass.
-Passive triggers, ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented yet.
+Passive TriggerSystem is implemented for OnCombatStart, OnCardActivated, OnDamageDealt, OnDamageTaken, OnStatusApplied, OnBurnTick, OnCooldownModified, and OnCombatEnd.
+Passive triggers support internalCooldownTicks, maxTriggersPerTick (default 1), deterministic order, and trigger-created CombatCommand objects pushed to ResolutionStack.
+Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, cardIsAdjacent, ownerHpBelowPercent, and targetHpBelowPercent.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, and TriggerSystem tests pass.
+ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers, and UI are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Phase 6:
+Phase 7:
 
 ```text
-Implement Passive TriggerSystem.
+Implement Minimal ModifierSystem / MBF.
 ```
 
 ## Rules For Next Agent
@@ -63,4 +66,4 @@ Implement Passive TriggerSystem.
 
 ## Recommended First Prompt
 
-Use Phase 6 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use Phase 7 prompt from `docs/MVP_BUILD_SEQUENCE.md`.

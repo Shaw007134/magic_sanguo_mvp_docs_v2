@@ -2,12 +2,14 @@ import type { ReplayEvent } from "../../model/result.js";
 import { applyDamage } from "../DamageCalculator.js";
 import type { CombatLog } from "../CombatLog.js";
 import type { RuntimeCombatant } from "../types.js";
+import type { TriggerSystem } from "../triggers/TriggerSystem.js";
 
 export interface StatusEffectSystemInput {
   readonly tick: number;
   readonly combatants: readonly RuntimeCombatant[];
   readonly combatLog: CombatLog;
   readonly replayEvents: ReplayEvent[];
+  readonly triggerSystem?: TriggerSystem;
 }
 
 export function updateStatusEffects(input: StatusEffectSystemInput): void {
@@ -36,6 +38,12 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
             amount: status.amount,
             expiresAtTick: status.expiresAtTick
           }
+        });
+        input.triggerSystem?.fire({
+          hook: "OnBurnTick",
+          tick: input.tick,
+          targetCombatant: combatant,
+          status: "Burn"
         });
         status.nextTickAt += status.tickIntervalTicks;
       }

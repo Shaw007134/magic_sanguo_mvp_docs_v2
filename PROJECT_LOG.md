@@ -243,6 +243,40 @@ Next recommended task:
 ---
 
 Date: 2026-05-01
+Phase: 6
+Task: Implemented Passive TriggerSystem.
+Files changed:
+- src/index.ts
+- src/combat/CombatCommandFactory.ts
+- src/combat/CombatEngine.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/CombatCommand.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/combat/commands/ModifyCooldownCommand.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/combat/triggers/TriggerDefinition.ts
+- src/combat/triggers/TriggerRuntimeState.ts
+- src/combat/triggers/TriggeredCombatCommand.ts
+- src/combat/triggers/TriggerSystem.ts
+- tests/combat/triggers.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/combat/triggers.test.ts
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Trigger definitions use `hook`, optional `conditions`, optional `internalCooldownTicks`, optional `maxTriggersPerTick`, and `effects`.
+- Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, cardIsAdjacent, ownerHpBelowPercent, and targetHpBelowPercent.
+- TriggerSystem does not implement random chance triggers, ModifierSystem, new statuses, absorb layers, or UI.
+Next recommended task:
+- Phase 7: Minimal ModifierSystem / MBF.
+
+---
+
+Date: 2026-05-01
 Phase: 5 patch
 Task: Patched Burn timing to absolute ticks and merged additive stacking before Phase 6.
 Files changed:

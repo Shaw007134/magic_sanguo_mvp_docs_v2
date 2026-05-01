@@ -35,5 +35,13 @@ export class ModifyCooldownCommand implements CombatCommand {
     context.combatLog.add(
       `${context.tick}: Modified cooldown on ${targetCard.instanceId} by ${this.amountTicks} ticks.`
     );
+    context.triggerSystem?.fire({
+      hook: "OnCooldownModified",
+      tick: context.tick,
+      sourceCard: context.sourceCard,
+      sourceCardDefinition: context.sourceCardDefinition,
+      sourceCombatant: context.sourceCombatant,
+      targetCombatant: context.targetCombatant
+    });
   }
 }

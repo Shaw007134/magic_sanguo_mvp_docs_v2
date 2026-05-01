@@ -38,5 +38,14 @@ export class ApplyBurnCommand implements CombatCommand {
     context.combatLog.add(
       `${context.tick}: ${context.sourceCombatant.formation.displayName} applied ${this.amount} burn to ${context.targetCombatant.formation.displayName}.`
     );
+    context.triggerSystem?.fire({
+      hook: "OnStatusApplied",
+      tick: context.tick,
+      sourceCard: context.sourceCard,
+      sourceCardDefinition: context.sourceCardDefinition,
+      sourceCombatant: context.sourceCombatant,
+      targetCombatant: context.targetCombatant,
+      status: "Burn"
+    });
   }
 }

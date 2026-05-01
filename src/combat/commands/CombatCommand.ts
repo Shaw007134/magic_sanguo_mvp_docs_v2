@@ -1,17 +1,20 @@
-import type { CardRuntimeState } from "../../model/card.js";
+import type { CardDefinition, CardRuntimeState } from "../../model/card.js";
 import type { ReplayEvent } from "../../model/result.js";
 import type { CombatLog } from "../CombatLog.js";
 import type { ResolutionStack } from "../ResolutionStack.js";
 import type { RuntimeCombatant } from "../types.js";
+import type { TriggerSystem } from "../triggers/TriggerSystem.js";
 
 export interface CombatExecutionContext {
   readonly tick: number;
   readonly sourceCard?: CardRuntimeState;
+  readonly sourceCardDefinition?: CardDefinition;
   readonly sourceCombatant: RuntimeCombatant;
   readonly targetCombatant: RuntimeCombatant;
   readonly combatLog: CombatLog;
   readonly replayEvents: ReplayEvent[];
   readonly resolutionStack: ResolutionStack;
+  readonly triggerSystem?: TriggerSystem;
   readonly triggerDepth: number;
 }
 

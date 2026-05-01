@@ -18,5 +18,21 @@ export class DealDamageCommand implements CombatCommand {
       combatLog: context.combatLog,
       replayEvents: context.replayEvents
     });
+    context.triggerSystem?.fire({
+      hook: "OnDamageDealt",
+      tick: context.tick,
+      sourceCard: context.sourceCard,
+      sourceCardDefinition: context.sourceCardDefinition,
+      sourceCombatant: context.sourceCombatant,
+      targetCombatant: context.targetCombatant
+    });
+    context.triggerSystem?.fire({
+      hook: "OnDamageTaken",
+      tick: context.tick,
+      sourceCard: context.sourceCard,
+      sourceCardDefinition: context.sourceCardDefinition,
+      sourceCombatant: context.sourceCombatant,
+      targetCombatant: context.targetCombatant
+    });
   }
 }
