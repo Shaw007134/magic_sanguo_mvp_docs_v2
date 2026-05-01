@@ -1,4 +1,5 @@
 import type { CombatCommand, CombatExecutionContext } from "./CombatCommand.js";
+import { applyDamage } from "../DamageCalculator.js";
 
 export class DealDamageCommand implements CombatCommand {
   readonly name = "DealDamage";
@@ -6,22 +7,16 @@ export class DealDamageCommand implements CombatCommand {
   constructor(readonly amount: number) {}
 
   execute(context: CombatExecutionContext): void {
-    const damage = Math.max(0, this.amount);
-    context.targetCombatant.hp = Math.max(0, context.targetCombatant.hp - damage);
-    context.replayEvents.push({
+    applyDamage({
       tick: context.tick,
-      type: "DAMAGE_DEALT",
       sourceId: context.sourceCard?.instanceId,
-      targetId: context.targetCombatant.formation.id,
-      payload: {
-        command: this.name,
-        amount: damage,
-        targetSide: context.targetCombatant.side,
-        targetHp: context.targetCombatant.hp
-      }
+      sourceName: context.sourceCombatant.formation.displayName,
+      target: context.targetCombatant,
+      amount: this.amount,
+      damageType: "DIRECT",
+      command: this.name,
+      combatLog: context.combatLog,
+      replayEvents: context.replayEvents
     });
-    context.combatLog.add(
-      `${context.tick}: ${context.sourceCombatant.formation.displayName} dealt ${damage} damage to ${context.targetCombatant.formation.displayName}.`
-    );
   }
 }

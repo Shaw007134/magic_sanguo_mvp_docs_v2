@@ -9,6 +9,7 @@ import { GainArmorCommand } from "./commands/GainArmorCommand.js";
 import { ModifyCooldownCommand } from "./commands/ModifyCooldownCommand.js";
 import { isReady, recoverCooldown, resetCooldown } from "./CooldownSystem.js";
 import { ResolutionStack, type ResolutionStackLimits } from "./ResolutionStack.js";
+import { updateStatusEffects } from "./status/StatusEffectSystem.js";
 import { getOpposingSide } from "./TargetingSystem.js";
 import type { CombatSide, MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
 
@@ -112,6 +113,18 @@ export class CombatEngine {
       if (defeatWinner) {
         return createCombatResult(defeatWinner, tick, combatants, combatLog, replayEvents);
       }
+
+      updateStatusEffects({
+        tick,
+        combatants: [combatants.PLAYER, combatants.ENEMY],
+        combatLog,
+        replayEvents
+      });
+
+      const statusDefeatWinner = getDefeatWinner(combatants);
+      if (statusDefeatWinner) {
+        return createCombatResult(statusDefeatWinner, tick, combatants, combatLog, replayEvents);
+      }
     }
 
     return createCombatResult(getTimeoutWinner(combatants), maxCombatTicks, combatants, combatLog, replayEvents);
@@ -175,7 +188,8 @@ function createRuntimeCombatant(
     formation,
     hp: formation.maxHp,
     armor: formation.startingArmor,
-    cards
+    cards,
+    statuses: []
   };
 }
 

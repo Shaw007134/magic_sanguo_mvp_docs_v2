@@ -206,3 +206,36 @@ Known issues:
 - Burn ticking/status behavior is not implemented until Phase 5.
 Next recommended task:
 - Phase 5: Armor and Burn.
+
+---
+
+Date: 2026-05-01
+Phase: 5
+Task: Implemented Armor and Burn.
+Files changed:
+- src/index.ts
+- src/combat/CombatEngine.ts
+- src/combat/DamageCalculator.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/combat/status/Burn.ts
+- src/combat/status/StatusEffect.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/combat/types.ts
+- tests/combat/armorBurn.test.ts
+- tests/combat/resolutionStack.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/combat/armorBurn.test.ts
+- Updated ResolutionStack command replay expectations for DamageCalculator payloads.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Burn damage goes through DamageCalculator but ignores Armor by MVP rule.
+- Damage modifiers are a placeholder only; ModifierSystem is not implemented.
+- Freeze, Haste, Vulnerable, TriggerSystem, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
+Next recommended task:
+- Phase 6: Passive TriggerSystem.

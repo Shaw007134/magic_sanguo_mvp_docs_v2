@@ -15,7 +15,7 @@ docs/MVP_MASTER_DESIGN.md
 Current implementation status:
 
 ```text
-Phase 4 complete.
+Phase 5 complete.
 TypeScript + pnpm + Vitest project skeleton exists.
 Core data model interfaces added.
 CardDefinition and FormationSnapshot validation helpers added.
@@ -27,20 +27,21 @@ Supported command effects are DealDamage, GainArmor, ApplyBurn, and ModifyCooldo
 Card effect JSON order is preserved by pushing commands onto the LIFO stack in reverse order.
 CombatEngine creates a fresh ResolutionStack for each simulate() call.
 ModifyCooldown card JSON supports `target: "SELF"` and `target: "ADJACENT_ALLY"`; ModifyCooldownCommand remains concrete and receives targetCardInstanceId.
-ApplyBurnCommand records application log/replay events only; Burn ticking/status behavior is not implemented.
-Known issue: GainArmorCommand updates runtime armor but DealDamageCommand does not consume armor until Phase 5.
-Smoke, model export, validation, basic combat, and ResolutionStack tests pass.
-Passive triggers, ModifierSystem, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented yet.
+Armor mitigation is implemented through DamageCalculator.
+Burn runtime status is implemented, ticks every 60 logic ticks, stacks additively, and expires by integer tick duration.
+MVP rule: Burn goes through DamageCalculator but ignores Armor so DOT keeps a clear tactical role.
+Smoke, model export, validation, basic combat, ResolutionStack, and Armor/Burn tests pass.
+Passive triggers, ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Phase 5:
+Phase 6:
 
 ```text
-Implement Armor and Burn.
+Implement Passive TriggerSystem.
 ```
 
 ## Rules For Next Agent
@@ -60,4 +61,4 @@ Implement Armor and Burn.
 
 ## Recommended First Prompt
 
-Use Phase 5 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use Phase 6 prompt from `docs/MVP_BUILD_SEQUENCE.md`.

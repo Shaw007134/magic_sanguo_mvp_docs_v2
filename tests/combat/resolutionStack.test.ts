@@ -25,7 +25,8 @@ function createCombatant(id: string, hp = 20): RuntimeCombatant {
     },
     hp,
     armor: 0,
-    cards: []
+    cards: [],
+    statuses: []
   };
 }
 
@@ -136,7 +137,7 @@ describe("ResolutionStack", () => {
     stack.resolve(context);
 
     expect(combatLog.toArray()).toEqual([
-      "7: player dealt 2 damage to enemy.",
+      "7: player dealt 2 direct damage to enemy (0 blocked by armor).",
       "7: player gained 3 armor."
     ]);
     expect(replayEvents).toEqual([
@@ -148,8 +149,13 @@ describe("ResolutionStack", () => {
         payload: {
           command: "DealDamage",
           amount: 2,
+          damageType: "DIRECT",
+          ignoresArmor: false,
+          armorBlocked: 0,
+          hpDamage: 2,
           targetSide: "ENEMY",
-          targetHp: 8
+          targetHp: 8,
+          targetArmor: 0
         }
       },
       {

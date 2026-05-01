@@ -1,5 +1,6 @@
 import type { CardRuntimeState } from "../model/card.js";
 import type { FormationSnapshot } from "../model/formation.js";
+import type { StatusEffect } from "./status/StatusEffect.js";
 
 export type CombatSide = "PLAYER" | "ENEMY";
 export type MutableCardRuntimeState = {
@@ -12,4 +13,5 @@ export interface RuntimeCombatant {
   hp: number;
   armor: number;
   cards: MutableCardRuntimeState[];
+  statuses: StatusEffect[];
 }
