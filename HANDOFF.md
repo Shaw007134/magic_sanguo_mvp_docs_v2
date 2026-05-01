@@ -52,9 +52,12 @@ CombatResultSummary is built from ReplayTimeline and aggregates damage by card, 
 MonsterTemplate and MonsterGenerator are implemented. MonsterGenerator outputs FormationSnapshot plus deterministic CardInstance data for the existing CombatEngine interface.
 MVP monster templates exist for Training Dummy, Rust Bandit, Burn Apprentice, Shield Guard, Drum Tactician, Fire Echo Adept, and First Boss: Gate Captain.
 Monster card content exists for Training Staff, Rusty Blade, Flame Spear, Wooden Shield, Spark Drum, Fire Echo Seal, and Gate Captain Saber.
+Monster card runtime content is loaded from data/cards/monster_cards.json; monster template runtime content is loaded from data/monsters/*.json.
 Tutorial and boss monsters are fixed; normal/elite monsters use deterministic seeded optional card layout.
+Optional monster cards currently shuffle and fill all fitting slots. Future balancing may add maxOptionalCards/minOptionalCards/day scaling.
 Monster battles use the same FormationSnapshot combat path as player and future async PvP opponents; no separate monster combat system was added.
 Size 2 monster cards occupy a starting slot and mark the adjacent slot locked in FormationSnapshot output; CombatEngine behavior is unchanged.
+Phase 10 UI must render locked adjacent slots as occupied by the size-2 card footprint.
 BurnTick damage remains summarized as statusDamage.Burn and is not attributed back to the applying card because Burn source tracking is still intentionally deferred.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, and MonsterGenerator tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, and UI are not implemented yet.

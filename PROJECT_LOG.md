@@ -469,3 +469,33 @@ Known issues:
 - Size 2 monster cards occupy a starting slot and mark the adjacent slot locked for readable FormationSnapshot output; CombatEngine behavior is unchanged.
 Next recommended task:
 - Phase 10: Minimal UI Prototype.
+
+---
+
+Date: 2026-05-01
+Phase: 9 patch
+Task: Clarified JSON source of truth for monster cards/templates and added content drift validation.
+Files changed:
+- tsconfig.json
+- src/content/cards/monsterCards.ts
+- src/content/monsters/monsterTemplates.ts
+- tests/content/monsterGenerator.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- JSON monster card exports match runtime card content.
+- JSON monster templates are exported through MONSTER_TEMPLATES.
+- JSON monster cards validate with validateCardDefinition.
+- Template card references and rewardPool ids exist in monster card definitions.
+- Templates include non-empty engine, payoff, weakness, and rewardPool fields.
+- Fixed templates are deterministic across different seeds.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Optional monster cards currently shuffle and fill all fitting slots.
+- Future balancing may add maxOptionalCards/minOptionalCards/day scaling.
+- Phase 10 UI must render locked adjacent slots as occupied by the size-2 card footprint.
+Next recommended task:
+- Phase 10: Minimal UI Prototype.

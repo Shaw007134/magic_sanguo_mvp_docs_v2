@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 
+import monsterCardsJson from "../../data/cards/monster_cards.json" with { type: "json" };
+import burnApprenticeJson from "../../data/monsters/burn_apprentice.json" with { type: "json" };
+import drumTacticianJson from "../../data/monsters/drum_tactician.json" with { type: "json" };
+import fireEchoAdeptJson from "../../data/monsters/fire_echo_adept.json" with { type: "json" };
+import gateCaptainJson from "../../data/monsters/gate_captain.json" with { type: "json" };
+import rustBanditJson from "../../data/monsters/rust_bandit.json" with { type: "json" };
+import shieldGuardJson from "../../data/monsters/shield_guard.json" with { type: "json" };
+import trainingDummyJson from "../../data/monsters/training_dummy.json" with { type: "json" };
 import { CombatEngine } from "../../src/combat/CombatEngine.js";
-import { getMonsterCardDefinitionsById } from "../../src/content/cards/monsterCards.js";
+import {
+  getMonsterCardDefinitionsById,
+  MONSTER_CARD_DEFINITIONS
+} from "../../src/content/cards/monsterCards.js";
 import { MonsterGenerator } from "../../src/content/monsters/MonsterGenerator.js";
 import { getMonsterTemplateById, MONSTER_TEMPLATES } from "../../src/content/monsters/monsterTemplates.js";
 import type { CardDefinition, CardInstance } from "../../src/model/card.js";
@@ -11,6 +22,15 @@ import { validateFormationSnapshot } from "../../src/validation/formationValidat
 
 const generator = new MonsterGenerator();
 const monsterCardsById = getMonsterCardDefinitionsById();
+const monsterTemplatesJson = [
+  trainingDummyJson,
+  rustBanditJson,
+  burnApprenticeJson,
+  shieldGuardJson,
+  drumTacticianJson,
+  fireEchoAdeptJson,
+  gateCaptainJson
+];
 
 function requireTemplate(id: string) {
   const template = getMonsterTemplateById(id);
@@ -63,6 +83,55 @@ function playerFormation(): FormationSnapshot {
 }
 
 describe("MonsterGenerator", () => {
+  it("exports monster cards directly from JSON content", () => {
+    expect(MONSTER_CARD_DEFINITIONS).toEqual(monsterCardsJson);
+  });
+
+  it("all JSON monster cards validate", () => {
+    for (const card of monsterCardsJson) {
+      expect(validateCardDefinition(card as CardDefinition), card.id).toEqual({ valid: true, errors: [] });
+    }
+  });
+
+  it("exports all JSON monster templates", () => {
+    expect(MONSTER_TEMPLATES).toEqual(monsterTemplatesJson);
+  });
+
+  it("every template card reference exists in monster card definitions", () => {
+    for (const template of MONSTER_TEMPLATES) {
+      const templateCards = [...template.requiredCards, ...template.optionalCards];
+      for (const templateCard of templateCards) {
+        expect(monsterCardsById.has(templateCard.cardId), `${template.id}:${templateCard.cardId}`).toBe(true);
+      }
+    }
+  });
+
+  it("every reward pool card id exists in monster card definitions", () => {
+    for (const template of MONSTER_TEMPLATES) {
+      for (const cardId of template.rewardPool) {
+        expect(monsterCardsById.has(cardId), `${template.id}:${cardId}`).toBe(true);
+      }
+    }
+  });
+
+  it("every template has readable engine, payoff, weakness, and rewards", () => {
+    for (const template of MONSTER_TEMPLATES) {
+      expect(template.engine.trim().length, `${template.id}:engine`).toBeGreaterThan(0);
+      expect(template.payoff.trim().length, `${template.id}:payoff`).toBeGreaterThan(0);
+      expect(template.weakness.trim().length, `${template.id}:weakness`).toBeGreaterThan(0);
+      expect(template.rewardPool.length, `${template.id}:rewardPool`).toBeGreaterThan(0);
+    }
+  });
+
+  it("fixed templates remain deterministic across different seeds", () => {
+    for (const template of MONSTER_TEMPLATES.filter((candidate) => candidate.fixed)) {
+      const first = generator.generate({ template, seed: "fixed-seed-a", day: template.minDay });
+      const second = generator.generate({ template, seed: "fixed-seed-b", day: template.minDay });
+
+      expect(second, template.id).toEqual(first);
+    }
+  });
+
   it("same seed creates the same monster formation", () => {
     const first = generate("rust-bandit", "same-seed", 3);
     const second = generate("rust-bandit", "same-seed", 3);
