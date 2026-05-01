@@ -46,7 +46,9 @@ export class ResolutionStack {
     let resolvedCommands = 0;
 
     while (this.#stack.length > 0) {
-      if (context.triggerDepth > this.#limits.maxTriggerDepth) {
+      const commandDepth = Math.max(context.triggerDepth, this.#stack[this.#stack.length - 1]?.triggerDepth ?? 0);
+
+      if (commandDepth > this.#limits.maxTriggerDepth) {
         return {
           ok: false,
           resolvedCommands,
@@ -77,6 +79,7 @@ export class ResolutionStack {
 
       command.execute({
         ...context,
+        triggerDepth: commandDepth,
         resolutionStack: this
       });
       this.#commandsResolvedThisTick += 1;

@@ -16,6 +16,7 @@ export interface TriggerEvent {
   readonly sourceCombatant?: RuntimeCombatant;
   readonly targetCombatant?: RuntimeCombatant;
   readonly status?: "Burn";
+  readonly triggerDepth?: number;
 }
 
 export interface TriggerSystemInput {
@@ -65,14 +66,19 @@ export class TriggerSystem {
         tick: event.tick,
         type: "TRIGGER_FIRED",
         sourceId: triggerState.sourceCard.instanceId,
-        targetId: event.targetCombatant?.formation.id,
+        targetId: getOpposingCombatant(triggerState.ownerCombatant, this.#combatants).formation.id,
         payload: {
           hook: triggerState.trigger.hook,
           triggerId: triggerState.id
         }
       });
 
-      const targetCombatant = event.targetCombatant ?? getOpposingCombatant(triggerState.ownerCombatant, this.#combatants);
+      // MVP restriction: OnCombatEnd can report that a trigger matched, but it must not mutate final combat state.
+      if (event.hook === "OnCombatEnd") {
+        continue;
+      }
+
+      const targetCombatant = getOpposingCombatant(triggerState.ownerCombatant, this.#combatants);
       const commands = createCombatCommands(
         triggerState.trigger.effects ?? [],
         triggerState.sourceCard,
@@ -84,7 +90,8 @@ export class TriggerSystem {
             triggerState.sourceCard,
             triggerState.sourceCardDefinition,
             triggerState.ownerCombatant,
-            targetCombatant
+            targetCombatant,
+            (event.triggerDepth ?? 0) + 1
           )
       );
 
@@ -208,6 +215,10 @@ function conditionsPass(triggerState: TriggerRuntimeState, event: TriggerEvent):
   }
 
   if (conditions.appliedByOwner !== undefined) {
+    if (event.hook === "OnBurnTick") {
+      return false;
+    }
+
     const appliedByOwner = event.sourceCombatant?.formation.id === triggerState.ownerCombatant.formation.id;
     if (conditions.appliedByOwner !== appliedByOwner) {
       return false;

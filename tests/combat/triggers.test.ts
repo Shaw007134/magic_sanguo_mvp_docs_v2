@@ -85,6 +85,51 @@ function simulateWithCards(
   });
 }
 
+function simulateScenario(input: {
+  readonly playerCards: readonly CardDefinition[];
+  readonly enemyCards: readonly CardDefinition[];
+  readonly playerInstances: readonly CardInstance[];
+  readonly enemyInstances: readonly CardInstance[];
+  readonly playerSlots: readonly (string | undefined)[];
+  readonly enemySlots: readonly (string | undefined)[];
+  readonly maxCombatTicks: number;
+  readonly resolutionStackLimits?: Parameters<CombatEngine["simulate"]>[0]["resolutionStackLimits"];
+}) {
+  const allInstances = [...input.playerInstances, ...input.enemyInstances];
+  const allCards = [...input.playerCards, ...input.enemyCards];
+  const cardsById = new Map(allCards.map((card) => [card.id, card]));
+
+  return new CombatEngine().simulate({
+    playerFormation: createFormation("player", 40, input.playerSlots),
+    enemyFormation: createFormation("enemy", 40, input.enemySlots),
+    cardInstancesById: new Map(allInstances.map((instance) => [instance.instanceId, instance])),
+    cardDefinitionsById: cardsById,
+    initialCardRuntimeStates: allInstances.map((instance) => {
+      const card = cardsById.get(instance.definitionId);
+      const cooldownTicks = card?.cooldownTicks ?? 1;
+
+      return {
+        instanceId: instance.instanceId,
+        definitionId: instance.definitionId,
+        ownerCombatantId: input.playerInstances.includes(instance) ? "player" : "enemy",
+        slotIndex:
+          (input.playerInstances.includes(instance)
+            ? input.playerSlots.indexOf(instance.instanceId)
+            : input.enemySlots.indexOf(instance.instanceId)) + 1,
+        cooldownMaxTicks: cooldownTicks,
+        cooldownRemainingTicks: 1,
+        cooldownRecoveryRate: 1,
+        disabled: false,
+        silenced: false,
+        frozen: false,
+        activationCount: 0
+      };
+    }),
+    maxCombatTicks: input.maxCombatTicks,
+    resolutionStackLimits: input.resolutionStackLimits
+  });
+}
+
 describe("TriggerSystem", () => {
   it("fires a passive trigger on OnStatusApplied", () => {
     const active = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }]);
@@ -257,5 +302,150 @@ describe("TriggerSystem", () => {
 
     expect(result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED")).toHaveLength(0);
     expect(result.enemyFinalHp).toBe(40);
+  });
+
+  it("OnDamageTaken DealDamage owned by damaged combatant damages the opposing attacker", () => {
+    const strike = createActiveCard("strike", [{ command: "DealDamage", amount: 4 }]);
+    const counter = createPassiveCard("counter", [
+      { hook: "OnDamageTaken", effects: [{ command: "DealDamage", amount: 3 }] }
+    ]);
+
+    const result = simulateScenario({
+      playerCards: [strike],
+      enemyCards: [counter],
+      playerInstances: [{ instanceId: "strike", definitionId: strike.id }],
+      enemyInstances: [{ instanceId: "counter", definitionId: counter.id }],
+      playerSlots: ["strike"],
+      enemySlots: ["counter"],
+      maxCombatTicks: 1
+    });
+
+    expect(result.playerFinalHp).toBe(37);
+    expect(result.enemyFinalHp).toBe(36);
+  });
+
+  it("OnDamageTaken GainArmor owned by damaged combatant gives armor to itself", () => {
+    const strike = createActiveCard("strike", [{ command: "DealDamage", amount: 4 }]);
+    const guard = createPassiveCard("guard", [
+      { hook: "OnDamageTaken", effects: [{ command: "GainArmor", amount: 5 }] }
+    ]);
+
+    const result = simulateScenario({
+      playerCards: [strike],
+      enemyCards: [guard],
+      playerInstances: [{ instanceId: "strike", definitionId: strike.id }],
+      enemyInstances: [{ instanceId: "guard", definitionId: guard.id }],
+      playerSlots: ["strike"],
+      enemySlots: ["guard"],
+      maxCombatTicks: 1
+    });
+
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 1,
+      type: "ARMOR_GAINED",
+      sourceId: "guard",
+      targetId: "enemy",
+      payload: {
+        command: "GainArmor",
+        amount: 5,
+        armor: 5
+      }
+    });
+  });
+
+  it("stops recursive trigger chains by maxTriggerDepth", () => {
+    const strike = createActiveCard("strike", [{ command: "DealDamage", amount: 1 }]);
+    const echo = createPassiveCard("echo", [
+      {
+        hook: "OnDamageDealt",
+        maxTriggersPerTick: 20,
+        effects: [{ command: "DealDamage", amount: 1 }]
+      }
+    ]);
+
+    const result = simulateScenario({
+      playerCards: [echo, strike],
+      enemyCards: [],
+      playerInstances: [
+        { instanceId: "echo", definitionId: echo.id },
+        { instanceId: "strike", definitionId: strike.id }
+      ],
+      enemyInstances: [],
+      playerSlots: ["echo", "strike"],
+      enemySlots: [],
+      maxCombatTicks: 1,
+      resolutionStackLimits: {
+        maxCommandsPerTick: 200,
+        maxCommandsPerCombat: 20000,
+        maxTriggerDepth: 2
+      }
+    });
+
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 1,
+      type: "STACK_LIMIT_REACHED",
+      sourceId: "strike",
+      payload: {
+        error: "ResolutionStack exceeded max trigger depth 2."
+      }
+    });
+  });
+
+  it("OnCombatEnd trigger logs but does not mutate final HP or winner", () => {
+    const ender = createPassiveCard("ender", [
+      { hook: "OnCombatEnd", effects: [{ command: "DealDamage", amount: 40 }] }
+    ]);
+
+    const result = simulateScenario({
+      playerCards: [ender],
+      enemyCards: [],
+      playerInstances: [{ instanceId: "ender", definitionId: ender.id }],
+      enemyInstances: [],
+      playerSlots: ["ender"],
+      enemySlots: [],
+      maxCombatTicks: 1
+    });
+
+    expect(result.winner).toBe("DRAW");
+    expect(result.playerFinalHp).toBe(40);
+    expect(result.enemyFinalHp).toBe(40);
+    expect(result.replayTimeline.events.filter((event) => event.type === "DAMAGE_DEALT")).toHaveLength(0);
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 1,
+      type: "TRIGGER_FIRED",
+      sourceId: "ender",
+      targetId: "enemy",
+      payload: {
+        hook: "OnCombatEnd",
+        triggerId: "ender:0"
+      }
+    });
+  });
+
+  it("OnBurnTick appliedByOwner condition does not fire without Burn source ownership tracking", () => {
+    const flame = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 120 }], [], 999);
+    const burnWatcher = createPassiveCard("burn-watcher", [
+      {
+        hook: "OnBurnTick",
+        conditions: { status: "Burn", appliedByOwner: true },
+        effects: [{ command: "DealDamage", amount: 5 }]
+      }
+    ]);
+
+    const result = simulateScenario({
+      playerCards: [burnWatcher, flame],
+      enemyCards: [],
+      playerInstances: [
+        { instanceId: "burn-watcher", definitionId: burnWatcher.id },
+        { instanceId: "flame", definitionId: flame.id }
+      ],
+      enemyInstances: [],
+      playerSlots: ["burn-watcher", "flame"],
+      enemySlots: [],
+      maxCombatTicks: 61
+    });
+
+    expect(result.enemyFinalHp).toBe(39);
+    expect(result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED")).toHaveLength(0);
   });
 });

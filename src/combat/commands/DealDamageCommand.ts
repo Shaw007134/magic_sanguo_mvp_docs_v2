@@ -24,7 +24,8 @@ export class DealDamageCommand implements CombatCommand {
       sourceCard: context.sourceCard,
       sourceCardDefinition: context.sourceCardDefinition,
       sourceCombatant: context.sourceCombatant,
-      targetCombatant: context.targetCombatant
+      targetCombatant: context.targetCombatant,
+      triggerDepth: context.triggerDepth
     });
     context.triggerSystem?.fire({
       hook: "OnDamageTaken",
@@ -32,7 +33,8 @@ export class DealDamageCommand implements CombatCommand {
       sourceCard: context.sourceCard,
       sourceCardDefinition: context.sourceCardDefinition,
       sourceCombatant: context.sourceCombatant,
-      targetCombatant: context.targetCombatant
+      targetCombatant: context.targetCombatant,
+      triggerDepth: context.triggerDepth
     });
   }
 }

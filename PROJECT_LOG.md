@@ -243,6 +243,39 @@ Next recommended task:
 ---
 
 Date: 2026-05-01
+Phase: 6 patch
+Task: Patched Passive TriggerSystem targeting, trigger depth safety, OnCombatEnd command restriction, and OnBurnTick ownership semantics.
+Files changed:
+- src/combat/ResolutionStack.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/CombatCommand.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/combat/commands/ModifyCooldownCommand.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/combat/triggers/TriggeredCombatCommand.ts
+- src/combat/triggers/TriggerSystem.ts
+- tests/combat/triggers.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- OnDamageTaken trigger DealDamage targets the opposing attacker.
+- OnDamageTaken trigger GainArmor affects the damaged trigger owner.
+- Recursive trigger chain stops by maxTriggerDepth.
+- OnCombatEnd trigger does not mutate final HP or winner.
+- OnBurnTick appliedByOwner condition does not fire without Burn source ownership tracking.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- OnCombatEnd triggers are log/replay only in MVP and do not push combat commands.
+- OnBurnTick does not support source ownership conditions until Burn source tracking is added.
+Next recommended task:
+- Phase 7: Minimal ModifierSystem / MBF.
+
+---
+
+Date: 2026-05-01
 Phase: 6
 Task: Implemented Passive TriggerSystem.
 Files changed:

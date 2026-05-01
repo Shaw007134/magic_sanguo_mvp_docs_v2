@@ -35,6 +35,10 @@ MVP rule: Burn goes through DamageCalculator but ignores Armor so DOT keeps a cl
 Passive TriggerSystem is implemented for OnCombatStart, OnCardActivated, OnDamageDealt, OnDamageTaken, OnStatusApplied, OnBurnTick, OnCooldownModified, and OnCombatEnd.
 Passive triggers support internalCooldownTicks, maxTriggersPerTick (default 1), deterministic order, and trigger-created CombatCommand objects pushed to ResolutionStack.
 Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, cardIsAdjacent, ownerHpBelowPercent, and targetHpBelowPercent.
+Trigger-created commands always use the trigger owner as sourceCombatant and the opposing combatant as default targetCombatant.
+Recursive trigger-created commands carry triggerDepth through ResolutionStack; maxTriggerDepth stops recursive chains with STACK_LIMIT_REACHED replay/log output.
+OnCombatEnd is log/replay only in MVP and must not push or resolve combat commands or mutate HP, armor, statuses, cooldowns, or winner.
+OnBurnTick currently supports status and HP conditions only; appliedByOwner/source ownership conditions do not fire until Burn source tracking is added.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, and TriggerSystem tests pass.
 ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers, and UI are not implemented yet.
 ```

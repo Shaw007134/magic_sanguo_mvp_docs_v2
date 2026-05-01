@@ -20,5 +20,6 @@ export interface CombatExecutionContext {
 
 export interface CombatCommand {
   readonly name: string;
+  readonly triggerDepth?: number;
   execute(context: CombatExecutionContext): void;
 }

@@ -41,7 +41,8 @@ export class ModifyCooldownCommand implements CombatCommand {
       sourceCard: context.sourceCard,
       sourceCardDefinition: context.sourceCardDefinition,
       sourceCombatant: context.sourceCombatant,
-      targetCombatant: context.targetCombatant
+      targetCombatant: context.targetCombatant,
+      triggerDepth: context.triggerDepth
     });
   }
 }

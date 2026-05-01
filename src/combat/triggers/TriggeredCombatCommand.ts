@@ -10,7 +10,8 @@ export class TriggeredCombatCommand implements CombatCommand {
     readonly sourceCard: MutableCardRuntimeState,
     readonly sourceCardDefinition: CardDefinition,
     readonly sourceCombatant: RuntimeCombatant,
-    readonly targetCombatant: RuntimeCombatant
+    readonly targetCombatant: RuntimeCombatant,
+    readonly triggerDepth: number
   ) {
     this.name = wrappedCommand.name;
   }
@@ -22,7 +23,7 @@ export class TriggeredCombatCommand implements CombatCommand {
       sourceCardDefinition: this.sourceCardDefinition,
       sourceCombatant: this.sourceCombatant,
       targetCombatant: this.targetCombatant,
-      triggerDepth: context.triggerDepth + 1
+      triggerDepth: this.triggerDepth
     });
   }
 }

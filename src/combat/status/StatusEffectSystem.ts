@@ -43,7 +43,8 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
           hook: "OnBurnTick",
           tick: input.tick,
           targetCombatant: combatant,
-          status: "Burn"
+          status: "Burn",
+          triggerDepth: 0
         });
         status.nextTickAt += status.tickIntervalTicks;
       }

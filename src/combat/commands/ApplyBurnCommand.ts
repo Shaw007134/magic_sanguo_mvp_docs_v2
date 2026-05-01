@@ -45,7 +45,8 @@ export class ApplyBurnCommand implements CombatCommand {
       sourceCardDefinition: context.sourceCardDefinition,
       sourceCombatant: context.sourceCombatant,
       targetCombatant: context.targetCombatant,
-      status: "Burn"
+      status: "Burn",
+      triggerDepth: context.triggerDepth
     });
   }
 }
