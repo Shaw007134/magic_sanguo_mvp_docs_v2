@@ -124,3 +124,60 @@ Known issues:
 - Combat ends immediately when a combatant reaches 0 HP during ordered same-tick resolution.
 Next recommended task:
 - Phase 4: CombatCommand and ResolutionStack.
+
+---
+
+Date: 2026-05-01
+Phase: Pre-4 patch
+Task: Aligned Phase 3 direct effect grammar with MVP command grammar.
+Files changed:
+- src/combat/CombatEngine.ts
+- tests/combat/basicCombat.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Updated existing combat tests to use `{ command: "DealDamage", amount: number }`.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Old `{ type: "DealDamage", amount: number }` effects are no longer supported.
+Next recommended task:
+- Phase 4: CombatCommand and ResolutionStack.
+
+---
+
+Date: 2026-05-01
+Phase: 4
+Task: Implemented CombatCommand and ResolutionStack.
+Files changed:
+- src/index.ts
+- src/combat/CombatEngine.ts
+- src/combat/CooldownSystem.ts
+- src/combat/ResolutionStack.ts
+- src/combat/TargetingSystem.ts
+- src/combat/types.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/CombatCommand.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/combat/commands/GainArmorCommand.ts
+- src/combat/commands/ModifyCooldownCommand.ts
+- tests/combat/basicCombat.test.ts
+- tests/combat/resolutionStack.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/combat/resolutionStack.test.ts
+- Added basic combat coverage for card effect order through ResolutionStack.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- CombatEngine now converts active card effects using `effect.command`.
+- Supported command effects are DealDamage, GainArmor, ApplyBurn, and ModifyCooldown.
+- ApplyBurnCommand records a deterministic application event only; Burn ticking/status behavior is not implemented.
+- Passive triggers, ModifierSystem, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
+Next recommended task:
+- Phase 5: Armor and Burn.

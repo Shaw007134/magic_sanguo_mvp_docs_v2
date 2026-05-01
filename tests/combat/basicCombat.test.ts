@@ -155,6 +155,34 @@ describe("CombatEngine", () => {
     expect(activations).toEqual(["player-card-a", "player-card-b"]);
   });
 
+  it("resolves card effects in listed order through the ResolutionStack", () => {
+    const orderedCard: CardDefinition = {
+      ...createDamageCard("ordered-effects", 1, 0),
+      effects: [
+        { command: "GainArmor", amount: 3 },
+        { command: "DealDamage", amount: 2 }
+      ]
+    };
+    const orderedInstance: CardInstance = {
+      instanceId: "ordered-card",
+      definitionId: orderedCard.id
+    };
+
+    const result = new CombatEngine().simulate({
+      playerFormation: createFormation("player", "Player", 20, ["ordered-card"]),
+      enemyFormation: createFormation("enemy", "Enemy", 20, []),
+      cardInstancesById: new Map([[orderedInstance.instanceId, orderedInstance]]),
+      cardDefinitionsById: new Map([[orderedCard.id, orderedCard]]),
+      maxCombatTicks: 1
+    });
+
+    const commandEvents = result.replayTimeline.events
+      .filter((event) => event.type === "ARMOR_GAINED" || event.type === "DAMAGE_DEALT")
+      .map((event) => event.type);
+
+    expect(commandEvents).toEqual(["ARMOR_GAINED", "DAMAGE_DEALT"]);
+  });
+
   it("ends combat when HP reaches 0", () => {
     const finishingCard = createDamageCard("finisher", 1, 20);
     const finishingInstance: CardInstance = {

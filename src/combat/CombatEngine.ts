@@ -2,13 +2,18 @@ import type { CardDefinition, CardInstance, CardRuntimeState, EffectDefinition }
 import type { FormationSnapshot } from "../model/formation.js";
 import type { CombatResult, CombatWinner, ReplayEvent } from "../model/result.js";
 import { CombatLog } from "./CombatLog.js";
+import type { CombatCommand } from "./commands/CombatCommand.js";
+import { ApplyBurnCommand } from "./commands/ApplyBurnCommand.js";
+import { DealDamageCommand } from "./commands/DealDamageCommand.js";
+import { GainArmorCommand } from "./commands/GainArmorCommand.js";
+import { ModifyCooldownCommand } from "./commands/ModifyCooldownCommand.js";
 import { isReady, recoverCooldown, resetCooldown } from "./CooldownSystem.js";
+import { ResolutionStack } from "./ResolutionStack.js";
 import { getOpposingSide } from "./TargetingSystem.js";
+import type { CombatSide, MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
 
 export const LOGIC_TICKS_PER_SECOND = 60;
 export const DEFAULT_MAX_COMBAT_TICKS = 3600;
-
-export type CombatSide = "PLAYER" | "ENEMY";
 
 export interface CombatEngineInput {
   readonly playerFormation: FormationSnapshot;
@@ -18,24 +23,13 @@ export interface CombatEngineInput {
   readonly maxCombatTicks?: number;
   readonly sidePriority?: readonly CombatSide[];
   readonly initialCardRuntimeStates?: readonly CardRuntimeState[];
-}
-
-interface RuntimeCombatant {
-  readonly side: CombatSide;
-  readonly formation: FormationSnapshot;
-  hp: number;
-  cards: CardRuntimeState[];
+  readonly resolutionStack?: ResolutionStack;
 }
 
 interface ReadyCard {
   readonly readyTick: number;
   readonly side: CombatSide;
-  readonly card: CardRuntimeState;
-}
-
-interface DealDamageEffect {
-  readonly command: "DealDamage";
-  readonly amount: number;
+  readonly card: MutableCardRuntimeState;
 }
 
 export class CombatEngine {
@@ -44,10 +38,11 @@ export class CombatEngine {
     const sidePriority = input.sidePriority ?? (["PLAYER", "ENEMY"] as const);
     const replayEvents: ReplayEvent[] = [];
     const combatLog = new CombatLog();
-    const combatants = {
+    const resolutionStack = input.resolutionStack ?? new ResolutionStack();
+    const combatants: Record<CombatSide, RuntimeCombatant> = {
       PLAYER: createRuntimeCombatant("PLAYER", input.playerFormation, input),
       ENEMY: createRuntimeCombatant("ENEMY", input.enemyFormation, input)
-    } satisfies Record<CombatSide, RuntimeCombatant>;
+    };
 
     for (let tick = 1; tick <= maxCombatTicks; tick += 1) {
       const readyCards = recoverCooldownsAndCollectReadyCards(tick, combatants);
@@ -77,33 +72,37 @@ export class CombatEngine {
           `${tick}: ${source.formation.displayName} activated ${cardDefinition.name} in slot ${readyCard.card.slotIndex}.`
         );
 
-        for (const effect of cardDefinition.effects ?? []) {
-          const dealDamage = parseDealDamageEffect(effect);
-          if (!dealDamage) {
-            continue;
-          }
+        const commands = createCombatCommands(cardDefinition.effects ?? []);
+        for (const command of [...commands].reverse()) {
+          resolutionStack.push(command);
+        }
 
-          const damage = Math.max(0, dealDamage.amount);
-          target.hp = Math.max(0, target.hp - damage);
+        const stackResult = resolutionStack.resolve({
+          tick,
+          sourceCard: readyCard.card,
+          sourceCombatant: source,
+          targetCombatant: target,
+          combatLog,
+          replayEvents,
+          triggerDepth: 0
+        });
+
+        if (!stackResult.ok) {
+          combatLog.add(`${tick}: ${stackResult.error}`);
           replayEvents.push({
             tick,
-            type: "DAMAGE_DEALT",
+            type: "STACK_LIMIT_REACHED",
             sourceId: readyCard.card.instanceId,
-            targetId: target.formation.id,
             payload: {
-              amount: damage,
-              targetSide,
-              targetHp: target.hp
+              error: stackResult.error
             }
           });
-          combatLog.add(
-            `${tick}: ${cardDefinition.name} dealt ${damage} damage to ${target.formation.displayName}.`
-          );
+          return createCombatResult("DRAW", tick, combatants, combatLog, replayEvents);
+        }
 
-          const defeatWinner = getDefeatWinner(combatants);
-          if (defeatWinner) {
-            return createCombatResult(defeatWinner, tick, combatants, combatLog, replayEvents);
-          }
+        const defeatWinner = getDefeatWinner(combatants);
+        if (defeatWinner) {
+          return createCombatResult(defeatWinner, tick, combatants, combatLog, replayEvents);
         }
 
         updateCard(source, resetCooldown({ ...readyCard.card, lastActivatedTick: tick }));
@@ -127,7 +126,7 @@ function createRuntimeCombatant(
   const initialRuntimeStates = new Map(
     (input.initialCardRuntimeStates ?? []).map((card) => [card.instanceId, card] as const)
   );
-  const cards: CardRuntimeState[] = [];
+  const cards: MutableCardRuntimeState[] = [];
 
   for (const slot of formation.slots) {
     if (!slot.cardInstanceId) {
@@ -145,7 +144,7 @@ function createRuntimeCombatant(
     }
 
     const explicitRuntimeState = initialRuntimeStates.get(cardInstance.instanceId);
-    const runtimeCard: CardRuntimeState = {
+    const runtimeCard: MutableCardRuntimeState = {
       instanceId: cardInstance.instanceId,
       definitionId: cardInstance.definitionId,
       ownerCombatantId: formation.id,
@@ -175,8 +174,49 @@ function createRuntimeCombatant(
     side,
     formation,
     hp: formation.maxHp,
+    armor: formation.startingArmor,
     cards
   };
+}
+
+function createCombatCommands(effects: readonly EffectDefinition[]): CombatCommand[] {
+  const commands: CombatCommand[] = [];
+
+  for (const effect of effects) {
+    const command = createCombatCommand(effect);
+    if (command) {
+      commands.push(command);
+    }
+  }
+
+  return commands;
+}
+
+function createCombatCommand(effect: EffectDefinition): CombatCommand | undefined {
+  switch (effect["command"]) {
+    case "DealDamage":
+      if (typeof effect["amount"] !== "number") {
+        return undefined;
+      }
+      return new DealDamageCommand(effect["amount"]);
+    case "GainArmor":
+      if (typeof effect["amount"] !== "number") {
+        return undefined;
+      }
+      return new GainArmorCommand(effect["amount"]);
+    case "ApplyBurn":
+      if (typeof effect["amount"] !== "number" || typeof effect["durationTicks"] !== "number") {
+        return undefined;
+      }
+      return new ApplyBurnCommand(effect["amount"], effect["durationTicks"]);
+    case "ModifyCooldown":
+      if (typeof effect["targetCardInstanceId"] !== "string" || typeof effect["amountTicks"] !== "number") {
+        return undefined;
+      }
+      return new ModifyCooldownCommand(effect["targetCardInstanceId"], effect["amountTicks"]);
+    default:
+      return undefined;
+  }
 }
 
 function recoverCooldownsAndCollectReadyCards(
@@ -221,18 +261,7 @@ function getSidePriority(side: CombatSide, sidePriority: readonly CombatSide[]):
   return priority === -1 ? Number.MAX_SAFE_INTEGER : priority;
 }
 
-function parseDealDamageEffect(effect: EffectDefinition): DealDamageEffect | undefined {
-  if (effect["command"] !== "DealDamage" || typeof effect["amount"] !== "number") {
-    return undefined;
-  }
-
-  return {
-    command: "DealDamage",
-    amount: effect["amount"]
-  };
-}
-
-function updateCard(combatant: RuntimeCombatant, updatedCard: CardRuntimeState): void {
+function updateCard(combatant: RuntimeCombatant, updatedCard: MutableCardRuntimeState): void {
   combatant.cards = combatant.cards.map((card) =>
     card.instanceId === updatedCard.instanceId ? updatedCard : card
   );

@@ -1,13 +1,14 @@
 import type { CardRuntimeState } from "../model/card.js";
+import type { MutableCardRuntimeState } from "./types.js";
 
-export function recoverCooldown(card: CardRuntimeState): CardRuntimeState {
+export function recoverCooldown<TCard extends CardRuntimeState>(card: TCard): TCard {
   return {
     ...card,
     cooldownRemainingTicks: card.cooldownRemainingTicks - card.cooldownRecoveryRate
   };
 }
 
-export function resetCooldown(card: CardRuntimeState): CardRuntimeState {
+export function resetCooldown(card: MutableCardRuntimeState): MutableCardRuntimeState {
   return {
     ...card,
     cooldownRemainingTicks: card.cooldownMaxTicks,
