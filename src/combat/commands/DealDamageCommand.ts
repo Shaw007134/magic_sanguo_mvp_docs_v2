@@ -14,6 +14,11 @@ export class DealDamageCommand implements CombatCommand {
       target: context.targetCombatant,
       amount: this.amount,
       damageType: "DIRECT",
+      sourceCard: context.sourceCard,
+      sourceCardDefinition: context.sourceCardDefinition,
+      sourceCombatant: context.sourceCombatant,
+      combatants: context.combatants,
+      modifierSystem: context.modifierSystem,
       command: this.name,
       combatLog: context.combatLog,
       replayEvents: context.replayEvents

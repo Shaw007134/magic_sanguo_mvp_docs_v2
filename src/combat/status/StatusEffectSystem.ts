@@ -3,6 +3,7 @@ import { applyDamage } from "../DamageCalculator.js";
 import type { CombatLog } from "../CombatLog.js";
 import type { RuntimeCombatant } from "../types.js";
 import type { TriggerSystem } from "../triggers/TriggerSystem.js";
+import type { ModifierSystem } from "../modifiers/ModifierSystem.js";
 
 export interface StatusEffectSystemInput {
   readonly tick: number;
@@ -10,6 +11,7 @@ export interface StatusEffectSystemInput {
   readonly combatLog: CombatLog;
   readonly replayEvents: ReplayEvent[];
   readonly triggerSystem?: TriggerSystem;
+  readonly modifierSystem?: ModifierSystem;
 }
 
 export function updateStatusEffects(input: StatusEffectSystemInput): void {
@@ -25,6 +27,8 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
           target: combatant,
           amount: status.amount,
           damageType: "FIRE",
+          combatants: input.combatants,
+          modifierSystem: input.modifierSystem,
           ignoresArmor: true,
           command: "BurnTick",
           combatLog: input.combatLog,

@@ -1,5 +1,7 @@
 import type { ReplayEvent } from "../model/result.js";
+import type { CardDefinition, CardRuntimeState } from "../model/card.js";
 import type { CombatLog } from "./CombatLog.js";
+import type { ModifierSystem } from "./modifiers/ModifierSystem.js";
 import type { RuntimeCombatant } from "./types.js";
 
 export type DamageType = "DIRECT" | "FIRE";
@@ -11,6 +13,11 @@ export interface DamageCalculationInput {
   readonly target: RuntimeCombatant;
   readonly amount: number;
   readonly damageType: DamageType;
+  readonly sourceCard?: CardRuntimeState;
+  readonly sourceCardDefinition?: CardDefinition;
+  readonly sourceCombatant?: RuntimeCombatant;
+  readonly combatants?: readonly RuntimeCombatant[];
+  readonly modifierSystem?: ModifierSystem;
   readonly ignoresArmor?: boolean;
   readonly command: string;
   readonly combatLog: CombatLog;
@@ -26,7 +33,18 @@ export interface DamageCalculationResult {
 }
 
 export function applyDamage(input: DamageCalculationInput): DamageCalculationResult {
-  const incomingDamage = Math.max(0, input.amount);
+  const modifiedDamage = input.modifierSystem
+    ? input.modifierSystem.applyDamageModifiers(input.amount, {
+        tick: input.tick,
+        sourceCard: input.sourceCard,
+        sourceCardDefinition: input.sourceCardDefinition,
+        sourceCombatant: input.sourceCombatant,
+        targetCombatant: input.target,
+        combatants: input.combatants ?? [],
+        damageType: input.damageType
+      })
+    : input.amount;
+  const incomingDamage = Math.max(0, modifiedDamage);
   const armorBlocked = input.ignoresArmor ? 0 : Math.min(input.target.armor, incomingDamage);
   const hpDamage = Math.max(0, incomingDamage - armorBlocked);
 

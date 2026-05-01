@@ -4,6 +4,8 @@ import type { CombatResult, CombatWinner, ReplayEvent } from "../model/result.js
 import { CombatLog } from "./CombatLog.js";
 import { createCombatCommands } from "./CombatCommandFactory.js";
 import { isReady, recoverCooldown, resetCooldown } from "./CooldownSystem.js";
+import type { Modifier } from "./modifiers/Modifier.js";
+import { ModifierSystem } from "./modifiers/ModifierSystem.js";
 import { ResolutionStack, type ResolutionStackLimits } from "./ResolutionStack.js";
 import { updateStatusEffects } from "./status/StatusEffectSystem.js";
 import { getOpposingSide } from "./TargetingSystem.js";
@@ -22,6 +24,7 @@ export interface CombatEngineInput {
   readonly sidePriority?: readonly CombatSide[];
   readonly initialCardRuntimeStates?: readonly CardRuntimeState[];
   readonly resolutionStackLimits?: ResolutionStackLimits;
+  readonly modifiers?: readonly Modifier[];
 }
 
 interface ReadyCard {
@@ -41,6 +44,7 @@ export class CombatEngine {
       PLAYER: createRuntimeCombatant("PLAYER", input.playerFormation, input),
       ENEMY: createRuntimeCombatant("ENEMY", input.enemyFormation, input)
     };
+    const modifierSystem = new ModifierSystem(input.modifiers ?? []);
     const triggerSystem = new TriggerSystem({
       combatants: [combatants.PLAYER, combatants.ENEMY],
       cardInstancesById: input.cardInstancesById,
@@ -54,21 +58,23 @@ export class CombatEngine {
       hook: "OnCombatStart",
       tick: 0
     });
-    const combatStartStackResult = resolveStack({
-      tick: 0,
-      sourceCombatant: combatants.PLAYER,
-      targetCombatant: combatants.ENEMY,
-      combatLog,
-      replayEvents,
-      resolutionStack,
-      triggerSystem
-    });
+	    const combatStartStackResult = resolveStack({
+	      tick: 0,
+	      sourceCombatant: combatants.PLAYER,
+	      targetCombatant: combatants.ENEMY,
+	      combatLog,
+	      replayEvents,
+	      resolutionStack,
+	      triggerSystem,
+	      modifierSystem,
+	      combatants: [combatants.PLAYER, combatants.ENEMY]
+	    });
     if (!combatStartStackResult.ok) {
       return finalizeCombatResult("DRAW", 0, combatants, combatLog, replayEvents, triggerSystem, resolutionStack);
     }
 
     for (let tick = 1; tick <= maxCombatTicks; tick += 1) {
-      const readyCards = recoverCooldownsAndCollectReadyCards(tick, combatants);
+      const readyCards = recoverCooldownsAndCollectReadyCards(tick, combatants, input.cardDefinitionsById, modifierSystem);
       readyCards.sort((a, b) => compareReadyCards(a, b, sidePriority));
 
       for (const readyCard of readyCards) {
@@ -117,7 +123,9 @@ export class CombatEngine {
           combatLog,
           replayEvents,
           resolutionStack,
-          triggerSystem
+          triggerSystem,
+          modifierSystem,
+          combatants: [combatants.PLAYER, combatants.ENEMY]
         });
 
         if (!stackResult.ok) {
@@ -150,19 +158,22 @@ export class CombatEngine {
         tick,
         combatants: [combatants.PLAYER, combatants.ENEMY],
         combatLog,
-        replayEvents,
-        triggerSystem
-      });
+	        replayEvents,
+	        triggerSystem,
+	        modifierSystem
+	      });
 
       const statusStackResult = resolveStack({
         tick,
         sourceCombatant: combatants.PLAYER,
         targetCombatant: combatants.ENEMY,
         combatLog,
-        replayEvents,
-        resolutionStack,
-        triggerSystem
-      });
+	        replayEvents,
+	        resolutionStack,
+	        triggerSystem,
+	        modifierSystem,
+	        combatants: [combatants.PLAYER, combatants.ENEMY]
+	      });
       if (!statusStackResult.ok) {
         return finalizeCombatResult("DRAW", tick, combatants, combatLog, replayEvents, triggerSystem, resolutionStack);
       }
@@ -195,6 +206,8 @@ interface StackResolveInput {
   readonly replayEvents: ReplayEvent[];
   readonly resolutionStack: ResolutionStack;
   readonly triggerSystem: TriggerSystem;
+  readonly modifierSystem?: ModifierSystem;
+  readonly combatants?: readonly RuntimeCombatant[];
 }
 
 function resolveStack(input: StackResolveInput) {
@@ -207,6 +220,8 @@ function resolveStack(input: StackResolveInput) {
     combatLog: input.combatLog,
     replayEvents: input.replayEvents,
     triggerSystem: input.triggerSystem,
+    modifierSystem: input.modifierSystem,
+    combatants: input.combatants,
     triggerDepth: 0
   });
 }
@@ -300,14 +315,22 @@ function createRuntimeCombatant(
 
 function recoverCooldownsAndCollectReadyCards(
   tick: number,
-  combatants: Record<CombatSide, RuntimeCombatant>
+  combatants: Record<CombatSide, RuntimeCombatant>,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>,
+  modifierSystem: ModifierSystem
 ): ReadyCard[] {
   const readyCards: ReadyCard[] = [];
 
   for (const side of ["PLAYER", "ENEMY"] as const) {
     const combatant = combatants[side];
     combatant.cards = combatant.cards.map((card) => {
-      const recoveredCard = recoverCooldown(card);
+      const recoveredCard = recoverCooldown(card, {
+        tick,
+        sourceCardDefinition: cardDefinitionsById.get(card.definitionId),
+        sourceCombatant: combatant,
+        combatants: [combatants.PLAYER, combatants.ENEMY],
+        modifierSystem
+      });
       if (isReady(recoveredCard)) {
         readyCards.push({
           readyTick: tick,

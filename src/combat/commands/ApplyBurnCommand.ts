@@ -10,7 +10,17 @@ export class ApplyBurnCommand implements CombatCommand {
   ) {}
 
   execute(context: CombatExecutionContext): void {
-    const burn = createBurn(this.amount, this.durationTicks, context.tick);
+    const durationTicks = context.modifierSystem
+      ? context.modifierSystem.applyStatusDurationModifiers(this.durationTicks, {
+          tick: context.tick,
+          sourceCard: context.sourceCard,
+          sourceCardDefinition: context.sourceCardDefinition,
+          sourceCombatant: context.sourceCombatant,
+          targetCombatant: context.targetCombatant,
+          combatants: context.combatants ?? []
+        })
+      : this.durationTicks;
+    const burn = createBurn(this.amount, durationTicks, context.tick);
     if (burn.amount <= 0 || burn.expiresAtTick <= context.tick) {
       return;
     }
@@ -29,7 +39,7 @@ export class ApplyBurnCommand implements CombatCommand {
       payload: {
         command: this.name,
         amount: this.amount,
-        durationTicks: this.durationTicks,
+        durationTicks,
         totalAmount: existingBurn?.amount ?? burn.amount,
         nextTickAt: existingBurn?.nextTickAt ?? burn.nextTickAt,
         expiresAtTick: existingBurn?.expiresAtTick ?? burn.expiresAtTick

@@ -40,17 +40,21 @@ Recursive trigger-created commands carry triggerDepth through ResolutionStack; m
 OnCombatEnd is log/replay only in MVP and must not push or resolve combat commands or mutate HP, armor, statuses, cooldowns, or winner.
 OnBurnTick currently supports status and HP conditions only; appliedByOwner/source ownership conditions do not fire until Burn source tracking is added.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, and TriggerSystem tests pass.
-ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers, and UI are not implemented yet.
+Minimal ModifierSystem / MBF is implemented for damage, cooldown recovery rate, and status duration modifiers.
+Modifier priority: lower priority number executes first; same priority sorts by modifier id.
+Supported modifier conditions are sourceHasTag, targetHasStatus, ownerHasStatus, damageType, cardInSlot, and always.
+Supported modifier operations are ADD_DAMAGE, MULTIPLY_DAMAGE, ADD_COOLDOWN_RECOVERY_RATE, MULTIPLY_COOLDOWN_RECOVERY_RATE, ADD_STATUS_DURATION, and MULTIPLY_STATUS_DURATION.
+Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, and UI are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Phase 7:
+Phase 8:
 
 ```text
-Implement Minimal ModifierSystem / MBF.
+Implement ReplayTimeline and CombatResultSummary.
 ```
 
 ## Rules For Next Agent
@@ -70,4 +74,4 @@ Implement Minimal ModifierSystem / MBF.
 
 ## Recommended First Prompt
 
-Use Phase 7 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use Phase 8 prompt from `docs/MVP_BUILD_SEQUENCE.md`.

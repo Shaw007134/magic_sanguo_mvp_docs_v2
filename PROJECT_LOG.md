@@ -276,6 +276,38 @@ Next recommended task:
 ---
 
 Date: 2026-05-01
+Phase: 7
+Task: Implemented Minimal ModifierSystem / MBF.
+Files changed:
+- src/index.ts
+- src/combat/CombatEngine.ts
+- src/combat/CooldownSystem.ts
+- src/combat/DamageCalculator.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/CombatCommand.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/combat/modifiers/Modifier.ts
+- src/combat/modifiers/ModifierHooks.ts
+- src/combat/modifiers/ModifierSystem.ts
+- src/combat/status/StatusEffectSystem.ts
+- tests/combat/modifiers.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/combat/modifiers.test.ts
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- ModifierSystem supports only damage, cooldown recovery rate, and status duration operations.
+- Formula rewriting, rollback/snapshot, random modifiers, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
+Next recommended task:
+- Phase 8: ReplayTimeline and CombatResultSummary.
+
+---
+
+Date: 2026-05-01
 Phase: 6
 Task: Implemented Passive TriggerSystem.
 Files changed:
