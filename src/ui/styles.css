@@ -1,0 +1,290 @@
+:root {
+  color: #1c2128;
+  background: #f4f1e8;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.top-bar,
+.panel,
+.battle-actions,
+.dev-log {
+  border: 1px solid #c8c1b2;
+  background: #fffdf7;
+  box-shadow: 0 1px 0 rgba(20, 28, 38, 0.06);
+}
+
+.top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 8px;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 18px;
+}
+
+h3 {
+  font-size: 14px;
+}
+
+.gold-display {
+  min-width: 96px;
+  padding: 8px 12px;
+  border: 1px solid #b68b2f;
+  border-radius: 6px;
+  background: #fff4c7;
+  font-weight: 700;
+  text-align: center;
+}
+
+.battle-planner,
+.post-combat {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.25fr) minmax(260px, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+.panel,
+.battle-actions,
+.dev-log {
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.panel-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.panel-heading span,
+.card-meta,
+.enemy-stats,
+.event-tick,
+small {
+  color: #596170;
+  font-size: 13px;
+}
+
+.card-list,
+.formation-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.card-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.card-actions > button,
+.secondary-action,
+.primary-action {
+  min-height: 38px;
+  border: 1px solid #948977;
+  border-radius: 6px;
+  background: #f8efe1;
+}
+
+.card-view {
+  width: 100%;
+  min-height: 104px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #a7b0b7;
+  border-radius: 6px;
+  background: #f8fbfd;
+  color: inherit;
+  text-align: left;
+}
+
+.card-view.selected {
+  border-color: #2d6cdf;
+  box-shadow: inset 0 0 0 1px #2d6cdf;
+}
+
+.card-title {
+  font-weight: 800;
+}
+
+.formation-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.formation-slot,
+.enemy-slot {
+  min-height: 156px;
+  display: grid;
+  gap: 8px;
+}
+
+.slot-button,
+.enemy-slot,
+.formation-slot.locked {
+  width: 100%;
+  min-height: 126px;
+  padding: 10px;
+  border: 1px dashed #8b96a0;
+  border-radius: 6px;
+  background: #f6f7f2;
+  color: inherit;
+  text-align: left;
+}
+
+.formation-slot.locked {
+  border-style: solid;
+  background: #e8edf1;
+  color: #4e5662;
+}
+
+.enemy-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.battle-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.primary-action {
+  min-width: 180px;
+  background: #26394f;
+  color: #fff;
+  border-color: #26394f;
+  font-weight: 800;
+}
+
+.replay-panel {
+  grid-column: span 2;
+}
+
+.event-list,
+.dev-log ol {
+  max-height: 360px;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+  padding-left: 20px;
+}
+
+.event-list li {
+  display: grid;
+  grid-template-columns: 54px 150px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.summary-grid > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-radius: 6px;
+  background: #eef4ee;
+}
+
+.metric-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.metric-list ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.metric-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.dev-log {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 980px) {
+  .battle-planner,
+  .post-combat {
+    grid-template-columns: 1fr;
+  }
+
+  .replay-panel {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 620px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .top-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .formation-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .event-list li {
+    grid-template-columns: 1fr;
+  }
+}

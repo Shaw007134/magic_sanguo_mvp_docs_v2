@@ -499,3 +499,44 @@ Known issues:
 - Phase 10 UI must render locked adjacent slots as occupied by the size-2 card footprint.
 Next recommended task:
 - Phase 10: Minimal UI Prototype.
+
+---
+
+Date: 2026-05-01
+Phase: 10
+Task: Implemented Minimal UI prototype.
+Files changed:
+- index.html
+- package.json
+- pnpm-lock.yaml
+- tsconfig.json
+- vite.config.ts
+- vitest.config.ts
+- src/ui/main.tsx
+- src/ui/App.tsx
+- src/ui/styles.css
+- src/ui/state/initialState.ts
+- src/ui/state/uiState.ts
+- src/ui/components/CardView.tsx
+- src/ui/components/ChestPanel.tsx
+- src/ui/components/FormationSlot.tsx
+- src/ui/components/FormationEditor.tsx
+- src/ui/components/EnemyPreview.tsx
+- src/ui/components/CombatReplay.tsx
+- src/ui/components/ResultSummary.tsx
+- tests/ui/uiState.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/ui/uiState.test.ts
+How to run:
+- pnpm dev
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- UI uses placeholder visuals only.
+- UI state is local and temporary; persistent run inventory/economy belongs to Phase 11.
+- No shop, event, reward, save/load, async PvP, animation polish, or final art is implemented.
+Next recommended task:
+- Phase 11: MVP Run Loop.

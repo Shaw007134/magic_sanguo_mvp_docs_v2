@@ -15,7 +15,7 @@ docs/MVP_MASTER_DESIGN.md
 Current implementation status:
 
 ```text
-Phase 9 complete.
+Phase 10 complete.
 TypeScript + pnpm + Vitest project skeleton exists.
 Core data model interfaces added.
 CardDefinition and FormationSnapshot validation helpers added.
@@ -59,18 +59,38 @@ Monster battles use the same FormationSnapshot combat path as player and future 
 Size 2 monster cards occupy a starting slot and mark the adjacent slot locked in FormationSnapshot output; CombatEngine behavior is unchanged.
 Phase 10 UI must render locked adjacent slots as occupied by the size-2 card footprint.
 BurnTick damage remains summarized as statusDamage.Burn and is not attributed back to the applying card because Burn source tracking is still intentionally deferred.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, and MonsterGenerator tests pass.
-Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, and UI are not implemented yet.
+Minimal React + Vite UI prototype is implemented under src/ui.
+UI state helpers live under src/ui/state and own only local gold, chest, formation, and selling state.
+Chest capacity is formation slot count x 2. With 4 formation slots, the MVP chest capacity is 8.
+Selling from chest uses MVP prices: BRONZE 1, SILVER 2, GOLD 4, JADE 8, CELESTIAL 12. Formation cards cannot be sold until removed back to chest.
+The UI builds a player FormationSnapshot from final pre-combat formation state and passes it to CombatEngine. React components do not calculate combat results.
+Enemy preview uses Phase 9 MonsterGenerator and renders locked adjacent slots as size-2 footprints.
+Post-combat UI shows ReplayTimeline and CombatResultSummary, with raw CombatLog behind a dev-only toggle.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, and UI state tests pass.
+Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, shop, event, reward, and run-loop systems are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Phase 10:
+Phase 11:
 
 ```text
-Implement Minimal UI Prototype.
+Implement MVP Run Loop.
+```
+
+## Manual Test Instructions
+
+```text
+1. Run pnpm dev.
+2. Open the shown localhost URL.
+3. Select a chest card, then click a formation slot to place it.
+4. Click a placed formation card, then click another open slot to move it.
+5. Remove a placed card back to chest, then sell it from chest and confirm gold increases.
+6. Start battle and confirm Replay and Summary populate.
+7. Toggle Dev CombatLog and confirm raw combat log is hidden until enabled.
+8. Confirm enemy size-2 card footprints render locked adjacent slots as occupied.
 ```
 
 ## Rules For Next Agent
@@ -78,7 +98,7 @@ Implement Minimal UI Prototype.
 ```text
 1. Read docs/MVP_MASTER_DESIGN.md first.
 2. Implement only the requested phase from docs/MVP_BUILD_SEQUENCE.md.
-3. Do not build UI yet.
+3. Do not expand UI beyond the requested phase scope.
 4. Use `effect.command`, not `effect.type`, for combat effect grammar.
 5. Do not implement Barrier, Ward, Energy Shield, or absorb layers.
 6. Add tests when code is implemented.
@@ -91,4 +111,4 @@ Implement Minimal UI Prototype.
 
 ## Recommended First Prompt
 
-Use Phase 10 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use Phase 11 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
