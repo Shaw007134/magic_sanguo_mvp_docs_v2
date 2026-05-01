@@ -28,7 +28,9 @@ Card effect JSON order is preserved by pushing commands onto the LIFO stack in r
 CombatEngine creates a fresh ResolutionStack for each simulate() call.
 ModifyCooldown card JSON supports `target: "SELF"` and `target: "ADJACENT_ALLY"`; ModifyCooldownCommand remains concrete and receives targetCardInstanceId.
 Armor mitigation is implemented through DamageCalculator.
-Burn runtime status is implemented, ticks every 60 logic ticks, stacks additively, and expires by integer tick duration.
+Tick order: card activations resolve before status updates; status damage can end combat after same-tick card activations.
+Burn runtime status uses absolute tick fields: appliedAtTick, nextTickAt, expiresAtTick.
+Burn first ticks at appliedAtTick + 60, stacks as one merged additive Burn status, and expires by integer tick duration.
 MVP rule: Burn goes through DamageCalculator but ignores Armor so DOT keeps a clear tactical role.
 Smoke, model export, validation, basic combat, ResolutionStack, and Armor/Burn tests pass.
 Passive triggers, ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented yet.

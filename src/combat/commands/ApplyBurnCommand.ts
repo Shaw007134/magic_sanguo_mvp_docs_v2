@@ -1,5 +1,5 @@
 import type { CombatCommand, CombatExecutionContext } from "./CombatCommand.js";
-import { createBurn } from "../status/Burn.js";
+import { createBurn, mergeBurn } from "../status/Burn.js";
 
 export class ApplyBurnCommand implements CombatCommand {
   readonly name = "ApplyBurn";
@@ -10,12 +10,17 @@ export class ApplyBurnCommand implements CombatCommand {
   ) {}
 
   execute(context: CombatExecutionContext): void {
-    const burn = createBurn(this.amount, this.durationTicks);
-    if (burn.amount <= 0 || burn.durationRemainingTicks <= 0) {
+    const burn = createBurn(this.amount, this.durationTicks, context.tick);
+    if (burn.amount <= 0 || burn.expiresAtTick <= context.tick) {
       return;
     }
 
-    context.targetCombatant.statuses.push(burn);
+    const existingBurn = context.targetCombatant.statuses.find((status) => status.kind === "BURN");
+    if (existingBurn) {
+      mergeBurn(existingBurn, burn);
+    } else {
+      context.targetCombatant.statuses.push(burn);
+    }
     context.replayEvents.push({
       tick: context.tick,
       type: "BURN_APPLIED",
@@ -24,7 +29,10 @@ export class ApplyBurnCommand implements CombatCommand {
       payload: {
         command: this.name,
         amount: this.amount,
-        durationTicks: this.durationTicks
+        durationTicks: this.durationTicks,
+        totalAmount: existingBurn?.amount ?? burn.amount,
+        nextTickAt: existingBurn?.nextTickAt ?? burn.nextTickAt,
+        expiresAtTick: existingBurn?.expiresAtTick ?? burn.expiresAtTick
       }
     });
     context.combatLog.add(

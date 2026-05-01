@@ -15,10 +15,7 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
     const remainingStatuses = [];
 
     for (const status of combatant.statuses) {
-      status.durationRemainingTicks -= 1;
-      status.ticksUntilNextTick -= 1;
-
-      if (status.kind === "BURN" && status.ticksUntilNextTick <= 0 && status.durationRemainingTicks >= 0) {
+      if (status.kind === "BURN" && input.tick >= status.nextTickAt && input.tick <= status.expiresAtTick) {
         // MVP rule: Burn is Fire DOT and ignores Armor so DOT keeps a clear tactical role.
         applyDamage({
           tick: input.tick,
@@ -37,13 +34,13 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
           targetId: combatant.formation.id,
           payload: {
             amount: status.amount,
-            durationRemainingTicks: Math.max(0, status.durationRemainingTicks)
+            expiresAtTick: status.expiresAtTick
           }
         });
-        status.ticksUntilNextTick += status.tickIntervalTicks;
+        status.nextTickAt += status.tickIntervalTicks;
       }
 
-      if (status.durationRemainingTicks > 0) {
+      if (input.tick < status.expiresAtTick) {
         remainingStatuses.push(status);
       } else {
         input.replayEvents.push({

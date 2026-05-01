@@ -239,3 +239,31 @@ Known issues:
 - Freeze, Haste, Vulnerable, TriggerSystem, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
 Next recommended task:
 - Phase 6: Passive TriggerSystem.
+
+---
+
+Date: 2026-05-01
+Phase: 5 patch
+Task: Patched Burn timing to absolute ticks and merged additive stacking before Phase 6.
+Files changed:
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/status/Burn.ts
+- src/combat/status/StatusEffect.ts
+- src/combat/status/StatusEffectSystem.ts
+- tests/combat/armorBurn.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Burn applied at tick 1 first ticks at tick 61.
+- Burn duration 60 applied at tick 1 ticks once at tick 61 and then expires.
+- Burn does not lose duration during the same tick it is applied.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Burn stacking is merged additive: repeated Burn applications merge into one Burn status with additive amount and the later expiresAtTick.
+- Card activations resolve before status updates; status damage can end combat after same-tick card activations.
+- Passive triggers, ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
+Next recommended task:
+- Phase 6: Passive TriggerSystem.
