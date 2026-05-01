@@ -119,7 +119,7 @@ How to run:
 - pnpm typecheck
 - pnpm build
 Known issues:
-- CombatEngine supports only direct `{ type: "DealDamage", amount: number }` active card effects.
+- CombatEngine supports only direct `{ command: "DealDamage", amount: number }` active card effects.
 - No ResolutionStack, CombatCommand, Armor behavior, Burn behavior, triggers, ModifierSystem, or UI implemented yet.
 - Combat ends immediately when a combatant reaches 0 HP during ordered same-tick resolution.
 Next recommended task:

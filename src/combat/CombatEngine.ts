@@ -34,7 +34,7 @@ interface ReadyCard {
 }
 
 interface DealDamageEffect {
-  readonly type: "DealDamage";
+  readonly command: "DealDamage";
   readonly amount: number;
 }
 
@@ -222,12 +222,12 @@ function getSidePriority(side: CombatSide, sidePriority: readonly CombatSide[]):
 }
 
 function parseDealDamageEffect(effect: EffectDefinition): DealDamageEffect | undefined {
-  if (effect["type"] !== "DealDamage" || typeof effect["amount"] !== "number") {
+  if (effect["command"] !== "DealDamage" || typeof effect["amount"] !== "number") {
     return undefined;
   }
 
   return {
-    type: "DealDamage",
+    command: "DealDamage",
     amount: effect["amount"]
   };
 }

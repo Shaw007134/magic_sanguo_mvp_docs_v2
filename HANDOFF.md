@@ -22,7 +22,7 @@ CardDefinition and FormationSnapshot validation helpers added.
 Basic deterministic CombatEngine added without ResolutionStack.
 Active cards start at cooldownMaxTicks unless an explicit initial runtime state is provided.
 Same-tick card ordering is deterministic: ready tick, side priority, slotIndex, cardInstanceId.
-Combat supports only direct DealDamage effects.
+Combat supports only direct `{ command: "DealDamage", amount: number }` effects.
 Smoke, model export, validation, and basic combat tests pass.
 No ResolutionStack, CombatCommand, Armor behavior, Burn behavior, triggers, ModifierSystem, or UI implemented yet.
 ```

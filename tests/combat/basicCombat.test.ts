@@ -13,7 +13,7 @@ function createDamageCard(id: string, cooldownTicks: number, amount: number): Ca
     size: 1,
     tags: [],
     cooldownTicks,
-    effects: [{ type: "DealDamage", amount }],
+    effects: [{ command: "DealDamage", amount }],
     description: "Deals direct damage."
   };
 }
