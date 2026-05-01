@@ -1,0 +1,18 @@
+{
+  "id": "rust-bandit",
+  "name": "Rust Bandit",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 24,
+  "startingArmor": 1,
+  "requiredCards": [{ "cardId": "rusty-blade", "slot": 1 }],
+  "optionalCards": [{ "cardId": "rusty-blade" }, { "cardId": "training-staff" }, { "cardId": "wooden-shield" }],
+  "defenseStyle": "LOW_ARMOR",
+  "weakness": "Armor gain or faster damage beats repeated small hits.",
+  "rewardPool": ["rusty-blade", "wooden-shield"],
+  "minDay": 2,
+  "maxDay": 4,
+  "engine": "Fast Rusty Blade attacks start immediately and keep repeating.",
+  "payoff": "Repeated Physical damage wins if the player cannot stabilize.",
+  "fixed": false
+}

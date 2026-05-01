@@ -1,0 +1,21 @@
+{
+  "id": "drum-tactician",
+  "name": "Drum Tactician",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 30,
+  "startingArmor": 0,
+  "requiredCards": [
+    { "cardId": "spark-drum", "slot": 2 },
+    { "cardId": "rusty-blade", "slot": 1 }
+  ],
+  "optionalCards": [{ "cardId": "flame-spear" }, { "cardId": "wooden-shield" }],
+  "defenseStyle": "MODERATE_HP",
+  "weakness": "Burst is the MVP answer until disruption exists later.",
+  "rewardPool": ["spark-drum", "rusty-blade"],
+  "minDay": 4,
+  "maxDay": 7,
+  "engine": "Spark Drum accelerates adjacent ally cooldowns.",
+  "payoff": "Faster ally activations turn modest cards into a tempo plan.",
+  "fixed": false
+}

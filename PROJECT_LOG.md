@@ -434,3 +434,38 @@ Known issues:
 - Stack viewer / modifier trace remain dev-only and UI is not implemented.
 Next recommended task:
 - Phase 9: Monster Templates.
+
+---
+
+Date: 2026-05-01
+Phase: 9
+Task: Implemented monster templates and deterministic monster formation generation.
+Files changed:
+- data/cards/monster_cards.json
+- data/monsters/training_dummy.json
+- data/monsters/rust_bandit.json
+- data/monsters/burn_apprentice.json
+- data/monsters/shield_guard.json
+- data/monsters/drum_tactician.json
+- data/monsters/fire_echo_adept.json
+- data/monsters/gate_captain.json
+- src/index.ts
+- src/content/cards/monsterCards.ts
+- src/content/monsters/MonsterTemplate.ts
+- src/content/monsters/monsterTemplates.ts
+- src/content/monsters/MonsterGenerator.ts
+- tests/content/monsterGenerator.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/content/monsterGenerator.test.ts
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Monster content uses existing MVP command/status/trigger grammar only.
+- BurnTick damage remains summarized as `statusDamage.Burn` and is not attributed to the applying card until Burn source tracking is implemented later.
+- Size 2 monster cards occupy a starting slot and mark the adjacent slot locked for readable FormationSnapshot output; CombatEngine behavior is unchanged.
+Next recommended task:
+- Phase 10: Minimal UI Prototype.

@@ -1,0 +1,18 @@
+{
+  "id": "shield-guard",
+  "name": "Shield Guard",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 28,
+  "startingArmor": 4,
+  "requiredCards": [{ "cardId": "wooden-shield", "slot": 1 }],
+  "optionalCards": [{ "cardId": "wooden-shield" }, { "cardId": "rusty-blade" }, { "cardId": "training-staff" }],
+  "defenseStyle": "ARMOR",
+  "weakness": "Burn beats it because Burn ignores Armor.",
+  "rewardPool": ["wooden-shield", "flame-spear"],
+  "minDay": 3,
+  "maxDay": 6,
+  "engine": "Repeated Wooden Shield activations keep Armor coming.",
+  "payoff": "It outlasts weak direct damage and chips back slowly.",
+  "fixed": false
+}

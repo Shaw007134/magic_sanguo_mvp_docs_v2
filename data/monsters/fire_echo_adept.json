@@ -1,0 +1,21 @@
+{
+  "id": "fire-echo-adept",
+  "name": "Fire Echo Adept",
+  "difficulty": "ELITE",
+  "slotCount": 4,
+  "maxHp": 34,
+  "startingArmor": 2,
+  "requiredCards": [
+    { "cardId": "fire-echo-seal", "slot": 1 },
+    { "cardId": "flame-spear", "slot": 2 }
+  ],
+  "optionalCards": [{ "cardId": "wooden-shield" }, { "cardId": "rusty-blade" }],
+  "defenseStyle": "MODERATE_HP",
+  "weakness": "Burst or enough HP can survive the Burn plus echo window.",
+  "rewardPool": ["fire-echo-seal", "flame-spear", "spark-drum"],
+  "minDay": 5,
+  "maxDay": 8,
+  "engine": "Flame Spear applies Burn and Fire Echo Seal reacts to the application.",
+  "payoff": "Burn damage combines with trigger damage for a bigger fire turn.",
+  "fixed": false
+}

@@ -1,0 +1,18 @@
+{
+  "id": "training-dummy",
+  "name": "Training Dummy",
+  "difficulty": "TUTORIAL",
+  "slotCount": 4,
+  "maxHp": 18,
+  "startingArmor": 2,
+  "requiredCards": [{ "cardId": "training-staff", "slot": 2 }],
+  "optionalCards": [],
+  "defenseStyle": "HP",
+  "weakness": "Any starter attack can beat it.",
+  "rewardPool": ["rusty-blade", "wooden-shield"],
+  "minDay": 1,
+  "maxDay": 1,
+  "engine": "None; it repeats one simple slow attack.",
+  "payoff": "Low direct damage teaches cooldown pacing.",
+  "fixed": true
+}

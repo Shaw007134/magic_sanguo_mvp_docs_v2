@@ -15,7 +15,7 @@ docs/MVP_MASTER_DESIGN.md
 Current implementation status:
 
 ```text
-Phase 8 complete.
+Phase 9 complete.
 TypeScript + pnpm + Vitest project skeleton exists.
 Core data model interfaces added.
 CardDefinition and FormationSnapshot validation helpers added.
@@ -49,7 +49,14 @@ BurnTick still does not track sourceCombatant/sourceCard; source-owned damage mo
 ReplayTimeline is the clean player-facing replay data. Raw CombatLog remains dev/debug data and can include stack-limit/debug detail not shown in ReplayTimeline.
 ReplayTimeline currently uses CombatStarted, CardActivated, DamageDealt, ArmorGained, ArmorBlocked, StatusApplied, StatusTicked, CooldownModified, TriggerFired, CombatEnded, and StatusExpired events.
 CombatResultSummary is built from ReplayTimeline and aggregates damage by card, Burn/status damage, armor gained by card, armor blocked, activations by card, trigger count by card, top contributors, winner, and ticks elapsed.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, and CombatResultSummary tests pass.
+MonsterTemplate and MonsterGenerator are implemented. MonsterGenerator outputs FormationSnapshot plus deterministic CardInstance data for the existing CombatEngine interface.
+MVP monster templates exist for Training Dummy, Rust Bandit, Burn Apprentice, Shield Guard, Drum Tactician, Fire Echo Adept, and First Boss: Gate Captain.
+Monster card content exists for Training Staff, Rusty Blade, Flame Spear, Wooden Shield, Spark Drum, Fire Echo Seal, and Gate Captain Saber.
+Tutorial and boss monsters are fixed; normal/elite monsters use deterministic seeded optional card layout.
+Monster battles use the same FormationSnapshot combat path as player and future async PvP opponents; no separate monster combat system was added.
+Size 2 monster cards occupy a starting slot and mark the adjacent slot locked in FormationSnapshot output; CombatEngine behavior is unchanged.
+BurnTick damage remains summarized as statusDamage.Burn and is not attributed back to the applying card because Burn source tracking is still intentionally deferred.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, and MonsterGenerator tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, and UI are not implemented yet.
 ```
 
@@ -57,10 +64,10 @@ Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, 
 
 ## Next Task
 
-Phase 9:
+Phase 10:
 
 ```text
-Implement Monster Templates.
+Implement Minimal UI Prototype.
 ```
 
 ## Rules For Next Agent
@@ -81,4 +88,4 @@ Implement Monster Templates.
 
 ## Recommended First Prompt
 
-Use Phase 9 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use Phase 10 prompt from `docs/MVP_BUILD_SEQUENCE.md`.

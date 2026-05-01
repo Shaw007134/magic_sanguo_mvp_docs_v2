@@ -1,0 +1,18 @@
+{
+  "id": "burn-apprentice",
+  "name": "Burn Apprentice",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 22,
+  "startingArmor": 0,
+  "requiredCards": [{ "cardId": "flame-spear", "slot": 2 }],
+  "optionalCards": [{ "cardId": "training-staff" }, { "cardId": "wooden-shield" }, { "cardId": "rusty-blade" }],
+  "defenseStyle": "MODERATE_HP",
+  "weakness": "Burst it down before Burn ticks stack up.",
+  "rewardPool": ["flame-spear", "fire-echo-seal"],
+  "minDay": 2,
+  "maxDay": 5,
+  "engine": "Flame Spear applies Burn on a repeatable cooldown.",
+  "payoff": "Burn DOT pressures HP while ignoring Armor.",
+  "fixed": false
+}

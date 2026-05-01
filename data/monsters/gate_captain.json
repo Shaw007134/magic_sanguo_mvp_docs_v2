@@ -1,0 +1,22 @@
+{
+  "id": "gate-captain",
+  "name": "First Boss: Gate Captain",
+  "difficulty": "BOSS",
+  "slotCount": 4,
+  "maxHp": 46,
+  "startingArmor": 6,
+  "requiredCards": [
+    { "cardId": "gate-captain-saber", "slot": 1 },
+    { "cardId": "wooden-shield", "slot": 2 },
+    { "cardId": "spark-drum", "slot": 3 }
+  ],
+  "optionalCards": [],
+  "defenseStyle": "ARMOR_HP",
+  "weakness": "Balanced damage plus Burn can beat its Armor and HP.",
+  "rewardPool": ["gate-captain-saber", "spark-drum", "wooden-shield", "flame-spear"],
+  "minDay": 9,
+  "maxDay": 9,
+  "engine": "Mixed weapon, shield, and cooldown support form a stable boss loop.",
+  "payoff": "Steady direct damage lands while Armor and HP keep the captain alive.",
+  "fixed": true
+}
