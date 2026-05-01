@@ -15,7 +15,7 @@ docs/MVP_MASTER_DESIGN.md
 Current implementation status:
 
 ```text
-Phase 10 complete.
+Phase 11 complete.
 TypeScript + pnpm + Vitest project skeleton exists.
 Core data model interfaces added.
 CardDefinition and FormationSnapshot validation helpers added.
@@ -72,18 +72,25 @@ Size 2 cards render as one wide visual block in player and enemy formations, whi
 removeCardFromFormation no longer checks chest capacity, because ownedCards already contains placed cards and chestCards is derived from ownedCards minus placed cards.
 Phase 10 initial owned cards remain prototype-only to make manual UI testing possible.
 Phase 11 RunManager must start real runs with 0 owned cards, 10 gold, 4 formation slots, chest capacity 8, and must enforce chest capacity when adding cards through shop/event/reward.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, and UI state tests pass.
-Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, shop, event, reward, and run-loop systems are not implemented yet.
+Headless Phase 11 RunState and RunManager are implemented under src/run.
+New runs start with 0 owned cards, 10 gold, 4 formation slots, and chest capacity 8.
+RunManager owns chest/owned card state, formation placement, selling, deterministic shop/event/reward choices, battle execution, battle completion, and linear node advancement.
+Run node order is linear: starter shop, starter event, easy battle, reward, normal battle, reward, shop, elite battle, reward, boss, run result.
+Battle nodes use Phase 9 MonsterGenerator and existing CombatEngine; no separate monster battle system was added.
+DRAW is treated as DEFEAT for MVP run completion.
+Phase 10 UI is not yet connected to RunManager; that integration remains future work.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, and RunManager tests pass.
+Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, branching map, and RunManager/UI integration are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Phase 11:
+Phase 12:
 
 ```text
-Implement MVP Run Loop.
+Implement Save And Load.
 ```
 
 ## Manual Test Instructions
@@ -119,4 +126,4 @@ Implement MVP Run Loop.
 
 ## Recommended First Prompt
 
-Use Phase 11 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use Phase 12 prompt from `docs/MVP_BUILD_SEQUENCE.md`.

@@ -576,3 +576,35 @@ Known issues:
 - Phase 11 RunManager must replace local UI state later and enforce chest capacity when adding cards through shop/event/reward.
 Next recommended task:
 - Phase 11: MVP Run Loop.
+
+---
+
+Date: 2026-05-01
+Phase: 11
+Task: Implemented deterministic MVP Run Loop.
+Files changed:
+- src/index.ts
+- src/run/RunState.ts
+- src/run/RunManager.ts
+- src/run/deterministic.ts
+- src/run/economy.ts
+- src/run/nodes/ShopNode.ts
+- src/run/nodes/EventNode.ts
+- src/run/nodes/BattleNode.ts
+- src/run/rewards/RewardGenerator.ts
+- tests/run/runManager.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/run/runManager.test.ts
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Run loop is headless only; Phase 10 UI still uses local prototype state until future integration.
+- Linear node sequence is implemented without branching.
+- DRAW is treated as DEFEAT for MVP.
+- Save/load is not implemented yet.
+Next recommended task:
+- Phase 12: Save And Load.
