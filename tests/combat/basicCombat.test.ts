@@ -183,6 +183,107 @@ describe("CombatEngine", () => {
     expect(commandEvents).toEqual(["ARMOR_GAINED", "DAMAGE_DEALT"]);
   });
 
+  it("uses a fresh ResolutionStack for repeated simulations", () => {
+    const input = createInput({
+      enemyFormation: createFormation("enemy", "Enemy", 20, []),
+      resolutionStackLimits: {
+        maxCommandsPerTick: 10,
+        maxCommandsPerCombat: 1,
+        maxTriggerDepth: 50
+      },
+      maxCombatTicks: 3
+    });
+    const engine = new CombatEngine();
+
+    const firstResult = engine.simulate(input);
+    const secondResult = engine.simulate(input);
+
+    expect(firstResult.replayTimeline.events.some((event) => event.type === "STACK_LIMIT_REACHED")).toBe(false);
+    expect(secondResult).toEqual(firstResult);
+  });
+
+  it("resolves ModifyCooldown SELF target to the activating card", () => {
+    const selfCard: CardDefinition = {
+      ...createDamageCard("self-cooldown", 5, 0),
+      effects: [{ command: "ModifyCooldown", target: "SELF", amountTicks: -3 }]
+    };
+    const selfInstance: CardInstance = {
+      instanceId: "self-card",
+      definitionId: selfCard.id
+    };
+
+    const result = new CombatEngine().simulate({
+      playerFormation: createFormation("player", "Player", 20, ["self-card"]),
+      enemyFormation: createFormation("enemy", "Enemy", 20, []),
+      cardInstancesById: new Map([[selfInstance.instanceId, selfInstance]]),
+      cardDefinitionsById: new Map([[selfCard.id, selfCard]]),
+      initialCardRuntimeStates: [
+        {
+          instanceId: "self-card",
+          definitionId: selfCard.id,
+          ownerCombatantId: "player",
+          slotIndex: 1,
+          cooldownMaxTicks: 5,
+          cooldownRemainingTicks: 1,
+          cooldownRecoveryRate: 1,
+          disabled: false,
+          silenced: false,
+          frozen: false,
+          activationCount: 0
+        }
+      ],
+      maxCombatTicks: 1
+    });
+
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 1,
+      type: "COOLDOWN_MODIFIED",
+      sourceId: "self-card",
+      targetId: "self-card",
+      payload: {
+        command: "ModifyCooldown",
+        amountTicks: -3,
+        cooldownRemainingTicks: 0
+      }
+    });
+  });
+
+  it("resolves ModifyCooldown ADJACENT_ALLY target to same-side adjacent cards", () => {
+    const supportCard: CardDefinition = {
+      ...createDamageCard("support-cooldown", 1, 0),
+      effects: [{ command: "ModifyCooldown", target: "ADJACENT_ALLY", amountTicks: -2 }]
+    };
+    const allyCard = createDamageCard("ally", 10, 0);
+    const cardInstances: CardInstance[] = [
+      { instanceId: "left-ally", definitionId: allyCard.id },
+      { instanceId: "support", definitionId: supportCard.id },
+      { instanceId: "right-ally", definitionId: allyCard.id },
+      { instanceId: "far-ally", definitionId: allyCard.id }
+    ];
+
+    const result = new CombatEngine().simulate({
+      playerFormation: createFormation("player", "Player", 20, [
+        "left-ally",
+        "support",
+        "right-ally",
+        "far-ally"
+      ]),
+      enemyFormation: createFormation("enemy", "Enemy", 20, []),
+      cardInstancesById: new Map(cardInstances.map((card) => [card.instanceId, card])),
+      cardDefinitionsById: new Map([
+        [supportCard.id, supportCard],
+        [allyCard.id, allyCard]
+      ]),
+      maxCombatTicks: 1
+    });
+
+    const modifiedTargets = result.replayTimeline.events
+      .filter((event) => event.type === "COOLDOWN_MODIFIED")
+      .map((event) => event.targetId);
+
+    expect(modifiedTargets).toEqual(["left-ally", "right-ally"]);
+  });
+
   it("ends combat when HP reaches 0", () => {
     const finishingCard = createDamageCard("finisher", 1, 20);
     const finishingInstance: CardInstance = {

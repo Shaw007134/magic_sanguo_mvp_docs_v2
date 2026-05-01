@@ -181,3 +181,28 @@ Known issues:
 - Passive triggers, ModifierSystem, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
 Next recommended task:
 - Phase 5: Armor and Burn.
+
+---
+
+Date: 2026-05-01
+Phase: 4 patch
+Task: Patched ResolutionStack freshness and ModifyCooldown card effect targeting before Phase 5.
+Files changed:
+- src/combat/CombatEngine.ts
+- tests/combat/basicCombat.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Repeated CombatEngine simulations do not leak ResolutionStack command counters.
+- ModifyCooldown card effects resolve SELF target.
+- ModifyCooldown card effects resolve ADJACENT_ALLY target.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- GainArmorCommand updates runtime armor but DealDamageCommand does not consume armor until Phase 5.
+- ModifyCooldown card effect targeting supports only SELF and ADJACENT_ALLY card JSON targets plus legacy concrete targetCardInstanceId.
+- Burn ticking/status behavior is not implemented until Phase 5.
+Next recommended task:
+- Phase 5: Armor and Burn.

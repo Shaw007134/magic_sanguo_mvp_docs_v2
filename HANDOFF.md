@@ -25,7 +25,10 @@ Same-tick card ordering is deterministic: ready tick, side priority, slotIndex, 
 Card effects use `effect.command`, not `effect.type`.
 Supported command effects are DealDamage, GainArmor, ApplyBurn, and ModifyCooldown.
 Card effect JSON order is preserved by pushing commands onto the LIFO stack in reverse order.
+CombatEngine creates a fresh ResolutionStack for each simulate() call.
+ModifyCooldown card JSON supports `target: "SELF"` and `target: "ADJACENT_ALLY"`; ModifyCooldownCommand remains concrete and receives targetCardInstanceId.
 ApplyBurnCommand records application log/replay events only; Burn ticking/status behavior is not implemented.
+Known issue: GainArmorCommand updates runtime armor but DealDamageCommand does not consume armor until Phase 5.
 Smoke, model export, validation, basic combat, and ResolutionStack tests pass.
 Passive triggers, ModifierSystem, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented yet.
 ```

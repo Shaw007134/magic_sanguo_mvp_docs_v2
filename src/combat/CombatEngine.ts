@@ -8,7 +8,7 @@ import { DealDamageCommand } from "./commands/DealDamageCommand.js";
 import { GainArmorCommand } from "./commands/GainArmorCommand.js";
 import { ModifyCooldownCommand } from "./commands/ModifyCooldownCommand.js";
 import { isReady, recoverCooldown, resetCooldown } from "./CooldownSystem.js";
-import { ResolutionStack } from "./ResolutionStack.js";
+import { ResolutionStack, type ResolutionStackLimits } from "./ResolutionStack.js";
 import { getOpposingSide } from "./TargetingSystem.js";
 import type { CombatSide, MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
 
@@ -23,7 +23,7 @@ export interface CombatEngineInput {
   readonly maxCombatTicks?: number;
   readonly sidePriority?: readonly CombatSide[];
   readonly initialCardRuntimeStates?: readonly CardRuntimeState[];
-  readonly resolutionStack?: ResolutionStack;
+  readonly resolutionStackLimits?: ResolutionStackLimits;
 }
 
 interface ReadyCard {
@@ -38,7 +38,7 @@ export class CombatEngine {
     const sidePriority = input.sidePriority ?? (["PLAYER", "ENEMY"] as const);
     const replayEvents: ReplayEvent[] = [];
     const combatLog = new CombatLog();
-    const resolutionStack = input.resolutionStack ?? new ResolutionStack();
+    const resolutionStack = new ResolutionStack(input.resolutionStackLimits);
     const combatants: Record<CombatSide, RuntimeCombatant> = {
       PLAYER: createRuntimeCombatant("PLAYER", input.playerFormation, input),
       ENEMY: createRuntimeCombatant("ENEMY", input.enemyFormation, input)
@@ -72,7 +72,7 @@ export class CombatEngine {
           `${tick}: ${source.formation.displayName} activated ${cardDefinition.name} in slot ${readyCard.card.slotIndex}.`
         );
 
-        const commands = createCombatCommands(cardDefinition.effects ?? []);
+        const commands = createCombatCommands(cardDefinition.effects ?? [], readyCard.card, source);
         for (const command of [...commands].reverse()) {
           resolutionStack.push(command);
         }
@@ -179,44 +179,73 @@ function createRuntimeCombatant(
   };
 }
 
-function createCombatCommands(effects: readonly EffectDefinition[]): CombatCommand[] {
+function createCombatCommands(
+  effects: readonly EffectDefinition[],
+  sourceCard: MutableCardRuntimeState,
+  sourceCombatant: RuntimeCombatant
+): CombatCommand[] {
   const commands: CombatCommand[] = [];
 
   for (const effect of effects) {
-    const command = createCombatCommand(effect);
-    if (command) {
-      commands.push(command);
-    }
+    commands.push(...createCombatCommandsForEffect(effect, sourceCard, sourceCombatant));
   }
 
   return commands;
 }
 
-function createCombatCommand(effect: EffectDefinition): CombatCommand | undefined {
+function createCombatCommandsForEffect(
+  effect: EffectDefinition,
+  sourceCard: MutableCardRuntimeState,
+  sourceCombatant: RuntimeCombatant
+): CombatCommand[] {
   switch (effect["command"]) {
     case "DealDamage":
       if (typeof effect["amount"] !== "number") {
-        return undefined;
+        return [];
       }
-      return new DealDamageCommand(effect["amount"]);
+      return [new DealDamageCommand(effect["amount"])];
     case "GainArmor":
       if (typeof effect["amount"] !== "number") {
-        return undefined;
+        return [];
       }
-      return new GainArmorCommand(effect["amount"]);
+      return [new GainArmorCommand(effect["amount"])];
     case "ApplyBurn":
       if (typeof effect["amount"] !== "number" || typeof effect["durationTicks"] !== "number") {
-        return undefined;
+        return [];
       }
-      return new ApplyBurnCommand(effect["amount"], effect["durationTicks"]);
+      return [new ApplyBurnCommand(effect["amount"], effect["durationTicks"])];
     case "ModifyCooldown":
-      if (typeof effect["targetCardInstanceId"] !== "string" || typeof effect["amountTicks"] !== "number") {
-        return undefined;
+      if (typeof effect["amountTicks"] !== "number") {
+        return [];
       }
-      return new ModifyCooldownCommand(effect["targetCardInstanceId"], effect["amountTicks"]);
+      return createModifyCooldownCommands(effect, sourceCard, sourceCombatant);
     default:
-      return undefined;
+      return [];
   }
+}
+
+function createModifyCooldownCommands(
+  effect: EffectDefinition,
+  sourceCard: MutableCardRuntimeState,
+  sourceCombatant: RuntimeCombatant
+): CombatCommand[] {
+  if (typeof effect["targetCardInstanceId"] === "string") {
+    return [new ModifyCooldownCommand(effect["targetCardInstanceId"], effect["amountTicks"] as number)];
+  }
+
+  const target = effect["target"];
+  if (target === "SELF") {
+    return [new ModifyCooldownCommand(sourceCard.instanceId, effect["amountTicks"] as number)];
+  }
+
+  if (target === "ADJACENT_ALLY") {
+    return sourceCombatant.cards
+      .filter((card) => Math.abs(card.slotIndex - sourceCard.slotIndex) === 1)
+      .sort((left, right) => left.slotIndex - right.slotIndex || left.instanceId.localeCompare(right.instanceId))
+      .map((card) => new ModifyCooldownCommand(card.instanceId, effect["amountTicks"] as number));
+  }
+
+  return [];
 }
 
 function recoverCooldownsAndCollectReadyCards(
