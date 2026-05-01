@@ -23,7 +23,7 @@ export class ModifyCooldownCommand implements CombatCommand {
     targetCard.cooldownRemainingTicks = Math.max(0, targetCard.cooldownRemainingTicks + this.amountTicks);
     context.replayEvents.push({
       tick: context.tick,
-      type: "COOLDOWN_MODIFIED",
+      type: "CooldownModified",
       sourceId: context.sourceCard?.instanceId,
       targetId: targetCard.instanceId,
       payload: {

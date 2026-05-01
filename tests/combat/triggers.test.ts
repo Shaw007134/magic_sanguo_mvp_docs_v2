@@ -153,7 +153,7 @@ describe("TriggerSystem", () => {
 
     expect(result.replayTimeline.events).toContainEqual({
       tick: 1,
-      type: "TRIGGER_FIRED",
+      type: "TriggerFired",
       sourceId: "passive",
       targetId: "enemy",
       payload: {
@@ -184,7 +184,7 @@ describe("TriggerSystem", () => {
       ["passive", "active"],
       2
     );
-    const triggerEvents = result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED");
+    const triggerEvents = result.replayTimeline.events.filter((event) => event.type === "TriggerFired");
 
     expect(triggerEvents).toHaveLength(1);
     expect(triggerEvents[0]?.tick).toBe(1);
@@ -213,7 +213,7 @@ describe("TriggerSystem", () => {
       1
     );
 
-    expect(result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED")).toHaveLength(1);
+    expect(result.replayTimeline.events.filter((event) => event.type === "TriggerFired")).toHaveLength(1);
   });
 
   it("pushes trigger-created commands to ResolutionStack", () => {
@@ -238,7 +238,7 @@ describe("TriggerSystem", () => {
 
     expect(result.replayTimeline.events).toContainEqual({
       tick: 1,
-      type: "ARMOR_GAINED",
+      type: "ArmorGained",
       sourceId: "passive",
       targetId: "player",
       payload: {
@@ -270,10 +270,10 @@ describe("TriggerSystem", () => {
     );
 
     const triggerSourceIds = result.replayTimeline.events
-      .filter((event) => event.type === "TRIGGER_FIRED")
+      .filter((event) => event.type === "TriggerFired")
       .map((event) => event.sourceId);
     const triggerDamageAmounts = result.replayTimeline.events
-      .filter((event) => event.type === "DAMAGE_DEALT" && event.sourceId?.startsWith("passive"))
+      .filter((event) => event.type === "DamageDealt" && event.sourceId?.startsWith("passive"))
       .map((event) => event.payload?.amount);
 
     expect(triggerSourceIds).toEqual(["passive-b", "passive-a"]);
@@ -300,7 +300,7 @@ describe("TriggerSystem", () => {
       1
     );
 
-    expect(result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED")).toHaveLength(0);
+    expect(result.replayTimeline.events.filter((event) => event.type === "TriggerFired")).toHaveLength(0);
     expect(result.enemyFinalHp).toBe(40);
   });
 
@@ -342,7 +342,7 @@ describe("TriggerSystem", () => {
 
     expect(result.replayTimeline.events).toContainEqual({
       tick: 1,
-      type: "ARMOR_GAINED",
+      type: "ArmorGained",
       sourceId: "guard",
       targetId: "enemy",
       payload: {
@@ -381,14 +381,8 @@ describe("TriggerSystem", () => {
       }
     });
 
-    expect(result.replayTimeline.events).toContainEqual({
-      tick: 1,
-      type: "STACK_LIMIT_REACHED",
-      sourceId: "strike",
-      payload: {
-        error: "ResolutionStack exceeded max trigger depth 2."
-      }
-    });
+    expect(result.replayTimeline.events.some((event) => event.type === "StackLimitReached")).toBe(false);
+    expect(result.combatLog).toContain("1: ResolutionStack exceeded max trigger depth 2.");
   });
 
   it("OnCombatEnd trigger logs but does not mutate final HP or winner", () => {
@@ -409,10 +403,10 @@ describe("TriggerSystem", () => {
     expect(result.winner).toBe("DRAW");
     expect(result.playerFinalHp).toBe(40);
     expect(result.enemyFinalHp).toBe(40);
-    expect(result.replayTimeline.events.filter((event) => event.type === "DAMAGE_DEALT")).toHaveLength(0);
+    expect(result.replayTimeline.events.filter((event) => event.type === "DamageDealt")).toHaveLength(0);
     expect(result.replayTimeline.events).toContainEqual({
       tick: 1,
-      type: "TRIGGER_FIRED",
+      type: "TriggerFired",
       sourceId: "ender",
       targetId: "enemy",
       payload: {
@@ -446,6 +440,6 @@ describe("TriggerSystem", () => {
     });
 
     expect(result.enemyFinalHp).toBe(39);
-    expect(result.replayTimeline.events.filter((event) => event.type === "TRIGGER_FIRED")).toHaveLength(0);
+    expect(result.replayTimeline.events.filter((event) => event.type === "TriggerFired")).toHaveLength(0);
   });
 });

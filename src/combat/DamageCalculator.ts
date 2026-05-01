@@ -61,7 +61,7 @@ export function applyDamage(input: DamageCalculationInput): DamageCalculationRes
 
   input.replayEvents.push({
     tick: input.tick,
-    type: "DAMAGE_DEALT",
+    type: "DamageDealt",
     sourceId: input.sourceId,
     targetId: input.target.formation.id,
     payload: {
@@ -76,6 +76,21 @@ export function applyDamage(input: DamageCalculationInput): DamageCalculationRes
       targetArmor: input.target.armor
     }
   });
+  if (armorBlocked > 0) {
+    input.replayEvents.push({
+      tick: input.tick,
+      type: "ArmorBlocked",
+      sourceId: input.sourceId,
+      targetId: input.target.formation.id,
+      payload: {
+        command: input.command,
+        amount: armorBlocked,
+        damageType: input.damageType,
+        targetSide: input.target.side,
+        targetArmor: input.target.armor
+      }
+    });
+  }
   input.combatLog.add(
     `${input.tick}: ${input.sourceName} dealt ${hpDamage} ${input.damageType.toLowerCase()} damage to ${input.target.formation.displayName} (${armorBlocked} blocked by armor).`
   );

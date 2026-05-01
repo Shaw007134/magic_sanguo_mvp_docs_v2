@@ -15,7 +15,7 @@ docs/MVP_MASTER_DESIGN.md
 Current implementation status:
 
 ```text
-Phase 5 complete.
+Phase 8 complete.
 TypeScript + pnpm + Vitest project skeleton exists.
 Core data model interfaces added.
 CardDefinition and FormationSnapshot validation helpers added.
@@ -36,14 +36,20 @@ Passive TriggerSystem is implemented for OnCombatStart, OnCardActivated, OnDamag
 Passive triggers support internalCooldownTicks, maxTriggersPerTick (default 1), deterministic order, and trigger-created CombatCommand objects pushed to ResolutionStack.
 Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, cardIsAdjacent, ownerHpBelowPercent, and targetHpBelowPercent.
 Trigger-created commands always use the trigger owner as sourceCombatant and the opposing combatant as default targetCombatant.
-Recursive trigger-created commands carry triggerDepth through ResolutionStack; maxTriggerDepth stops recursive chains with STACK_LIMIT_REACHED replay/log output.
+Recursive trigger-created commands carry triggerDepth through ResolutionStack; maxTriggerDepth stops recursive chains with StackLimitReached internal/debug output and CombatLog detail.
 OnCombatEnd is log/replay only in MVP and must not push or resolve combat commands or mutate HP, armor, statuses, cooldowns, or winner.
 OnBurnTick currently supports status and HP conditions only; appliedByOwner/source ownership conditions do not fire until Burn source tracking is added.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, and TriggerSystem tests pass.
 Minimal ModifierSystem / MBF is implemented for damage, cooldown recovery rate, and status duration modifiers.
+Modifiers are owner-scoped by default: modifier.ownerId must match sourceCombatant.formation.id, and modifiers do not apply when sourceCombatant is absent.
 Modifier priority: lower priority number executes first; same priority sorts by modifier id.
 Supported modifier conditions are sourceHasTag, targetHasStatus, ownerHasStatus, damageType, cardInSlot, and always.
 Supported modifier operations are ADD_DAMAGE, MULTIPLY_DAMAGE, ADD_COOLDOWN_RECOVERY_RATE, MULTIPLY_COOLDOWN_RECOVERY_RATE, ADD_STATUS_DURATION, and MULTIPLY_STATUS_DURATION.
+Damage, cooldown recovery, and status duration modifier outputs are clamped to 0+ and rounded to integer MVP combat values for deterministic replay/readability.
+BurnTick still does not track sourceCombatant/sourceCard; source-owned damage modifiers therefore do not apply to BurnTick damage until Burn source tracking is added later.
+ReplayTimeline is the clean player-facing replay data. Raw CombatLog remains dev/debug data and can include stack-limit/debug detail not shown in ReplayTimeline.
+ReplayTimeline currently uses CombatStarted, CardActivated, DamageDealt, ArmorGained, ArmorBlocked, StatusApplied, StatusTicked, CooldownModified, TriggerFired, CombatEnded, and StatusExpired events.
+CombatResultSummary is built from ReplayTimeline and aggregates damage by card, Burn/status damage, armor gained by card, armor blocked, activations by card, trigger count by card, top contributors, winner, and ticks elapsed.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, and CombatResultSummary tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, and UI are not implemented yet.
 ```
 
@@ -51,10 +57,10 @@ Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, 
 
 ## Next Task
 
-Phase 8:
+Phase 9:
 
 ```text
-Implement ReplayTimeline and CombatResultSummary.
+Implement Monster Templates.
 ```
 
 ## Rules For Next Agent
@@ -70,8 +76,9 @@ Implement ReplayTimeline and CombatResultSummary.
 8. Update HANDOFF.md.
 9. Create a git commit after each completed phase so the phase is easy to review.
 10. Stop after task completion.
+11. New phase log entries in PROJECT_LOG.md append only.
 ```
 
 ## Recommended First Prompt
 
-Use Phase 8 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use Phase 9 prompt from `docs/MVP_BUILD_SEQUENCE.md`.

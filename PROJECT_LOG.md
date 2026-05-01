@@ -2,6 +2,8 @@
 
 Update this after every Codex task.
 
+Rule: new phase log entries append only. Do not insert new phase entries above existing entries; if the log order ever needs repair, fix it explicitly in a dedicated maintenance edit and keep future updates append-only.
+
 ## Template
 
 ```text
@@ -243,6 +245,68 @@ Next recommended task:
 ---
 
 Date: 2026-05-01
+Phase: 5 patch
+Task: Patched Burn timing to absolute ticks and merged additive stacking before Phase 6.
+Files changed:
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/status/Burn.ts
+- src/combat/status/StatusEffect.ts
+- src/combat/status/StatusEffectSystem.ts
+- tests/combat/armorBurn.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Burn applied at tick 1 first ticks at tick 61.
+- Burn duration 60 applied at tick 1 ticks once at tick 61 and then expires.
+- Burn does not lose duration during the same tick it is applied.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Burn stacking is merged additive: repeated Burn applications merge into one Burn status with additive amount and the later expiresAtTick.
+- Card activations resolve before status updates; status damage can end combat after same-tick card activations.
+- Passive triggers, ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
+Next recommended task:
+- Phase 6: Passive TriggerSystem.
+
+---
+
+Date: 2026-05-01
+Phase: 6
+Task: Implemented Passive TriggerSystem.
+Files changed:
+- src/index.ts
+- src/combat/CombatCommandFactory.ts
+- src/combat/CombatEngine.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/CombatCommand.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/combat/commands/ModifyCooldownCommand.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/combat/triggers/TriggerDefinition.ts
+- src/combat/triggers/TriggerRuntimeState.ts
+- src/combat/triggers/TriggeredCombatCommand.ts
+- src/combat/triggers/TriggerSystem.ts
+- tests/combat/triggers.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- tests/combat/triggers.test.ts
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Trigger definitions use `hook`, optional `conditions`, optional `internalCooldownTicks`, optional `maxTriggersPerTick`, and `effects`.
+- Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, cardIsAdjacent, ownerHpBelowPercent, and targetHpBelowPercent.
+- TriggerSystem does not implement random chance triggers, ModifierSystem, new statuses, absorb layers, or UI.
+Next recommended task:
+- Phase 7: Minimal ModifierSystem / MBF.
+
+---
+
+Date: 2026-05-01
 Phase: 6 patch
 Task: Patched Passive TriggerSystem targeting, trigger depth safety, OnCombatEnd command restriction, and OnBurnTick ownership semantics.
 Files changed:
@@ -308,61 +372,65 @@ Next recommended task:
 ---
 
 Date: 2026-05-01
-Phase: 6
-Task: Implemented Passive TriggerSystem.
+Phase: 7 patch
+Task: Patched Minimal ModifierSystem owner scoping, integer math, and BurnTick modifier behavior before Phase 8.
 Files changed:
-- src/index.ts
-- src/combat/CombatCommandFactory.ts
-- src/combat/CombatEngine.ts
-- src/combat/commands/ApplyBurnCommand.ts
-- src/combat/commands/CombatCommand.ts
-- src/combat/commands/DealDamageCommand.ts
-- src/combat/commands/ModifyCooldownCommand.ts
+- src/combat/modifiers/ModifierSystem.ts
 - src/combat/status/StatusEffectSystem.ts
-- src/combat/triggers/TriggerDefinition.ts
-- src/combat/triggers/TriggerRuntimeState.ts
-- src/combat/triggers/TriggeredCombatCommand.ts
-- src/combat/triggers/TriggerSystem.ts
-- tests/combat/triggers.test.ts
+- tests/combat/modifiers.test.ts
 - PROJECT_LOG.md
 - HANDOFF.md
 Tests added:
-- tests/combat/triggers.test.ts
+- Player-owned damage modifier does not modify enemy DealDamage.
+- Enemy-owned damage modifier does not modify player DealDamage.
+- Player-owned cooldown recovery modifier does not speed up enemy card cooldown.
+- Decimal damage modifier result is rounded deterministically.
+- Decimal cooldown recovery modifier result is rounded deterministically.
+- BurnTick does not receive source-owned damage modifiers while Burn source tracking is absent.
 How to run:
 - pnpm test
 - pnpm typecheck
 - pnpm build
 Known issues:
-- Trigger definitions use `hook`, optional `conditions`, optional `internalCooldownTicks`, optional `maxTriggersPerTick`, and `effects`.
-- Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, cardIsAdjacent, ownerHpBelowPercent, and targetHpBelowPercent.
-- TriggerSystem does not implement random chance triggers, ModifierSystem, new statuses, absorb layers, or UI.
+- Burn still does not track sourceCombatant/sourceCard, so source-owned damage modifiers and source ownership conditions do not apply to BurnTick.
 Next recommended task:
-- Phase 7: Minimal ModifierSystem / MBF.
+- Phase 8: ReplayTimeline and CombatResultSummary.
 
 ---
 
 Date: 2026-05-01
-Phase: 5 patch
-Task: Patched Burn timing to absolute ticks and merged additive stacking before Phase 6.
+Phase: 8
+Task: Implemented ReplayTimeline and CombatResultSummary.
 Files changed:
+- src/index.ts
+- src/model/result.ts
+- src/replay/ReplayEvent.ts
+- src/replay/ReplayTimeline.ts
+- src/combat/CombatEngine.ts
+- src/combat/CombatResultSummaryBuilder.ts
+- src/combat/DamageCalculator.ts
 - src/combat/commands/ApplyBurnCommand.ts
-- src/combat/status/Burn.ts
-- src/combat/status/StatusEffect.ts
+- src/combat/commands/GainArmorCommand.ts
+- src/combat/commands/ModifyCooldownCommand.ts
 - src/combat/status/StatusEffectSystem.ts
+- src/combat/triggers/TriggerSystem.ts
+- tests/replay/replayTimeline.test.ts
+- tests/combat/summary.test.ts
 - tests/combat/armorBurn.test.ts
+- tests/combat/basicCombat.test.ts
+- tests/combat/resolutionStack.test.ts
+- tests/combat/triggers.test.ts
 - PROJECT_LOG.md
 - HANDOFF.md
 Tests added:
-- Burn applied at tick 1 first ticks at tick 61.
-- Burn duration 60 applied at tick 1 ticks once at tick 61 and then expires.
-- Burn does not lose duration during the same tick it is applied.
+- tests/replay/replayTimeline.test.ts
+- tests/combat/summary.test.ts
 How to run:
 - pnpm test
 - pnpm typecheck
 - pnpm build
 Known issues:
-- Burn stacking is merged additive: repeated Burn applications merge into one Burn status with additive amount and the later expiresAtTick.
-- Card activations resolve before status updates; status damage can end combat after same-tick card activations.
-- Passive triggers, ModifierSystem, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, and UI are not implemented.
+- ReplayTimeline remains player-facing; stack limit/debug detail stays in CombatLog.
+- Stack viewer / modifier trace remain dev-only and UI is not implemented.
 Next recommended task:
-- Phase 6: Passive TriggerSystem.
+- Phase 9: Monster Templates.

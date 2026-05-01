@@ -6,6 +6,7 @@ export function getLogicTicksPerSecond(): number {
 
 export * from "./model/index.js";
 export * from "./combat/CombatEngine.js";
+export * from "./combat/CombatResultSummaryBuilder.js";
 export * from "./combat/DamageCalculator.js";
 export * from "./combat/ResolutionStack.js";
 export * from "./combat/commands/CombatCommand.js";
@@ -22,6 +23,8 @@ export * from "./combat/modifiers/ModifierSystem.js";
 export * from "./combat/triggers/TriggerDefinition.js";
 export * from "./combat/triggers/TriggerRuntimeState.js";
 export * from "./combat/triggers/TriggerSystem.js";
+export * from "./replay/ReplayEvent.js";
+export * from "./replay/ReplayTimeline.js";
 export * from "./validation/cardValidation.js";
 export * from "./validation/formationValidation.js";
 export * from "./validation/validationResult.js";

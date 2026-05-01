@@ -78,7 +78,7 @@ describe("Armor and Burn", () => {
 
     expect(result.replayTimeline.events).toContainEqual({
       tick: 1,
-      type: "ARMOR_GAINED",
+      type: "ArmorGained",
       sourceId: "player-card",
       targetId: "player",
       payload: {
@@ -93,7 +93,7 @@ describe("Armor and Burn", () => {
     const card = createCard("strike", [{ command: "DealDamage", amount: 8 }]);
 
     const result = simulateOnePlayerCard(card, createFormation("enemy", 20, [], 3), 1);
-    const damageEvent = result.replayTimeline.events.find((event) => event.type === "DAMAGE_DEALT");
+    const damageEvent = result.replayTimeline.events.find((event) => event.type === "DamageDealt");
 
     expect(damageEvent?.payload).toMatchObject({
       command: "DealDamage",
@@ -111,7 +111,7 @@ describe("Armor and Burn", () => {
 
     const result = simulateOnePlayerCard(card, createFormation("enemy", 20, [], 5), 61);
     const burnDamageEvents = result.replayTimeline.events.filter(
-      (event) => event.type === "DAMAGE_DEALT" && event.payload?.command === "BurnTick"
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
     );
 
     expect(burnDamageEvents).toHaveLength(1);
@@ -134,15 +134,15 @@ describe("Armor and Burn", () => {
 
     const result = simulateOnePlayerCard(card, createFormation("enemy", 20, []), 61);
     const burnDamageEvents = result.replayTimeline.events.filter(
-      (event) => event.type === "DAMAGE_DEALT" && event.payload?.command === "BurnTick"
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
     );
-    const expiryEvents = result.replayTimeline.events.filter((event) => event.type === "STATUS_EXPIRED");
+    const expiryEvents = result.replayTimeline.events.filter((event) => event.type === "StatusExpired");
 
     expect(burnDamageEvents).toHaveLength(1);
     expect(burnDamageEvents[0]?.tick).toBe(61);
     expect(expiryEvents).toContainEqual({
       tick: 61,
-      type: "STATUS_EXPIRED",
+      type: "StatusExpired",
       targetId: "enemy",
       payload: {
         kind: "BURN"
@@ -157,11 +157,12 @@ describe("Armor and Burn", () => {
 
     expect(result.replayTimeline.events).toContainEqual({
       tick: 1,
-      type: "BURN_APPLIED",
+      type: "StatusApplied",
       sourceId: "player-card",
       targetId: "enemy",
       payload: {
         command: "ApplyBurn",
+        status: "Burn",
         amount: 2,
         durationTicks: 60,
         totalAmount: 2,
@@ -169,7 +170,7 @@ describe("Armor and Burn", () => {
         expiresAtTick: 61
       }
     });
-    expect(result.replayTimeline.events.some((event) => event.type === "STATUS_EXPIRED")).toBe(false);
+    expect(result.replayTimeline.events.some((event) => event.type === "StatusExpired")).toBe(false);
   });
 
   it("Burn stacking works deterministically", () => {
@@ -184,7 +185,7 @@ describe("Armor and Burn", () => {
 
     const result = simulateOnePlayerCard(card, createFormation("enemy", 20, []), 61);
     const burnDamageEvents = result.replayTimeline.events.filter(
-      (event) => event.type === "DAMAGE_DEALT" && event.payload?.command === "BurnTick"
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
     );
 
     expect(burnDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([5]);

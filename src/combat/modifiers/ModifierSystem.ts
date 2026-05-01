@@ -22,6 +22,7 @@ export class ModifierSystem {
     return this.modifiers
       .filter((modifier) => modifier.hook === context.hook)
       .filter((modifier) => modifier.expiresAtTick === undefined || context.tick <= modifier.expiresAtTick)
+      .filter((modifier) => ownerMatchesSource(modifier.ownerId, context))
       .filter((modifier) => conditionPasses(modifier.condition, modifier.ownerId, context))
       .sort(compareModifiers);
   }
@@ -35,7 +36,8 @@ export class ModifierSystem {
         modifiedAmount *= modifier.operation.value;
       }
     }
-    return Math.max(0, modifiedAmount);
+    // MVP combat values stay integer so replay and summaries are deterministic and easy to read.
+    return Math.max(0, Math.round(modifiedAmount));
   }
 
   applyCooldownRecoveryModifiers(recoveryRate: number, context: Omit<ModifierContext, "hook">): number {
@@ -47,7 +49,8 @@ export class ModifierSystem {
         modifiedRate *= modifier.operation.value;
       }
     }
-    return Math.max(0, modifiedRate);
+    // MVP combat values stay integer so replay and summaries are deterministic and easy to read.
+    return Math.max(0, Math.round(modifiedRate));
   }
 
   applyStatusDurationModifiers(durationTicks: number, context: Omit<ModifierContext, "hook">): number {
@@ -59,12 +62,17 @@ export class ModifierSystem {
         modifiedDuration *= modifier.operation.value;
       }
     }
+    // MVP combat values stay integer so replay and summaries are deterministic and easy to read.
     return Math.max(0, Math.round(modifiedDuration));
   }
 }
 
 function compareModifiers(left: Modifier, right: Modifier): number {
   return left.priority - right.priority || left.id.localeCompare(right.id);
+}
+
+function ownerMatchesSource(ownerId: string, context: ModifierContext): boolean {
+  return context.sourceCombatant?.formation.id === ownerId;
 }
 
 function conditionPasses(condition: ModifierCondition, ownerId: string, context: ModifierContext): boolean {

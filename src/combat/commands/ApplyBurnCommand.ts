@@ -33,11 +33,12 @@ export class ApplyBurnCommand implements CombatCommand {
     }
     context.replayEvents.push({
       tick: context.tick,
-      type: "BURN_APPLIED",
+      type: "StatusApplied",
       sourceId: context.sourceCard?.instanceId,
       targetId: context.targetCombatant.formation.id,
       payload: {
         command: this.name,
+        status: "Burn",
         amount: this.amount,
         durationTicks,
         totalAmount: existingBurn?.amount ?? burn.amount,

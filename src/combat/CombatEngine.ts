@@ -1,6 +1,7 @@
 import type { CardDefinition, CardInstance, CardRuntimeState } from "../model/card.js";
 import type { FormationSnapshot } from "../model/formation.js";
 import type { CombatResult, CombatWinner, ReplayEvent } from "../model/result.js";
+import { buildCombatResultSummary } from "./CombatResultSummaryBuilder.js";
 import { CombatLog } from "./CombatLog.js";
 import { createCombatCommands } from "./CombatCommandFactory.js";
 import { isReady, recoverCooldown, resetCooldown } from "./CooldownSystem.js";
@@ -11,6 +12,7 @@ import { updateStatusEffects } from "./status/StatusEffectSystem.js";
 import { getOpposingSide } from "./TargetingSystem.js";
 import { TriggerSystem } from "./triggers/TriggerSystem.js";
 import type { CombatSide, MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
+import { buildReplayTimeline } from "../replay/ReplayTimeline.js";
 
 export const LOGIC_TICKS_PER_SECOND = 60;
 export const DEFAULT_MAX_COMBAT_TICKS = 3600;
@@ -39,6 +41,14 @@ export class CombatEngine {
     const sidePriority = input.sidePriority ?? (["PLAYER", "ENEMY"] as const);
     const replayEvents: ReplayEvent[] = [];
     const combatLog = new CombatLog();
+    replayEvents.push({
+      tick: 0,
+      type: "CombatStarted",
+      payload: {
+        playerFormationId: input.playerFormation.id,
+        enemyFormationId: input.enemyFormation.id
+      }
+    });
     const resolutionStack = new ResolutionStack(input.resolutionStackLimits);
     const combatants: Record<CombatSide, RuntimeCombatant> = {
       PLAYER: createRuntimeCombatant("PLAYER", input.playerFormation, input),
@@ -89,7 +99,7 @@ export class CombatEngine {
 
         replayEvents.push({
           tick,
-          type: "CARD_ACTIVATED",
+          type: "CardActivated",
           sourceId: readyCard.card.instanceId,
           payload: {
             side: readyCard.side,
@@ -132,7 +142,7 @@ export class CombatEngine {
           combatLog.add(`${tick}: ${stackResult.error}`);
           replayEvents.push({
             tick,
-            type: "STACK_LIMIT_REACHED",
+            type: "StackLimitReached",
             sourceId: readyCard.card.instanceId,
             payload: {
               error: stackResult.error
@@ -247,6 +257,15 @@ function finalizeCombatResult(
     replayEvents,
     resolutionStack,
     triggerSystem
+  });
+  replayEvents.push({
+    tick: ticksElapsed,
+    type: "CombatEnded",
+    payload: {
+      winner,
+      playerFinalHp: combatants.PLAYER.hp,
+      enemyFinalHp: combatants.ENEMY.hp
+    }
   });
   return createCombatResult(winner, ticksElapsed, combatants, combatLog, replayEvents);
 }
@@ -414,20 +433,22 @@ function createCombatResult(
   const playerFinalHp = combatants.PLAYER.hp;
   const enemyFinalHp = combatants.ENEMY.hp;
 
+  const replayTimeline = buildReplayTimeline(replayEvents);
+  const summary = buildCombatResultSummary({
+    replayTimeline,
+    winner,
+    ticksElapsed,
+    playerFinalHp,
+    enemyFinalHp
+  });
+
   return {
     winner,
     ticksElapsed,
     playerFinalHp,
     enemyFinalHp,
     combatLog: combatLog.toArray(),
-    replayTimeline: {
-      events: [...replayEvents]
-    },
-    summary: {
-      winner,
-      ticksElapsed,
-      playerFinalHp,
-      enemyFinalHp
-    }
+    replayTimeline,
+    summary
   };
 }

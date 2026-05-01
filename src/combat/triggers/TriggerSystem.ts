@@ -64,7 +64,7 @@ export class TriggerSystem {
       );
       this.#replayEvents.push({
         tick: event.tick,
-        type: "TRIGGER_FIRED",
+        type: "TriggerFired",
         sourceId: triggerState.sourceCard.instanceId,
         targetId: getOpposingCombatant(triggerState.ownerCombatant, this.#combatants).formation.id,
         payload: {

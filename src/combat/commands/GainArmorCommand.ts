@@ -10,7 +10,7 @@ export class GainArmorCommand implements CombatCommand {
     context.sourceCombatant.armor += armorGained;
     context.replayEvents.push({
       tick: context.tick,
-      type: "ARMOR_GAINED",
+      type: "ArmorGained",
       sourceId: context.sourceCard?.instanceId,
       targetId: context.sourceCombatant.formation.id,
       payload: {

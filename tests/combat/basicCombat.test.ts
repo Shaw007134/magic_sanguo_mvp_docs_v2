@@ -87,7 +87,7 @@ describe("CombatEngine", () => {
 
     expect(result.replayTimeline.events).toContainEqual({
       tick: 3,
-      type: "CARD_ACTIVATED",
+      type: "CardActivated",
       sourceId: "player-card",
       payload: {
         side: "PLAYER",
@@ -121,7 +121,7 @@ describe("CombatEngine", () => {
     });
 
     const activations = result.replayTimeline.events
-      .filter((event) => event.type === "CARD_ACTIVATED")
+      .filter((event) => event.type === "CardActivated")
       .map((event) => event.sourceId);
 
     expect(activations).toEqual(["player-b", "player-a", "enemy-a"]);
@@ -149,7 +149,7 @@ describe("CombatEngine", () => {
     });
 
     const activations = result.replayTimeline.events
-      .filter((event) => event.type === "CARD_ACTIVATED")
+      .filter((event) => event.type === "CardActivated")
       .map((event) => event.sourceId);
 
     expect(activations).toEqual(["player-card-a", "player-card-b"]);
@@ -177,10 +177,10 @@ describe("CombatEngine", () => {
     });
 
     const commandEvents = result.replayTimeline.events
-      .filter((event) => event.type === "ARMOR_GAINED" || event.type === "DAMAGE_DEALT")
+      .filter((event) => event.type === "ArmorGained" || event.type === "DamageDealt")
       .map((event) => event.type);
 
-    expect(commandEvents).toEqual(["ARMOR_GAINED", "DAMAGE_DEALT"]);
+    expect(commandEvents).toEqual(["ArmorGained", "DamageDealt"]);
   });
 
   it("uses a fresh ResolutionStack for repeated simulations", () => {
@@ -198,7 +198,7 @@ describe("CombatEngine", () => {
     const firstResult = engine.simulate(input);
     const secondResult = engine.simulate(input);
 
-    expect(firstResult.replayTimeline.events.some((event) => event.type === "STACK_LIMIT_REACHED")).toBe(false);
+    expect(firstResult.replayTimeline.events.some((event) => event.type === "StackLimitReached")).toBe(false);
     expect(secondResult).toEqual(firstResult);
   });
 
@@ -237,7 +237,7 @@ describe("CombatEngine", () => {
 
     expect(result.replayTimeline.events).toContainEqual({
       tick: 1,
-      type: "COOLDOWN_MODIFIED",
+      type: "CooldownModified",
       sourceId: "self-card",
       targetId: "self-card",
       payload: {
@@ -278,7 +278,7 @@ describe("CombatEngine", () => {
     });
 
     const modifiedTargets = result.replayTimeline.events
-      .filter((event) => event.type === "COOLDOWN_MODIFIED")
+      .filter((event) => event.type === "CooldownModified")
       .map((event) => event.targetId);
 
     expect(modifiedTargets).toEqual(["left-ally", "right-ally"]);

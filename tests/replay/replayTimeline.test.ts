@@ -1,0 +1,35 @@
+import { describe, expect, it } from "vitest";
+
+import { buildReplayTimeline } from "../../src/replay/ReplayTimeline.js";
+import type { ReplayEvent } from "../../src/model/result.js";
+
+describe("ReplayTimeline", () => {
+  it("orders events by tick while preserving same-tick order", () => {
+    const events: ReplayEvent[] = [
+      { tick: 3, type: "CombatEnded" },
+      { tick: 1, type: "DamageDealt", sourceId: "card-a" },
+      { tick: 1, type: "ArmorGained", sourceId: "card-b" },
+      { tick: 0, type: "CombatStarted" }
+    ];
+
+    expect(buildReplayTimeline(events).events.map((event) => event.type)).toEqual([
+      "CombatStarted",
+      "DamageDealt",
+      "ArmorGained",
+      "CombatEnded"
+    ]);
+  });
+
+  it("keeps stack limit debug detail out of the player-facing timeline", () => {
+    const events: ReplayEvent[] = [
+      { tick: 0, type: "CombatStarted" },
+      { tick: 1, type: "StackLimitReached", payload: { error: "debug-only stack detail" } },
+      { tick: 1, type: "CombatEnded" }
+    ];
+
+    expect(buildReplayTimeline(events).events.map((event) => event.type)).toEqual([
+      "CombatStarted",
+      "CombatEnded"
+    ]);
+  });
+});

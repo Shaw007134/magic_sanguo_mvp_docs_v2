@@ -143,7 +143,7 @@ describe("ResolutionStack", () => {
     expect(replayEvents).toEqual([
       {
         tick: 7,
-        type: "DAMAGE_DEALT",
+        type: "DamageDealt",
         sourceId: "source-card",
         targetId: "enemy",
         payload: {
@@ -160,7 +160,7 @@ describe("ResolutionStack", () => {
       },
       {
         tick: 7,
-        type: "ARMOR_GAINED",
+        type: "ArmorGained",
         sourceId: "source-card",
         targetId: "player",
         payload: {
