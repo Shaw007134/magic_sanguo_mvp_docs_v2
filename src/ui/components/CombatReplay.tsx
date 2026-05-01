@@ -1,4 +1,5 @@
 import type { ReplayTimeline } from "../../model/result.js";
+import { formatTicksAsSeconds } from "../../replay/time.js";
 
 export interface CombatReplayProps {
   readonly timeline: ReplayTimeline;
@@ -14,7 +15,7 @@ export function CombatReplay({ timeline }: CombatReplayProps) {
       <ol className="event-list">
         {timeline.events.map((event, index) => (
           <li key={`${event.tick}-${event.type}-${index}`}>
-            <span className="event-tick">T{event.tick}</span>
+            <span className="event-tick">{formatTicksAsSeconds(event.tick)}</span>
             <strong>{event.type}</strong>
             <span>{formatEventPayload(event.payload)}</span>
           </li>

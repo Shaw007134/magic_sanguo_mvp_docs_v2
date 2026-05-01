@@ -15,7 +15,7 @@ docs/MVP_MASTER_DESIGN.md
 Current implementation status:
 
 ```text
-Phase 11 complete.
+Phase 11 playable MVP run loop complete.
 TypeScript + pnpm + Vitest project skeleton exists.
 Core data model interfaces added.
 CardDefinition and FormationSnapshot validation helpers added.
@@ -70,17 +70,21 @@ Phase 10 cleanup switched the UI to a top-down encounter layout: Enemy Formation
 Visible cards use src/ui/presentation/cardDisplay.ts for type, tier, size, cooldown, and compact effect/trigger summaries.
 Size 2 cards render as one wide visual block in player and enemy formations, while the state/FormationSnapshot still keeps the adjacent locked slot.
 removeCardFromFormation no longer checks chest capacity, because ownedCards already contains placed cards and chestCards is derived from ownedCards minus placed cards.
-Phase 10 initial owned cards remain prototype-only to make manual UI testing possible.
-Phase 11 RunManager must start real runs with 0 owned cards, 10 gold, 4 formation slots, chest capacity 8, and must enforce chest capacity when adding cards through shop/event/reward.
-Headless Phase 11 RunState and RunManager are implemented under src/run.
-New runs start with 0 owned cards, 10 gold, 4 formation slots, and chest capacity 8.
-RunManager owns chest/owned card state, formation placement, selling, deterministic shop/event/reward choices, battle execution, battle completion, and linear node advancement.
-Run node order is linear: starter shop, starter event, easy battle, reward, normal battle, reward, shop, elite battle, reward, boss, run result.
+Phase 10 prototype-only owned cards have been replaced in the main UI by real RunManager state.
+Phase 11 RunState and RunManager are implemented under src/run and are intended to be serializable in Phase 12.
+New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
+RunManager owns chest/owned card state, formation placement, selling, deterministic shop/event/reward choices, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
+Run node order begins with starter shop, starter event, easy battle, reward, shop, normal battle, reward, shop, elite battle, reward, then repeats shop/event -> battle -> reward cycles until level 10.
+At level 10, the next generated battle node is the final boss; boss win sets VICTORY and boss loss/draw sets DEFEAT.
+Shop and event resolution grant 1 EXP once. Battle wins grant 1 encounter EXP + 3 win EXP. Level-up threshold is 10 EXP.
+Level-ups increase max HP by ceil(10%), heal current HP to max HP, and generate deterministic level-up reward choices.
+Reward choices now support deterministic card, gold, and upgrade choices; battle rewards include a monster rewardPool card when available.
+Card upgrades use a simple CardInstance tierOverride for runtime economy/reward purposes; combat card definitions remain unchanged.
 Battle nodes use Phase 9 MonsterGenerator and existing CombatEngine; no separate monster battle system was added.
 DRAW is treated as DEFEAT for MVP run completion.
-Phase 10 UI is not yet connected to RunManager; that integration remains future work.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, and RunManager tests pass.
-Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, branching map, and RunManager/UI integration are not implemented yet.
+Player-facing replay UI displays seconds via formatTicksAsSeconds; raw tick-style details remain allowed in dev logs.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, and expanded RunManager tests pass.
+Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, branching map, async PvP, and complex content expansion are not implemented yet.
 ```
 
 
@@ -93,19 +97,21 @@ Phase 12:
 Implement Save And Load.
 ```
 
+Reminder: save/load is Phase 12 and should persist/restore the new RunState rather than introducing a separate inventory or map model.
+
 ## Manual Test Instructions
 
 ```text
 1. Run pnpm dev.
 2. Open the shown localhost URL.
-3. Select a chest card, then click a formation slot to place it.
-4. Click a placed formation card, then click another open slot to move it.
-5. Remove a placed card back to chest, then sell it from chest and confirm gold increases.
-6. Start battle and confirm Replay and Summary populate.
-7. Toggle Dev CombatLog and confirm raw combat log is hidden until enabled.
-8. Confirm enemy size-2 card footprints render locked adjacent slots as occupied.
-9. Confirm size-2 cards appear as one wide card block in both enemy and player formations.
-10. Confirm visible cards show type, tier, size, cooldown where present, and a compact effect or trigger summary.
+3. Confirm the run starts at level 1, 0 EXP, 10 gold, 40/40 HP, 0 owned cards, and a starter shop.
+4. Pick a starter shop card, then pick a starter event option, and confirm EXP increases by 1 per resolved node.
+5. Select a chest card, click a formation slot, and confirm the card moves out of chest view.
+6. Start battle, confirm Replay and Summary populate, then click Continue to reach reward or defeat.
+7. Choose reward and continue through repeated shop/event, battle, and reward nodes.
+8. Confirm level-up choices appear at 10 EXP, max HP increases by 10% rounded up, and current HP heals to max.
+9. Continue until level 10, then confirm the next battle is the final boss and boss completion shows Victory or Defeat.
+10. Toggle Dev CombatLog and confirm raw combat log is hidden until enabled; replay event times should show seconds, not T/tick labels.
 ```
 
 ## Rules For Next Agent

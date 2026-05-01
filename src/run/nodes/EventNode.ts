@@ -16,7 +16,7 @@ export function createEventChoices(input: {
     ? CARD_EVENT_CHOICES
     : shuffleDeterministic(CARD_EVENT_CHOICES, `${input.seed}:event:${input.nodeIndex}`);
 
-  return [
+  const choices: EventChoice[] = [
     {
       id: `event-${input.nodeIndex}-card-0`,
       type: "EVENT_CARD",
@@ -34,6 +34,13 @@ export function createEventChoices(input: {
       type: "EVENT_GOLD",
       label: "Take 3 gold",
       gold: 3
+    },
+    {
+      id: `event-${input.nodeIndex}-heal`,
+      type: "EVENT_HEAL",
+      label: "Rest for 8 HP",
+      heal: 8
     }
   ];
+  return choices.slice(0, 3);
 }

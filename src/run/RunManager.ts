@@ -1,15 +1,16 @@
 import { CombatEngine } from "../combat/CombatEngine.js";
 import { getMonsterCardDefinitionsById } from "../content/cards/monsterCards.js";
-import type { CardDefinition, CardInstance } from "../model/card.js";
+import type { CardDefinition, CardInstance, CardTier } from "../model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
 import { validateFormationSnapshot } from "../validation/formationValidation.js";
 import { RUN_SELL_PRICES } from "./economy.js";
 import { createBattleEnemy } from "./nodes/BattleNode.js";
 import { createEventChoices } from "./nodes/EventNode.js";
 import { createShopChoices } from "./nodes/ShopNode.js";
-import { createRewardChoices } from "./rewards/RewardGenerator.js";
+import { createLevelUpRewardChoices, createRewardChoices } from "./rewards/RewardGenerator.js";
 import type {
   EventChoice,
+  LevelUpRewardChoice,
   RewardChoice,
   RunActionResult,
   RunChoice,
@@ -20,10 +21,19 @@ import type {
 } from "./RunState.js";
 
 const FORMATION_SLOT_COUNT = 4;
-const PLAYER_MAX_HP = 42;
+const PLAYER_STARTING_MAX_HP = 40;
 const CLASS_ID_PLACEHOLDER = "class-placeholder";
+const EXP_TO_NEXT_LEVEL = 10;
+const MAX_LEVEL = 10;
 
-const RUN_NODES: readonly RunNode[] = [
+const CARD_TIER_UPGRADES = {
+  BRONZE: "SILVER",
+  SILVER: "GOLD",
+  GOLD: "JADE",
+  JADE: "CELESTIAL"
+} as const satisfies Partial<Record<CardTier, CardTier>>;
+
+const STARTER_NODES: readonly RunNode[] = [
   { id: "starter-shop-1", type: "SHOP", day: 1, label: "Starter Shop" },
   { id: "starter-event-1", type: "EVENT", day: 1, label: "Starter Event" },
   {
@@ -35,6 +45,7 @@ const RUN_NODES: readonly RunNode[] = [
     monsterTemplateId: "training-dummy"
   },
   { id: "reward-1", type: "REWARD", day: 2, label: "Reward" },
+  { id: "shop-1", type: "SHOP", day: 3, label: "Shop" },
   {
     id: "normal-monster-1",
     type: "BATTLE",
@@ -44,7 +55,7 @@ const RUN_NODES: readonly RunNode[] = [
     monsterTemplateId: "rust-bandit"
   },
   { id: "reward-2", type: "REWARD", day: 3, label: "Reward" },
-  { id: "mid-shop-1", type: "SHOP", day: 4, label: "Shop" },
+  { id: "shop-2", type: "SHOP", day: 4, label: "Shop" },
   {
     id: "elite-monster-1",
     type: "BATTLE",
@@ -53,17 +64,10 @@ const RUN_NODES: readonly RunNode[] = [
     battleDifficulty: "ELITE",
     monsterTemplateId: "fire-echo-adept"
   },
-  { id: "reward-3", type: "REWARD", day: 5, label: "Reward" },
-  {
-    id: "boss-1",
-    type: "BATTLE",
-    day: 9,
-    label: "Boss",
-    battleDifficulty: "BOSS",
-    monsterTemplateId: "gate-captain"
-  },
-  { id: "run-result", type: "RUN_RESULT", day: 9, label: "Run Result" }
+  { id: "reward-3", type: "REWARD", day: 5, label: "Reward" }
 ];
+
+const RUN_RESULT_NODE: RunNode = { id: "run-result", type: "RUN_RESULT", day: 10, label: "Run Result" };
 
 export class RunManager {
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
@@ -79,20 +83,29 @@ export class RunManager {
     seed: string,
     cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
   ): RunManager {
-    const node = RUN_NODES[0];
+    const node = getNodeForIndex(0, 1, "IN_PROGRESS");
     const state: RunState = withNodeDerivedState(
       {
         runId: `run:${seed}`,
         seed,
         status: "IN_PROGRESS",
         currentNodeIndex: 0,
+        level: 1,
+        exp: 0,
+        expToNextLevel: EXP_TO_NEXT_LEVEL,
         gold: 10,
+        currentHp: PLAYER_STARTING_MAX_HP,
+        maxHp: PLAYER_STARTING_MAX_HP,
         ownedCards: [],
         formationSlots: createEmptyFormationSlots(FORMATION_SLOT_COUNT),
         formationSlotCount: FORMATION_SLOT_COUNT,
         chestCapacity: FORMATION_SLOT_COUNT * 2,
         currentNode: node,
         currentChoices: [],
+        pendingRewardChoices: [],
+        pendingLevelUpChoices: [],
+        completedEncounterCount: 0,
+        defeatedBattleCount: 0,
         classId: CLASS_ID_PLACEHOLDER,
         defeatedMonsters: [],
         completedNodes: []
@@ -183,16 +196,19 @@ export class RunManager {
     if (!card || !definition) {
       return this.fail("Card is not owned.");
     }
+    const tier = card.tierOverride ?? definition.tier;
     this.state = {
       ...this.state,
-      gold: this.state.gold + RUN_SELL_PRICES[definition.tier],
+      gold: this.state.gold + RUN_SELL_PRICES[tier],
       ownedCards: this.state.ownedCards.filter((candidate) => candidate.instanceId !== cardInstanceId)
     };
     return this.ok();
   }
 
   chooseShopOption(optionId: string): RunActionResult {
-    const choice = this.state.currentChoices.find((candidate): candidate is ShopChoice => candidate.id === optionId && candidate.type === "SHOP_CARD");
+    const choice = this.state.currentChoices.find(
+      (candidate): candidate is ShopChoice => candidate.id === optionId && candidate.type === "SHOP_CARD"
+    );
     if (!choice) {
       return this.fail("Shop option is not available.");
     }
@@ -210,11 +226,14 @@ export class RunManager {
       ...this.state,
       gold: this.state.gold - choice.cost
     };
-    return this.ok();
+    this.gainExp(1, "SHOP");
+    return this.continueAfterEncounter(true);
   }
 
   chooseEventOption(optionId: string): RunActionResult {
-    const choice = this.state.currentChoices.find((candidate): candidate is EventChoice => candidate.id === optionId && candidate.type.startsWith("EVENT"));
+    const choice = this.state.currentChoices.find(
+      (candidate): candidate is EventChoice => candidate.id === optionId && candidate.type.startsWith("EVENT")
+    );
     if (!choice) {
       return this.fail("Event option is not available.");
     }
@@ -223,20 +242,68 @@ export class RunManager {
         ...this.state,
         gold: this.state.gold + (choice.gold ?? 0)
       };
-      return this.ok();
+    } else if (choice.type === "EVENT_HEAL") {
+      this.state = {
+        ...this.state,
+        currentHp: Math.min(this.state.maxHp, this.state.currentHp + (choice.heal ?? 0))
+      };
+    } else {
+      if (!choice.cardDefinitionId) {
+        return this.fail("Event card option is missing card definition.");
+      }
+      const addResult = this.addCardToChest(choice.cardDefinitionId);
+      if (!addResult.ok) {
+        return addResult;
+      }
     }
-    if (!choice.cardDefinitionId) {
-      return this.fail("Event card option is missing card definition.");
-    }
-    return this.addCardToChest(choice.cardDefinitionId);
+    this.gainExp(1, "EVENT");
+    return this.continueAfterEncounter(true);
   }
 
   chooseRewardOption(optionId: string): RunActionResult {
-    const choice = this.state.currentChoices.find((candidate): candidate is RewardChoice => candidate.id === optionId && candidate.type === "REWARD_CARD");
+    const choice = this.state.currentChoices.find(
+      (candidate): candidate is RewardChoice => candidate.id === optionId && candidate.type.startsWith("REWARD")
+    );
     if (!choice) {
       return this.fail("Reward option is not available.");
     }
-    return this.addCardToChest(choice.cardDefinitionId);
+    const applyResult = this.applyRewardChoice(choice);
+    if (!applyResult.ok) {
+      return applyResult;
+    }
+    return this.advanceToNextNode();
+  }
+
+  chooseLevelUpReward(optionId: string): RunActionResult {
+    const choice = this.state.pendingLevelUpChoices.find((candidate) => candidate.id === optionId);
+    if (!choice) {
+      return this.fail("Level-up reward option is not available.");
+    }
+    const applyResult = this.applyLevelUpChoice(choice);
+    if (!applyResult.ok) {
+      return applyResult;
+    }
+    this.state = {
+      ...this.state,
+      pendingLevelUpChoices: [],
+      currentChoices: []
+    };
+    this.processLevelUps();
+    if (this.state.pendingLevelUpChoices.length > 0) {
+      return this.ok();
+    }
+    const interruptedNodeIndex = this.state.interruptedNodeIndex;
+    const interruptedNode = this.state.interruptedNode;
+    const advanceAfterLevelUp = this.state.advanceAfterLevelUp;
+    this.state = {
+      ...this.state,
+      interruptedNodeIndex: undefined,
+      interruptedNode: undefined,
+      advanceAfterLevelUp: undefined,
+      currentNodeIndex: interruptedNodeIndex ?? this.state.currentNodeIndex,
+      currentNode: interruptedNode ?? this.state.currentNode
+    };
+    return advanceAfterLevelUp ? this.advanceToNextNode() : this.ok();
   }
 
   startBattle(): RunActionResult {
@@ -267,52 +334,121 @@ export class RunManager {
       ...this.state,
       currentEnemySnapshot: enemy.formation,
       currentEnemyCardInstances: enemy.cardInstances,
+      pendingCombatResult: result,
       pendingBattleResult: result
     };
     return this.ok();
   }
 
   completeBattle(): RunActionResult {
-    if (!this.state.pendingBattleResult || this.state.currentNode.type !== "BATTLE") {
+    const pendingResult = this.state.pendingCombatResult ?? this.state.pendingBattleResult;
+    if (!pendingResult || this.state.currentNode.type !== "BATTLE") {
       return this.fail("No pending battle result.");
     }
-    const result = this.state.pendingBattleResult;
-    if (result.winner !== "PLAYER") {
+    if (pendingResult.winner !== "PLAYER") {
       this.state = {
         ...this.state,
-        status: "DEFEAT"
+        status: "DEFEAT",
+        currentHp: 0,
+        pendingCombatResult: pendingResult,
+        pendingBattleResult: pendingResult
       };
       return this.ok();
     }
+
     const defeatedMonsterId = this.state.currentEnemySnapshot?.aiProfile?.id ?? this.state.currentNode.monsterTemplateId;
+    const nextState = {
+      ...this.state,
+      currentHp: Math.max(1, pendingResult.playerFinalHp),
+      defeatedBattleCount: this.state.defeatedBattleCount + 1,
+      completedEncounterCount: this.state.completedEncounterCount + 1,
+      defeatedMonsters: appendDefined(this.state.defeatedMonsters, defeatedMonsterId),
+      completedNodes: this.state.completedNodes.includes(this.state.currentNode.id)
+        ? this.state.completedNodes
+        : [...this.state.completedNodes, this.state.currentNode.id],
+      pendingCombatResult: undefined,
+      pendingBattleResult: undefined
+    };
+    this.state = nextState;
+
     if (this.state.currentNode.battleDifficulty === "BOSS") {
       this.state = {
         ...this.state,
         status: "VICTORY",
-        defeatedMonsters: appendDefined(this.state.defeatedMonsters, defeatedMonsterId),
-        completedNodes: [...this.state.completedNodes, this.state.currentNode.id]
+        currentNode: RUN_RESULT_NODE,
+        currentNodeIndex: this.state.currentNodeIndex + 1,
+        currentChoices: []
       };
+      return this.ok();
+    }
+
+    this.gainExp(4, "BATTLE_WIN");
+    return this.continueAfterEncounter(false);
+  }
+
+  gainExp(amount: number, _reason: string): RunActionResult {
+    if (this.state.status !== "IN_PROGRESS" || this.state.level >= MAX_LEVEL) {
       return this.ok();
     }
     this.state = {
       ...this.state,
-      defeatedMonsters: appendDefined(this.state.defeatedMonsters, defeatedMonsterId),
-      completedNodes: [...this.state.completedNodes, this.state.currentNode.id],
-      pendingBattleResult: undefined
+      exp: this.state.exp + amount
     };
-    return this.advanceToNextNode();
+    this.processLevelUps();
+    return this.ok();
+  }
+
+  processLevelUps(): RunActionResult {
+    if (
+      this.state.status !== "IN_PROGRESS" ||
+      this.state.level >= MAX_LEVEL ||
+      this.state.exp < this.state.expToNextLevel ||
+      this.state.pendingLevelUpChoices.length > 0
+    ) {
+      return this.ok();
+    }
+
+    const nextLevel = Math.min(MAX_LEVEL, this.state.level + 1);
+    const nextMaxHp = Math.ceil(this.state.maxHp * 1.1);
+    const levelUpNode: RunNode = {
+      id: `level-up-${nextLevel}`,
+      type: "LEVEL_UP_REWARD",
+      day: this.state.currentNode.day,
+      label: `Level ${nextLevel} Reward`
+    };
+    const choices = createLevelUpRewardChoices({
+      seed: this.state.seed,
+      level: nextLevel,
+      ownedCards: this.state.ownedCards,
+      cardDefinitionsById: this.cardDefinitionsById
+    });
+    this.state = {
+      ...this.state,
+      level: nextLevel,
+      exp: nextLevel >= MAX_LEVEL ? 0 : this.state.exp - this.state.expToNextLevel,
+      maxHp: nextMaxHp,
+      currentHp: nextMaxHp,
+      currentNode: levelUpNode,
+      currentChoices: choices,
+      pendingLevelUpChoices: choices,
+      interruptedNodeIndex: this.state.interruptedNodeIndex ?? this.state.currentNodeIndex,
+      interruptedNode: this.state.interruptedNode ?? this.state.currentNode
+    };
+    return this.ok();
   }
 
   advanceToNextNode(): RunActionResult {
-    const nextIndex = Math.min(this.state.currentNodeIndex + 1, RUN_NODES.length - 1);
+    const nextIndex = this.state.currentNode.type === "RUN_RESULT" ? this.state.currentNodeIndex : this.state.currentNodeIndex + 1;
+    const nextNode = getNodeForIndex(nextIndex, this.state.level, this.state.status);
     this.state = withNodeDerivedState(
       {
         ...this.state,
         currentNodeIndex: nextIndex,
-        currentNode: RUN_NODES[nextIndex],
+        currentNode: nextNode,
         currentChoices: [],
         currentEnemySnapshot: undefined,
         currentEnemyCardInstances: undefined,
+        pendingCombatResult: undefined,
         pendingBattleResult: undefined,
         completedNodes: this.state.completedNodes.includes(this.state.currentNode.id)
           ? this.state.completedNodes
@@ -320,6 +456,83 @@ export class RunManager {
       },
       this.cardDefinitionsById
     );
+    return this.ok();
+  }
+
+  private continueAfterEncounter(incrementEncounterCount: boolean): RunActionResult {
+    this.state = {
+      ...this.state,
+      completedEncounterCount: this.state.completedEncounterCount + (incrementEncounterCount ? 1 : 0)
+    };
+    if (this.state.pendingLevelUpChoices.length > 0) {
+      this.state = {
+        ...this.state,
+        advanceAfterLevelUp: true
+      };
+      return this.ok();
+    }
+    return this.advanceToNextNode();
+  }
+
+  private applyRewardChoice(choice: RewardChoice): RunActionResult {
+    if (choice.type === "REWARD_GOLD") {
+      this.state = {
+        ...this.state,
+        gold: this.state.gold + (choice.gold ?? 0)
+      };
+      return this.ok();
+    }
+    if (choice.type === "REWARD_UPGRADE") {
+      return this.upgradeOwnedCard(choice.cardInstanceId, choice.toTier);
+    }
+    if (!choice.cardDefinitionId) {
+      return this.fail("Reward card option is missing card definition.");
+    }
+    return this.addCardToChest(choice.cardDefinitionId);
+  }
+
+  private applyLevelUpChoice(choice: LevelUpRewardChoice): RunActionResult {
+    if (choice.type === "LEVEL_GOLD") {
+      this.state = {
+        ...this.state,
+        gold: this.state.gold + (choice.gold ?? 0)
+      };
+      return this.ok();
+    }
+    if (choice.type === "LEVEL_UPGRADE") {
+      return this.upgradeOwnedCard(choice.cardInstanceId, choice.toTier);
+    }
+    if (!choice.cardDefinitionId) {
+      return this.fail("Level-up card option is missing card definition.");
+    }
+    return this.addCardToChest(choice.cardDefinitionId);
+  }
+
+  private upgradeOwnedCard(cardInstanceId: string | undefined, requestedTier: CardTier | undefined): RunActionResult {
+    if (!cardInstanceId) {
+      return this.fail("Upgrade reward is missing card instance.");
+    }
+    let upgraded = false;
+    const ownedCards = this.state.ownedCards.map((card) => {
+      if (card.instanceId !== cardInstanceId) {
+        return card;
+      }
+      const definition = this.cardDefinitionsById.get(card.definitionId);
+      const fromTier = card.tierOverride ?? definition?.tier;
+      const toTier = requestedTier ?? (fromTier ? CARD_TIER_UPGRADES[fromTier as keyof typeof CARD_TIER_UPGRADES] : undefined);
+      if (!toTier) {
+        return card;
+      }
+      upgraded = true;
+      return { ...card, tierOverride: toTier };
+    });
+    if (!upgraded) {
+      return this.fail("No upgrade is available for that card.");
+    }
+    this.state = {
+      ...this.state,
+      ownedCards
+    };
     return this.ok();
   }
 
@@ -340,11 +553,57 @@ export function createNewRun(
 }
 
 export function getRunNodes(): readonly RunNode[] {
-  return RUN_NODES;
+  return STARTER_NODES;
+}
+
+function getNodeForIndex(index: number, level: number, status: RunState["status"]): RunNode {
+  if (status !== "IN_PROGRESS") {
+    return RUN_RESULT_NODE;
+  }
+  if (level >= MAX_LEVEL) {
+    return {
+      id: `final-boss-${index}`,
+      type: "BATTLE",
+      day: 10,
+      label: "Final Boss",
+      battleDifficulty: "BOSS",
+      monsterTemplateId: "gate-captain"
+    };
+  }
+  const starterNode = STARTER_NODES[index];
+  if (starterNode) {
+    return starterNode;
+  }
+  const cycleIndex = index - STARTER_NODES.length;
+  const day = 6 + Math.floor(cycleIndex / 3);
+  const cycleSlot = cycleIndex % 3;
+  if (cycleSlot === 0) {
+    return {
+      id: `cycle-shop-${cycleIndex}`,
+      type: cycleIndex % 2 === 0 ? "SHOP" : "EVENT",
+      day,
+      label: cycleIndex % 2 === 0 ? "Shop" : "Event"
+    };
+  }
+  if (cycleSlot === 1) {
+    const elite = Math.floor(cycleIndex / 3) % 3 === 2;
+    return {
+      id: `${elite ? "cycle-elite" : "cycle-normal"}-${cycleIndex}`,
+      type: "BATTLE",
+      day,
+      label: elite ? "Elite Battle" : "Battle",
+      battleDifficulty: elite ? "ELITE" : "NORMAL",
+      monsterTemplateId: elite ? "fire-echo-adept" : "rust-bandit"
+    };
+  }
+  return { id: `cycle-reward-${cycleIndex}`, type: "REWARD", day, label: "Reward" };
 }
 
 function withNodeDerivedState(
-  state: Omit<RunState, "currentChoices"> & { readonly currentChoices: readonly RunChoice[] },
+  state: Omit<RunState, "currentChoices" | "pendingRewardChoices"> & {
+    readonly currentChoices: readonly RunChoice[];
+    readonly pendingRewardChoices: readonly RewardChoice[];
+  },
   cardDefinitionsById: ReadonlyMap<string, CardDefinition>
 ): RunState {
   const node = state.currentNode;
@@ -367,12 +626,14 @@ function withNodeDerivedState(
               seed: state.seed,
               nodeIndex: state.currentNodeIndex,
               defeatedMonsterId: state.defeatedMonsters[state.defeatedMonsters.length - 1],
-              cardDefinitionsById
+              cardDefinitionsById,
+              ownedCards: state.ownedCards
             })
           : [];
   return {
     ...state,
-    currentChoices
+    currentChoices,
+    pendingRewardChoices: node.type === "REWARD" ? (currentChoices as readonly RewardChoice[]) : []
   };
 }
 
@@ -419,8 +680,8 @@ function createPlayerFormationSnapshot(state: RunState): FormationSnapshot {
     id: "player",
     kind: "PLAYER",
     displayName: "Player",
-    level: 1,
-    maxHp: PLAYER_MAX_HP,
+    level: state.level,
+    maxHp: state.currentHp,
     startingArmor: 0,
     slots: state.formationSlots.map(toFormationSlot),
     skills: [],

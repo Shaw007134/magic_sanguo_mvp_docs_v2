@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { createNewRun, getRunNodes, RunManager } from "../../src/run/RunManager.js";
 import type { CombatResult } from "../../src/model/result.js";
+import { createNewRun, getRunNodes, RunManager } from "../../src/run/RunManager.js";
 
 function chooseFirstShop(manager: RunManager) {
   const choice = manager.state.currentChoices.find((candidate) => candidate.type === "SHOP_CARD");
@@ -20,25 +20,33 @@ function chooseFirstEvent(manager: RunManager) {
 }
 
 function chooseFirstReward(manager: RunManager) {
-  const choice = manager.state.currentChoices.find((candidate) => candidate.type === "REWARD_CARD");
+  const choice = manager.state.currentChoices.find((candidate) => candidate.type.startsWith("REWARD"));
   if (!choice) {
     throw new Error("Missing reward choice.");
   }
   return manager.chooseRewardOption(choice.id);
 }
 
-function fakeCombatResult(winner: CombatResult["winner"]): CombatResult {
+function chooseFirstLevelReward(manager: RunManager) {
+  const choice = manager.state.pendingLevelUpChoices[0];
+  if (!choice) {
+    throw new Error("Missing level-up choice.");
+  }
+  return manager.chooseLevelUpReward(choice.id);
+}
+
+function fakeCombatResult(winner: CombatResult["winner"], playerFinalHp = 12): CombatResult {
   return {
     winner,
-    ticksElapsed: 1,
-    playerFinalHp: winner === "ENEMY" ? 0 : 1,
+    ticksElapsed: 60,
+    playerFinalHp: winner === "ENEMY" ? 0 : playerFinalHp,
     enemyFinalHp: winner === "PLAYER" ? 0 : 1,
     combatLog: [],
-    replayTimeline: { events: [] },
+    replayTimeline: { events: [{ tick: 60, type: "CombatEnded" }] },
     summary: {
       winner,
-      ticksElapsed: 1,
-      playerFinalHp: winner === "ENEMY" ? 0 : 1,
+      ticksElapsed: 60,
+      playerFinalHp: winner === "ENEMY" ? 0 : playerFinalHp,
       enemyFinalHp: winner === "PLAYER" ? 0 : 1,
       damageByCard: {},
       statusDamage: {},
@@ -51,97 +59,127 @@ function fakeCombatResult(winner: CombatResult["winner"]): CombatResult {
   };
 }
 
+function reachFirstBattle(manager: RunManager) {
+  chooseFirstShop(manager);
+  chooseFirstEvent(manager);
+  expect(manager.getCurrentNode().type).toBe("BATTLE");
+}
+
+function completeFakeBattleWin(manager: RunManager, playerFinalHp = 12) {
+  manager.state = {
+    ...manager.state,
+    pendingCombatResult: fakeCombatResult("PLAYER", playerFinalHp),
+    pendingBattleResult: fakeCombatResult("PLAYER", playerFinalHp),
+    currentEnemySnapshot: {
+      id: "monster:training-dummy:2",
+      kind: "MONSTER",
+      displayName: "Training Dummy",
+      level: 2,
+      maxHp: 1,
+      startingArmor: 0,
+      slots: [],
+      skills: [],
+      relics: [],
+      aiProfile: { id: "training-dummy" }
+    }
+  };
+  return manager.completeBattle();
+}
+
 describe("RunManager", () => {
-  it("new run starts with 0 cards, 10 gold, 4 slots, and chest capacity 8", () => {
+  it("new run starts with MVP resources and first two safe growth nodes", () => {
     const manager = createNewRun("start");
 
-    expect(manager.state.ownedCards).toEqual([]);
+    expect(manager.state.level).toBe(1);
+    expect(manager.state.exp).toBe(0);
+    expect(manager.state.expToNextLevel).toBe(10);
     expect(manager.state.gold).toBe(10);
+    expect(manager.state.ownedCards).toEqual([]);
     expect(manager.state.formationSlotCount).toBe(4);
     expect(manager.state.formationSlots).toHaveLength(4);
     expect(manager.state.chestCapacity).toBe(8);
-  });
-
-  it("first two nodes are shop/event safe growth nodes", () => {
-    const manager = createNewRun("safe-growth");
-
+    expect(manager.state.maxHp).toBe(40);
+    expect(manager.state.currentHp).toBe(40);
     expect(manager.getCurrentNode().type).toBe("SHOP");
     expect(manager.state.currentChoices.some((choice) => choice.type === "SHOP_CARD" && choice.cost <= 10)).toBe(true);
-    manager.advanceToNextNode();
+    chooseFirstShop(manager);
     expect(manager.getCurrentNode().type).toBe("EVENT");
-    expect(manager.state.currentChoices.some((choice) => choice.type === "EVENT_CARD")).toBe(true);
   });
 
-  it("run node sequence is deterministic for same seed", () => {
-    expect(getRunNodes().map((node) => node.id)).toEqual(getRunNodes().map((node) => node.id));
-    expect(createNewRun("same").state.currentChoices).toEqual(createNewRun("same").state.currentChoices);
+  it("resolving shop/event gives 1 exp and winning battle gives total 4 exp", () => {
+    const manager = createNewRun("exp");
+
+    chooseFirstShop(manager);
+    expect(manager.state.exp).toBe(1);
+    chooseFirstEvent(manager);
+    expect(manager.state.exp).toBe(2);
+    completeFakeBattleWin(manager, 9);
+
+    expect(manager.state.exp).toBe(6);
+    expect(manager.state.currentHp).toBe(9);
+    expect(manager.state.defeatedBattleCount).toBe(1);
+    expect(manager.getCurrentNode().type).toBe("REWARD");
   });
 
-  it("shop purchase adds selected card and subtracts gold", () => {
-    const manager = createNewRun("shop");
-    const choice = manager.state.currentChoices[0];
-    if (!choice || choice.type !== "SHOP_CARD") {
-      throw new Error("Missing shop card.");
+  it("10 exp triggers one level-up, increases HP by 10 percent rounded up, heals, and caps at 10", () => {
+    const manager = createNewRun("level");
+
+    manager.gainExp(10, "test");
+
+    expect(manager.state.level).toBe(2);
+    expect(manager.state.exp).toBe(0);
+    expect(manager.state.maxHp).toBe(44);
+    expect(manager.state.currentHp).toBe(44);
+    expect(manager.state.currentNode.type).toBe("LEVEL_UP_REWARD");
+    expect(manager.state.pendingLevelUpChoices).toHaveLength(3);
+
+    manager.gainExp(200, "test");
+    while (manager.state.pendingLevelUpChoices.length > 0) {
+      chooseFirstLevelReward(manager);
     }
-
-    const result = manager.chooseShopOption(choice.id);
-
-    expect(result.ok).toBe(true);
-    expect(manager.state.ownedCards.map((card) => card.definitionId)).toContain(choice.cardDefinitionId);
-    expect(manager.state.gold).toBe(10 - choice.cost);
+    expect(manager.state.level).toBe(10);
+    expect(manager.state.exp).toBeLessThan(10);
   });
 
-  it("reward adds selected card to ownedCards", () => {
-    const manager = createNewRun("reward");
-    manager.state = {
-      ...manager.state,
-      currentNodeIndex: 3,
-      currentNode: getRunNodes()[3],
-      defeatedMonsters: ["training-dummy"]
-    };
-    manager.state = createNewRun("reward").advanceToNextNode().state; // node 1
-    manager.advanceToNextNode(); // node 2
-    manager.advanceToNextNode(); // node 3 reward
-    const result = chooseFirstReward(manager);
-
-    expect(result.ok).toBe(true);
+  it("shop purchase, reward card, chest derivation, formation moves, and capacity are enforced", () => {
+    const manager = createNewRun("inventory");
+    chooseFirstShop(manager);
+    expect(manager.state.gold).toBe(10);
     expect(manager.state.ownedCards).toHaveLength(1);
-  });
+    const card = manager.state.ownedCards[0];
 
-  it("cannot exceed chest capacity", () => {
-    const manager = createNewRun("capacity");
-    for (let index = 0; index < manager.state.chestCapacity; index += 1) {
+    expect(manager.moveCardFromChestToFormation(card.instanceId, 1).ok).toBe(true);
+    expect(manager.getChestCards()).toEqual([]);
+    expect(manager.removeCardFromFormationToChest(card.instanceId).ok).toBe(true);
+    expect(manager.getChestCards()).toEqual([card]);
+
+    chooseFirstEvent(manager);
+    expect(manager.getCurrentNode().type).toBe("BATTLE");
+    completeFakeBattleWin(manager);
+    const rewardChoice = manager.state.currentChoices.find((choice) => choice.type === "REWARD_CARD");
+    expect(rewardChoice).toBeDefined();
+    expect(chooseFirstReward(manager).ok).toBe(true);
+    expect(manager.state.ownedCards.length).toBeGreaterThan(1);
+
+    while (manager.state.ownedCards.length < manager.state.chestCapacity) {
       expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
     }
-
-    const result = manager.addCardToChest("rusty-blade");
-
-    expect(result.ok).toBe(false);
-    expect(result.error).toBe("Chest capacity is full.");
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(false);
   });
 
-  it("chest cards are derived from ownedCards not in formation", () => {
-    const manager = createNewRun("chest");
-    manager.addCardToChest("rusty-blade");
-    const card = manager.state.ownedCards[0];
-    manager.moveCardFromChestToFormation(card.instanceId, 1);
-
-    expect(manager.getChestCards()).toEqual([]);
-    manager.removeCardFromFormationToChest(card.instanceId);
-    expect(manager.getChestCards()).toEqual([card]);
-  });
-
-  it("cannot place unowned card or same card multiple times", () => {
-    const manager = createNewRun("ownership");
-
+  it("cannot place unowned or duplicate cards, and removing from formation works at full capacity", () => {
+    const manager = createNewRun("formation");
     expect(manager.moveCardFromChestToFormation("missing", 1).ok).toBe(false);
-    manager.addCardToChest("rusty-blade");
+    for (let index = 0; index < manager.state.chestCapacity; index += 1) {
+      manager.addCardToChest("rusty-blade");
+    }
     const card = manager.state.ownedCards[0];
     expect(manager.moveCardFromChestToFormation(card.instanceId, 1).ok).toBe(true);
     expect(manager.moveCardFromChestToFormation(card.instanceId, 2).ok).toBe(false);
+    expect(manager.removeCardFromFormationToChest(card.instanceId).ok).toBe(true);
   });
 
-  it("cannot sell formation card and selling chest cards grants tier gold", () => {
+  it("selling is chest-only and uses tier prices including upgrades", () => {
     const manager = createNewRun("sell");
     manager.addCardToChest("rusty-blade");
     manager.addCardToChest("spark-drum");
@@ -157,77 +195,92 @@ describe("RunManager", () => {
     const beforeBronzeSale = manager.state.gold;
     expect(manager.sellCardFromChest(bronze.instanceId).ok).toBe(true);
     expect(manager.state.gold).toBe(beforeBronzeSale + 1);
-  });
 
-  it("selling GOLD card from chest adds 4 gold", () => {
-    const manager = createNewRun("gold-sale");
-    const goldCard = {
-      ...(manager.cardDefinitionsById.get("rusty-blade")!),
-      id: "gold-test",
-      tier: "GOLD" as const
-    };
-    const definitions = new Map([...manager.cardDefinitionsById, [goldCard.id, goldCard]]);
-    const customManager = RunManager.createNewRun("gold-sale-custom", definitions);
-    customManager.addCardToChest(goldCard.id);
-    const card = customManager.state.ownedCards[0];
-
-    expect(customManager.sellCardFromChest(card.instanceId).ok).toBe(true);
-    expect(customManager.state.gold).toBe(14);
-  });
-
-  it("formation references remain valid after selling another card", () => {
-    const manager = createNewRun("sell-other");
     manager.addCardToChest("rusty-blade");
-    manager.addCardToChest("wooden-shield");
-    const placed = manager.state.ownedCards[0];
-    const sold = manager.state.ownedCards[1];
-    manager.moveCardFromChestToFormation(placed.instanceId, 1);
-    manager.sellCardFromChest(sold.instanceId);
-
-    expect(manager.state.formationSlots[0]?.cardInstanceId).toBe(placed.instanceId);
+    const upgraded = manager.state.ownedCards[0];
+    manager.state = {
+      ...manager.state,
+      ownedCards: [{ ...upgraded, tierOverride: "GOLD" }]
+    };
+    const beforeGoldSale = manager.state.gold;
+    expect(manager.sellCardFromChest(upgraded.instanceId).ok).toBe(true);
+    expect(manager.state.gold).toBe(beforeGoldSale + 4);
   });
 
-  it("player can obtain an active card before first combat and cannot battle without one placed", () => {
-    const manager = createNewRun("pre-combat");
-    chooseFirstShop(manager);
-    expect(manager.state.ownedCards.some((card) => manager.cardDefinitionsById.get(card.definitionId)?.type === "ACTIVE")).toBe(true);
-    manager.advanceToNextNode();
-    manager.advanceToNextNode();
-    expect(manager.getCurrentNode().type).toBe("BATTLE");
+  it("first combat cannot start without an active card in formation, then uses MonsterGenerator and returns replay/summary", () => {
+    const manager = createNewRun("battle");
+    reachFirstBattle(manager);
+
     expect(manager.startBattle().ok).toBe(false);
     manager.moveCardFromChestToFormation(manager.state.ownedCards[0].instanceId, 1);
-    expect(manager.startBattle().ok).toBe(true);
-  });
-
-  it("battle uses MonsterGenerator output and produces replay and summary", () => {
-    const manager = createNewRun("battle");
-    chooseFirstShop(manager);
-    const card = manager.state.ownedCards[0];
-    manager.moveCardFromChestToFormation(card.instanceId, 1);
-    manager.advanceToNextNode();
-    manager.advanceToNextNode();
-
     const result = manager.startBattle();
 
     expect(result.ok).toBe(true);
     expect(manager.state.currentEnemySnapshot?.kind).toBe("MONSTER");
-    expect(manager.state.pendingBattleResult?.replayTimeline.events.length).toBeGreaterThan(0);
-    expect(manager.state.pendingBattleResult?.summary.ticksElapsed).toBeGreaterThan(0);
+    expect(manager.state.pendingCombatResult?.replayTimeline.events.length).toBeGreaterThan(0);
+    expect(manager.state.pendingCombatResult?.summary.ticksElapsed).toBeGreaterThan(0);
   });
 
-  it("run can progress to boss and boss win produces victory", () => {
-    const manager = createNewRun("boss");
-    while (manager.getCurrentNode().id !== "boss-1") {
-      manager.advanceToNextNode();
+  it("battle reward includes at least one option from monster rewardPool if possible", () => {
+    const manager = createNewRun("reward-pool");
+    reachFirstBattle(manager);
+    completeFakeBattleWin(manager);
+
+    expect(manager.getCurrentNode().type).toBe("REWARD");
+    expect(manager.state.currentChoices.some((choice) => choice.type === "REWARD_CARD" && choice.cardDefinitionId === "rusty-blade")).toBe(true);
+  });
+
+  it("loss and draw set run status DEFEAT", () => {
+    for (const winner of ["ENEMY", "DRAW"] as const) {
+      const manager = createNewRun(`defeat-${winner}`);
+      reachFirstBattle(manager);
+      manager.state = {
+        ...manager.state,
+        pendingCombatResult: fakeCombatResult(winner),
+        pendingBattleResult: fakeCombatResult(winner)
+      };
+
+      expect(manager.completeBattle().ok).toBe(true);
+      expect(manager.state.status).toBe("DEFEAT");
     }
+  });
+
+  it("same seed and choices produce same shop, reward, and monster setup", () => {
+    const first = createNewRun("deterministic");
+    const second = createNewRun("deterministic");
+    expect(second.state.currentChoices).toEqual(first.state.currentChoices);
+
+    reachFirstBattle(first);
+    reachFirstBattle(second);
+    first.moveCardFromChestToFormation(first.state.ownedCards[0].instanceId, 1);
+    second.moveCardFromChestToFormation(second.state.ownedCards[0].instanceId, 1);
+    first.startBattle();
+    second.startBattle();
+    expect(second.state.currentEnemySnapshot).toEqual(first.state.currentEnemySnapshot);
+
+    completeFakeBattleWin(first);
+    completeFakeBattleWin(second);
+    expect(second.state.currentChoices).toEqual(first.state.currentChoices);
+  });
+
+  it("run can continue through repeated cycles, reach level 10, and final boss win produces victory", () => {
+    const manager = createNewRun("victory");
+    manager.gainExp(90, "test");
+    while (manager.state.pendingLevelUpChoices.length > 0) {
+      chooseFirstLevelReward(manager);
+    }
+    expect(manager.state.level).toBe(10);
+    manager.advanceToNextNode();
+    expect(manager.getCurrentNode().battleDifficulty).toBe("BOSS");
     manager.state = {
       ...manager.state,
+      pendingCombatResult: fakeCombatResult("PLAYER"),
       pendingBattleResult: fakeCombatResult("PLAYER"),
       currentEnemySnapshot: {
-        id: "monster:gate-captain:9",
+        id: "monster:gate-captain:10",
         kind: "BOSS",
         displayName: "First Boss: Gate Captain",
-        level: 9,
+        level: 10,
         maxHp: 1,
         startingArmor: 0,
         slots: [],
@@ -239,49 +292,21 @@ describe("RunManager", () => {
 
     expect(manager.completeBattle().ok).toBe(true);
     expect(manager.state.status).toBe("VICTORY");
+    expect(manager.getCurrentNode().type).toBe("RUN_RESULT");
   });
 
-  it("player defeat and DRAW are treated as defeat", () => {
-    for (const winner of ["ENEMY", "DRAW"] as const) {
-      const manager = createNewRun(`defeat-${winner}`);
-      manager.advanceToNextNode();
-      manager.advanceToNextNode();
-      manager.state = {
-        ...manager.state,
-        pendingBattleResult: fakeCombatResult(winner)
-      };
-
-      expect(manager.completeBattle().ok).toBe(true);
-      expect(manager.state.status).toBe("DEFEAT");
-    }
-  });
-
-  it("same seed produces same shop choices, reward choices, and monster setup", () => {
-    const first = createNewRun("deterministic");
-    const second = createNewRun("deterministic");
-
-    expect(second.state.currentChoices).toEqual(first.state.currentChoices);
-    first.advanceToNextNode();
-    first.advanceToNextNode();
-    first.advanceToNextNode();
-    second.advanceToNextNode();
-    second.advanceToNextNode();
-    second.advanceToNextNode();
-    expect(second.state.currentChoices).toEqual(first.state.currentChoices);
-
-    const battleA = createNewRun("monster-setup");
-    const battleB = createNewRun("monster-setup");
-    battleA.advanceToNextNode();
-    battleA.advanceToNextNode();
-    battleB.advanceToNextNode();
-    battleB.advanceToNextNode();
-    battleA.addCardToChest("rusty-blade");
-    battleB.addCardToChest("rusty-blade");
-    battleA.moveCardFromChestToFormation(battleA.state.ownedCards[0].instanceId, 1);
-    battleB.moveCardFromChestToFormation(battleB.state.ownedCards[0].instanceId, 1);
-    battleA.startBattle();
-    battleB.startBattle();
-
-    expect(battleB.state.currentEnemySnapshot).toEqual(battleA.state.currentEnemySnapshot);
+  it("run node starter sequence remains deterministic", () => {
+    expect(getRunNodes().map((node) => node.id)).toEqual([
+      "starter-shop-1",
+      "starter-event-1",
+      "easy-monster-1",
+      "reward-1",
+      "shop-1",
+      "normal-monster-1",
+      "reward-2",
+      "shop-2",
+      "elite-monster-1",
+      "reward-3"
+    ]);
   });
 });

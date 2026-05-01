@@ -1,9 +1,9 @@
-import type { CardInstance } from "../model/card.js";
+import type { CardInstance, CardTier } from "../model/card.js";
 import type { FormationSnapshot } from "../model/formation.js";
 import type { CombatResult } from "../model/result.js";
 
 export type RunStatus = "IN_PROGRESS" | "VICTORY" | "DEFEAT";
-export type RunNodeType = "SHOP" | "EVENT" | "BATTLE" | "REWARD" | "RUN_RESULT";
+export type RunNodeType = "SHOP" | "EVENT" | "BATTLE" | "REWARD" | "LEVEL_UP_REWARD" | "RUN_RESULT";
 export type BattleDifficulty = "EASY" | "NORMAL" | "ELITE" | "BOSS";
 
 export interface RunFormationSlot {
@@ -30,26 +30,48 @@ export interface ShopChoice {
 
 export interface EventChoice {
   readonly id: string;
-  readonly type: "EVENT_CARD" | "EVENT_GOLD";
+  readonly type: "EVENT_CARD" | "EVENT_GOLD" | "EVENT_HEAL";
   readonly label: string;
   readonly cardDefinitionId?: string;
   readonly gold?: number;
+  readonly heal?: number;
 }
 
 export interface RewardChoice {
   readonly id: string;
-  readonly type: "REWARD_CARD";
-  readonly cardDefinitionId: string;
+  readonly type: "REWARD_CARD" | "REWARD_GOLD" | "REWARD_UPGRADE";
+  readonly label: string;
+  readonly cardDefinitionId?: string;
+  readonly gold?: number;
+  readonly cardInstanceId?: string;
+  readonly fromTier?: CardTier;
+  readonly toTier?: CardTier;
 }
 
-export type RunChoice = ShopChoice | EventChoice | RewardChoice;
+export interface LevelUpRewardChoice {
+  readonly id: string;
+  readonly type: "LEVEL_GOLD" | "LEVEL_CARD" | "LEVEL_UPGRADE";
+  readonly label: string;
+  readonly gold?: number;
+  readonly cardDefinitionId?: string;
+  readonly cardInstanceId?: string;
+  readonly fromTier?: CardTier;
+  readonly toTier?: CardTier;
+}
+
+export type RunChoice = ShopChoice | EventChoice | RewardChoice | LevelUpRewardChoice;
 
 export interface RunState {
   readonly runId: string;
   readonly seed: string;
   readonly status: RunStatus;
   readonly currentNodeIndex: number;
+  readonly level: number;
+  readonly exp: number;
+  readonly expToNextLevel: number;
   readonly gold: number;
+  readonly currentHp: number;
+  readonly maxHp: number;
   readonly ownedCards: readonly CardInstance[];
   readonly formationSlots: readonly RunFormationSlot[];
   readonly formationSlotCount: number;
@@ -58,10 +80,18 @@ export interface RunState {
   readonly currentChoices: readonly RunChoice[];
   readonly currentEnemySnapshot?: FormationSnapshot;
   readonly currentEnemyCardInstances?: readonly CardInstance[];
+  readonly pendingCombatResult?: CombatResult;
   readonly pendingBattleResult?: CombatResult;
+  readonly pendingRewardChoices: readonly RewardChoice[];
+  readonly pendingLevelUpChoices: readonly LevelUpRewardChoice[];
+  readonly completedEncounterCount: number;
+  readonly defeatedBattleCount: number;
   readonly classId: string;
   readonly defeatedMonsters: readonly string[];
   readonly completedNodes: readonly string[];
+  readonly interruptedNodeIndex?: number;
+  readonly interruptedNode?: RunNode;
+  readonly advanceAfterLevelUp?: boolean;
 }
 
 export interface RunActionResult {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { buildReplayTimeline } from "../../src/replay/ReplayTimeline.js";
+import { formatTicksAsSeconds } from "../../src/replay/time.js";
 import type { ReplayEvent } from "../../src/model/result.js";
 
 describe("ReplayTimeline", () => {
@@ -31,5 +32,10 @@ describe("ReplayTimeline", () => {
       "CombatStarted",
       "CombatEnded"
     ]);
+  });
+
+  it("formats player-facing ticks as seconds", () => {
+    expect(formatTicksAsSeconds(60)).toBe("1.00s");
+    expect(formatTicksAsSeconds(90)).toBe("1.50s");
   });
 });

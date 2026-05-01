@@ -29,6 +29,7 @@ export * from "./content/monsters/MonsterTemplate.js";
 export * from "./content/monsters/monsterTemplates.js";
 export * from "./replay/ReplayEvent.js";
 export * from "./replay/ReplayTimeline.js";
+export * from "./replay/time.js";
 export * from "./run/RunManager.js";
 export * from "./run/RunState.js";
 export * from "./run/nodes/BattleNode.js";

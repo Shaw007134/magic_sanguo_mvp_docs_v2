@@ -27,6 +27,7 @@ export interface CardDefinition {
 export interface CardInstance {
   readonly instanceId: string;
   readonly definitionId: string;
+  readonly tierOverride?: CardTier;
 }
 
 export interface CardRuntimeState {

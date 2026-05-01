@@ -608,3 +608,37 @@ Known issues:
 - Save/load is not implemented yet.
 Next recommended task:
 - Phase 12: Save And Load.
+
+---
+
+Date: 2026-05-01
+Phase: 11 playable loop completion
+Task: Completed playable deterministic MVP run loop to level 10 and wired UI to RunManager.
+Files changed:
+- src/index.ts
+- src/model/card.ts
+- src/replay/time.ts
+- src/run/RunState.ts
+- src/run/RunManager.ts
+- src/run/nodes/EventNode.ts
+- src/run/rewards/RewardGenerator.ts
+- src/ui/App.tsx
+- src/ui/components/CombatReplay.tsx
+- tests/replay/replayTimeline.test.ts
+- tests/run/runManager.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Expanded tests/run/runManager.test.ts for run start, EXP/leveling, inventory/chest, battle/reward, deterministic progression, level 10 boss victory, loss/draw defeat.
+- Added formatTicksAsSeconds coverage in tests/replay/replayTimeline.test.ts.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Save/load is not implemented; Phase 12 should persist the new RunState model.
+- UI remains placeholder MVP presentation and does not add final art or animation polish.
+- Card upgrade rewards use CardInstance.tierOverride for runtime rewards/economy; combat behavior still comes from base CardDefinition content.
+- The run is deterministic and linear/repeating only; no branching map or async PvP.
+Next recommended task:
+- Phase 12: Save And Load.
