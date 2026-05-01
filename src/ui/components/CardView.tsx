@@ -1,4 +1,5 @@
 import type { CardDefinition, CardInstance } from "../../model/card.js";
+import { getCardDisplayInfo } from "../presentation/cardDisplay.js";
 
 export interface CardViewProps {
   readonly card: CardInstance;
@@ -9,12 +10,15 @@ export interface CardViewProps {
 }
 
 export function CardView({ card, definition, selected = false, compact = false, onClick }: CardViewProps) {
+  const display = getCardDisplayInfo(definition);
   const content = (
     <>
-      <div className="card-title">{definition.name}</div>
+      <div className="card-title">{display.name}</div>
       <div className="card-meta">
-        {definition.tier} · size {definition.size}
+        {display.typeLabel} · {display.tier} · size {display.size}
+        {display.cooldown !== undefined ? ` · ${display.cooldown}t` : ""}
       </div>
+      <div className="card-summary">{display.summary}</div>
       {!compact ? <p>{definition.description}</p> : null}
     </>
   );

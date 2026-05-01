@@ -10,6 +10,7 @@ import {
   createFormationSnapshotFromUi,
   getChestCapacity,
   getChestCards,
+  getPlacedCardIds,
   moveCardFromChestToFormation,
   removeCardFromFormation,
   sellCardFromChest,
@@ -81,6 +82,30 @@ describe("uiState", () => {
 
     expect(getChestCards(result).map((card) => card.instanceId)).toEqual(["bronze"]);
     expect(result.formationSlots[0]?.cardInstanceId).toBeUndefined();
+  });
+
+  it("removing a placed card succeeds even when ownedCards length equals chest capacity", () => {
+    const cards = Array.from({ length: getChestCapacity(4) }, (_, index) =>
+      cardInstance(`card-${index}`, "rusty-blade")
+    );
+    const placed = moveCardFromChestToFormation(state(cards), "card-0", 1, cardDefinitionsById);
+    const result = removeCardFromFormation(placed, "card-0");
+
+    expect(getChestCards(result)).toHaveLength(getChestCapacity(4));
+    expect(result.formationSlots[0]?.cardInstanceId).toBeUndefined();
+  });
+
+  it("size 2 placement logic still produces the locked footprint", () => {
+    const result = moveCardFromChestToFormation(
+      state([cardInstance("spark", "spark-drum")]),
+      "spark",
+      2,
+      cardDefinitionsById
+    );
+
+    expect(result.formationSlots[1]).toMatchObject({ slotIndex: 2, cardInstanceId: "spark" });
+    expect(result.formationSlots[2]).toMatchObject({ slotIndex: 3, lockedByInstanceId: "spark" });
+    expect([...getPlacedCardIds(result.formationSlots)]).toEqual(["spark"]);
   });
 
   it("generated formation can still be passed into CombatEngine", () => {

@@ -35,6 +35,7 @@ export function App() {
   const [showCombatLog, setShowCombatLog] = useState(false);
 
   const chestCards = getChestCards(inventory);
+  const selectedHint = getSelectedHint(selection, inventory.ownedCards);
 
   function handleChestCardClick(cardInstanceId: string): void {
     setSelection({ kind: "CHEST", cardInstanceId });
@@ -103,7 +104,31 @@ export function App() {
         <div className="gold-display">{inventory.gold} gold</div>
       </header>
 
-      <section className="battle-planner">
+      <section className="encounter-layout">
+        <EnemyPreview
+          monster={enemy}
+          cardDefinitionsById={cardDefinitionsById}
+        />
+
+        <section className="battle-action-bar">
+          <div>
+            <h2>Encounter</h2>
+            <p>{enemy.formation.displayName}</p>
+          </div>
+          <div className="selection-hint">{selectedHint}</div>
+          <button className="primary-action" type="button" onClick={handleStartBattle}>
+            Start Battle
+          </button>
+        </section>
+
+        <FormationEditor
+          slots={inventory.formationSlots}
+          selectedCardId={selection?.kind === "FORMATION" ? selection.cardInstanceId : undefined}
+          cardInstancesById={toCardInstanceMap(inventory.ownedCards)}
+          cardDefinitionsById={cardDefinitionsById}
+          onSlotClick={handleFormationSlotClick}
+          onRemove={handleRemoveFromFormation}
+        />
         <ChestPanel
           cards={chestCards}
           selectedCardId={selection?.kind === "CHEST" ? selection.cardInstanceId : undefined}
@@ -113,24 +138,6 @@ export function App() {
           onCardClick={handleChestCardClick}
           onSell={handleSell}
         />
-        <FormationEditor
-          slots={inventory.formationSlots}
-          selectedCardId={selection?.kind === "FORMATION" ? selection.cardInstanceId : undefined}
-          cardInstancesById={toCardInstanceMap(inventory.ownedCards)}
-          cardDefinitionsById={cardDefinitionsById}
-          onSlotClick={handleFormationSlotClick}
-          onRemove={handleRemoveFromFormation}
-        />
-        <EnemyPreview
-          monster={enemy}
-          cardDefinitionsById={cardDefinitionsById}
-        />
-      </section>
-
-      <section className="battle-actions">
-        <button className="primary-action" type="button" onClick={handleStartBattle}>
-          Start Battle
-        </button>
       </section>
 
       {combatResult ? (
@@ -174,4 +181,17 @@ function createEnemy(): MonsterGenerationResult {
 
 function toCardInstanceMap(cards: readonly CardInstance[]): ReadonlyMap<string, CardInstance> {
   return new Map(cards.map((card) => [card.instanceId, card]));
+}
+
+function getSelectedHint(selection: Selection, ownedCards: readonly CardInstance[]): string {
+  if (!selection) {
+    return "Select a card to place or move.";
+  }
+  const card = ownedCards.find((candidate) => candidate.instanceId === selection.cardInstanceId);
+  if (!card) {
+    return "Selected card is unavailable.";
+  }
+  return selection.kind === "CHEST"
+    ? `Placing ${card.definitionId}`
+    : `Moving ${card.definitionId}`;
 }

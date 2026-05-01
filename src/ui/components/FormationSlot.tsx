@@ -16,16 +16,12 @@ export function FormationSlot(props: FormationSlotProps) {
   const definition = card ? props.cardDefinitionsById.get(card.definitionId) : undefined;
 
   if (props.slot.lockedByInstanceId) {
-    return (
-      <div className="formation-slot locked">
-        <span>Slot {props.slot.slotIndex}</span>
-        <strong>Size 2 footprint</strong>
-      </div>
-    );
+    return null;
   }
+  const isWide = definition?.size === 2;
 
   return (
-    <div className="formation-slot">
+    <div className={`formation-slot${isWide ? " size-two-card" : ""}`} data-size={definition?.size ?? 1}>
       <button
         type="button"
         className="slot-button"
@@ -33,12 +29,15 @@ export function FormationSlot(props: FormationSlotProps) {
       >
         <span>Slot {props.slot.slotIndex}</span>
         {card && definition ? (
-          <CardView
-            card={card}
-            definition={definition}
-            selected={props.selectedCardId === card.instanceId}
-            compact
-          />
+          <>
+            <CardView
+              card={card}
+              definition={definition}
+              selected={props.selectedCardId === card.instanceId}
+              compact
+            />
+            {isWide ? <span className="footprint-label">Size 2</span> : null}
+          </>
         ) : (
           <em>Empty</em>
         )}

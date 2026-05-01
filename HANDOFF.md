@@ -66,6 +66,12 @@ Selling from chest uses MVP prices: BRONZE 1, SILVER 2, GOLD 4, JADE 8, CELESTIA
 The UI builds a player FormationSnapshot from final pre-combat formation state and passes it to CombatEngine. React components do not calculate combat results.
 Enemy preview uses Phase 9 MonsterGenerator and renders locked adjacent slots as size-2 footprints.
 Post-combat UI shows ReplayTimeline and CombatResultSummary, with raw CombatLog behind a dev-only toggle.
+Phase 10 cleanup switched the UI to a top-down encounter layout: Enemy Formation, encounter action bar, Your Formation, then Chest.
+Visible cards use src/ui/presentation/cardDisplay.ts for type, tier, size, cooldown, and compact effect/trigger summaries.
+Size 2 cards render as one wide visual block in player and enemy formations, while the state/FormationSnapshot still keeps the adjacent locked slot.
+removeCardFromFormation no longer checks chest capacity, because ownedCards already contains placed cards and chestCards is derived from ownedCards minus placed cards.
+Phase 10 initial owned cards remain prototype-only to make manual UI testing possible.
+Phase 11 RunManager must start real runs with 0 owned cards, 10 gold, 4 formation slots, chest capacity 8, and must enforce chest capacity when adding cards through shop/event/reward.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, and UI state tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, shop, event, reward, and run-loop systems are not implemented yet.
 ```
@@ -91,6 +97,8 @@ Implement MVP Run Loop.
 6. Start battle and confirm Replay and Summary populate.
 7. Toggle Dev CombatLog and confirm raw combat log is hidden until enabled.
 8. Confirm enemy size-2 card footprints render locked adjacent slots as occupied.
+9. Confirm size-2 cards appear as one wide card block in both enemy and player formations.
+10. Confirm visible cards show type, tier, size, cooldown where present, and a compact effect or trigger summary.
 ```
 
 ## Rules For Next Agent

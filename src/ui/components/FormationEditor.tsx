@@ -15,7 +15,7 @@ export function FormationEditor(props: FormationEditorProps) {
   return (
     <section className="panel formation-panel">
       <div className="panel-heading">
-        <h2>Formation</h2>
+        <h2>Your Formation</h2>
         <span>{props.slots.length} slots</span>
       </div>
       <div className="formation-grid">

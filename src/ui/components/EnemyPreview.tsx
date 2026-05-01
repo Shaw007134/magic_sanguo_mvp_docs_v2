@@ -1,5 +1,6 @@
 import type { MonsterGenerationResult } from "../../content/monsters/MonsterGenerator.js";
 import type { CardDefinition } from "../../model/card.js";
+import { getCardDisplayInfo } from "../presentation/cardDisplay.js";
 
 export interface EnemyPreviewProps {
   readonly monster: MonsterGenerationResult;
@@ -12,7 +13,7 @@ export function EnemyPreview({ monster, cardDefinitionsById }: EnemyPreviewProps
   return (
     <section className="panel enemy-panel">
       <div className="panel-heading">
-        <h2>Enemy</h2>
+        <h2>Enemy Formation</h2>
         <span>{monster.formation.displayName}</span>
       </div>
       <div className="enemy-stats">
@@ -24,21 +25,26 @@ export function EnemyPreview({ monster, cardDefinitionsById }: EnemyPreviewProps
           const instance = slot.cardInstanceId ? instancesById.get(slot.cardInstanceId) : undefined;
           const definition = instance ? cardDefinitionsById.get(instance.definitionId) : undefined;
           if (slot.locked) {
-            return (
-              <div className="formation-slot locked" key={slot.slotIndex}>
-                <span>Slot {slot.slotIndex}</span>
-                <strong>Size 2 footprint</strong>
-              </div>
-            );
+            return null;
           }
+          const display = definition ? getCardDisplayInfo(definition) : undefined;
           return (
-            <div className="enemy-slot" key={slot.slotIndex}>
+            <div
+              className={`enemy-slot${definition?.size === 2 ? " size-two-card" : ""}`}
+              data-size={definition?.size ?? 1}
+              key={slot.slotIndex}
+            >
               <span>Slot {slot.slotIndex}</span>
-              {definition ? (
+              {definition && display ? (
                 <>
-                  <strong>{definition.name}</strong>
-                  <small>Size {definition.size}</small>
+                  <strong>{display.name}</strong>
+                  <small>
+                    {display.typeLabel} · {display.tier} · size {display.size}
+                    {display.cooldown !== undefined ? ` · ${display.cooldown}t` : ""}
+                  </small>
+                  <span className="card-summary">{display.summary}</span>
                   <p>{definition.description}</p>
+                  {definition.size === 2 ? <span className="footprint-label">Size 2</span> : null}
                 </>
               ) : (
                 <em>Empty</em>

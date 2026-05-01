@@ -30,7 +30,7 @@ button {
 
 .top-bar,
 .panel,
-.battle-actions,
+.battle-action-bar,
 .dev-log {
   border: 1px solid #c8c1b2;
   background: #fffdf7;
@@ -75,17 +75,24 @@ h3 {
   text-align: center;
 }
 
-.battle-planner,
+.encounter-layout,
 .post-combat {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) minmax(320px, 1.25fr) minmax(260px, 1fr);
   gap: 16px;
   margin-top: 16px;
+}
+
+.encounter-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.post-combat {
+  grid-template-columns: minmax(320px, 1.4fr) minmax(260px, 1fr);
   align-items: start;
 }
 
 .panel,
-.battle-actions,
+.battle-action-bar,
 .dev-log {
   border-radius: 8px;
   padding: 14px;
@@ -150,8 +157,15 @@ small {
   font-weight: 800;
 }
 
+.card-summary {
+  color: #26394f;
+  font-size: 13px;
+  font-weight: 700;
+}
+
 .formation-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-flow: dense;
 }
 
 .formation-slot,
@@ -180,16 +194,38 @@ small {
   color: #4e5662;
 }
 
+.size-two-card {
+  grid-column: span 2;
+}
+
+.footprint-label {
+  display: inline-flex;
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #dce7ef;
+  color: #2d4a63;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .enemy-stats {
   display: flex;
   gap: 12px;
   margin-bottom: 10px;
 }
 
-.battle-actions {
+.battle-action-bar {
   margin-top: 16px;
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+}
+
+.selection-hint {
+  color: #596170;
+  font-weight: 700;
 }
 
 .primary-action {
@@ -260,7 +296,7 @@ small {
 }
 
 @media (max-width: 980px) {
-  .battle-planner,
+  .encounter-layout,
   .post-combat {
     grid-template-columns: 1fr;
   }
@@ -282,6 +318,10 @@ small {
 
   .formation-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .battle-action-bar {
+    grid-template-columns: 1fr;
   }
 
   .event-list li {

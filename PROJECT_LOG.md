@@ -540,3 +540,39 @@ Known issues:
 - No shop, event, reward, save/load, async PvP, animation polish, or final art is implemented.
 Next recommended task:
 - Phase 11: MVP Run Loop.
+
+---
+
+Date: 2026-05-01
+Phase: 10 patch
+Task: Improved UI layout/readability and size-2 card presentation before Phase 11.
+Files changed:
+- src/ui/App.tsx
+- src/ui/styles.css
+- src/ui/state/uiState.ts
+- src/ui/components/CardView.tsx
+- src/ui/components/EnemyPreview.tsx
+- src/ui/components/FormationEditor.tsx
+- src/ui/components/FormationSlot.tsx
+- src/ui/presentation/cardDisplay.ts
+- tests/ui/uiState.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/ui/formationPresentation.test.tsx
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Card removal from formation succeeds even when ownedCards length equals chest capacity.
+- Size 2 placement still produces locked footprint in UI state.
+- Card display summaries for Rusty Blade, Wooden Shield, Flame Spear, Spark Drum, and Fire Echo Seal.
+- Player and enemy size 2 cards render as one wide visual block.
+How to run:
+- pnpm dev
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Layout and visuals remain placeholder MVP UI.
+- Phase 10 initial owned cards are prototype-only for manual UI testing.
+- Phase 11 RunManager must replace local UI state later and enforce chest capacity when adding cards through shop/event/reward.
+Next recommended task:
+- Phase 11: MVP Run Loop.

@@ -87,9 +87,6 @@ export function removeCardFromFormation(
   if (!getPlacedCardIds(state.formationSlots).has(cardInstanceId)) {
     return state;
   }
-  if (getChestCards(state).length >= getChestCapacity(state.formationSlots.length)) {
-    return state;
-  }
 
   return {
     ...state,
