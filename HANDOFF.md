@@ -82,7 +82,13 @@ Reward choices now support deterministic card, gold, and upgrade choices; battle
 Card upgrades use a simple CardInstance tierOverride for runtime economy/reward purposes; combat card definitions remain unchanged.
 Battle nodes use Phase 9 MonsterGenerator and existing CombatEngine; no separate monster battle system was added.
 DRAW is treated as DEFEAT for MVP run completion.
-Player-facing replay UI displays seconds via formatTicksAsSeconds; raw tick-style details remain allowed in dev logs.
+Player-facing replay UI displays seconds via formatTicksAsSeconds and event-specific friendly text instead of raw payload fields.
+RunStatusBar renders labeled Gold, Level, EXP, and HP values with spacing so Level 1 and 0 / 10 EXP cannot visually merge.
+Choice UI renders readable shop/event/reward cards using card names, metadata, cooldown seconds, prices, gold/heal amounts, and upgrade tier transitions.
+Empty player/enemy slots render separate Slot N and Empty labels.
+Debug replay export helper exists at scripts/exportSampleCombatReplay.ts. Run `pnpm export:sample-replay` to build TS and write JSON under debug/combat-replays/.
+The root debug/ folder is gitignored; browser UI does not write to the local filesystem.
+Known limitation: CardInstance.tierOverride currently affects run economy/display and reward presentation, but does not scale combat stats or card effects.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, and expanded RunManager tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, branching map, async PvP, and complex content expansion are not implemented yet.
 ```
@@ -112,6 +118,7 @@ Reminder: save/load is Phase 12 and should persist/restore the new RunState rath
 8. Confirm level-up choices appear at 10 EXP, max HP increases by 10% rounded up, and current HP heals to max.
 9. Continue until level 10, then confirm the next battle is the final boss and boss completion shows Victory or Defeat.
 10. Toggle Dev CombatLog and confirm raw combat log is hidden until enabled; replay event times should show seconds, not T/tick labels.
+11. Optional debug export: run pnpm export:sample-replay and inspect debug/combat-replays/*.json.
 ```
 
 ## Rules For Next Agent

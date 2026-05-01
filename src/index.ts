@@ -27,6 +27,7 @@ export * from "./content/cards/monsterCards.js";
 export * from "./content/monsters/MonsterGenerator.js";
 export * from "./content/monsters/MonsterTemplate.js";
 export * from "./content/monsters/monsterTemplates.js";
+export * from "./debug/sampleCombatReplayExport.js";
 export * from "./replay/ReplayEvent.js";
 export * from "./replay/ReplayTimeline.js";
 export * from "./replay/time.js";

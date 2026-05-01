@@ -27,7 +27,7 @@ export function FormationSlot(props: FormationSlotProps) {
         className="slot-button"
         onClick={() => props.onSlotClick(props.slot.slotIndex, card?.instanceId)}
       >
-        <span>Slot {props.slot.slotIndex}</span>
+        <span className="slot-label">Slot {props.slot.slotIndex}</span>
         {card && definition ? (
           <>
             <CardView
@@ -39,7 +39,7 @@ export function FormationSlot(props: FormationSlotProps) {
             {isWide ? <span className="footprint-label">Size 2</span> : null}
           </>
         ) : (
-          <em>Empty</em>
+          <span className="empty-slot-label">Empty</span>
         )}
       </button>
       {card ? (

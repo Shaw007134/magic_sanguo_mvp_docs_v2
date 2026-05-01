@@ -34,20 +34,19 @@ export function EnemyPreview({ monster, cardDefinitionsById }: EnemyPreviewProps
               data-size={definition?.size ?? 1}
               key={slot.slotIndex}
             >
-              <span>Slot {slot.slotIndex}</span>
+              <span className="slot-label">Slot {slot.slotIndex}</span>
               {definition && display ? (
                 <>
                   <strong>{display.name}</strong>
                   <small>
                     {display.typeLabel} · {display.tier} · size {display.size}
-                    {display.cooldown !== undefined ? ` · ${display.cooldown}t` : ""}
                   </small>
                   <span className="card-summary">{display.summary}</span>
                   <p>{definition.description}</p>
                   {definition.size === 2 ? <span className="footprint-label">Size 2</span> : null}
                 </>
               ) : (
-                <em>Empty</em>
+                <span className="empty-slot-label">Empty</span>
               )}
             </div>
           );

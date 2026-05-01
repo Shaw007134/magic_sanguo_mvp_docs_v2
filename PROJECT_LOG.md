@@ -642,3 +642,48 @@ Known issues:
 - The run is deterministic and linear/repeating only; no branching map or async PvP.
 Next recommended task:
 - Phase 12: Save And Load.
+
+---
+
+Date: 2026-05-01
+Phase: 11 UI/replay/debug patch
+Task: Patched Phase 11 UI readability, player-facing replay formatting, and debug replay export before Phase 12.
+Files changed:
+- .gitignore
+- package.json
+- scripts/exportSampleCombatReplay.ts
+- src/debug/sampleCombatReplayExport.ts
+- src/index.ts
+- src/ui/App.tsx
+- src/ui/components/ChoiceCard.tsx
+- src/ui/components/CombatReplay.tsx
+- src/ui/components/EnemyPreview.tsx
+- src/ui/components/FormationSlot.tsx
+- src/ui/components/RunStatusBar.tsx
+- src/ui/presentation/choiceDisplay.ts
+- src/ui/presentation/replayDisplay.ts
+- src/ui/presentation/runStatusDisplay.ts
+- src/ui/styles.css
+- tests/debug/sampleCombatReplayExport.test.ts
+- tests/replay/replayTimeline.test.ts
+- tests/ui/runPresentation.test.tsx
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Run status display labels Gold, Level, EXP, HP clearly.
+- Empty formation slots render Slot N and Empty as separate elements.
+- Shop choice display uses card names and cooldown seconds instead of raw ids.
+- Upgrade reward display shows fromTier -> toTier.
+- Player-facing replay formatting uses seconds and omits internal payload fields.
+- Debug sample replay export returns serializable CombatResult/ReplayTimeline/Summary/CombatLog data.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+- pnpm export:sample-replay
+Known issues:
+- Save/load is not implemented; Phase 12 should persist/restore RunState.
+- CardInstance.tierOverride affects run economy/display and reward presentation but does not scale combat stats or card effects yet.
+- UI remains placeholder MVP presentation without final art or animation polish.
+Next recommended task:
+- Phase 12: Save And Load.

@@ -23,6 +23,11 @@ button {
   cursor: pointer;
 }
 
+dl,
+dd {
+  margin: 0;
+}
+
 .app-shell {
   min-height: 100vh;
   padding: 24px;
@@ -65,14 +70,32 @@ h3 {
   font-size: 14px;
 }
 
-.gold-display {
-  min-width: 96px;
-  padding: 8px 12px;
-  border: 1px solid #b68b2f;
+.run-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.run-status-item {
+  min-width: 92px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid #b9c1c8;
   border-radius: 6px;
-  background: #fff4c7;
-  font-weight: 700;
-  text-align: center;
+  background: #f5f8fa;
+}
+
+.run-status-item dt {
+  color: #596170;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.run-status-item dd {
+  font-weight: 800;
 }
 
 .encounter-layout,
@@ -116,9 +139,50 @@ small {
 }
 
 .card-list,
-.formation-grid {
+.formation-grid,
+.choice-list {
   display: grid;
   gap: 10px;
+}
+
+.choice-list {
+  min-width: min(520px, 100%);
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+}
+
+.choice-card {
+  min-height: 112px;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 10px;
+  border: 1px solid #a7b0b7;
+  border-radius: 6px;
+  background: #f8fbfd;
+  color: inherit;
+  text-align: left;
+}
+
+.choice-card strong {
+  font-size: 15px;
+}
+
+.choice-subtitle,
+.choice-meta,
+.slot-label,
+.empty-slot-label {
+  color: #596170;
+  font-size: 13px;
+}
+
+.slot-label {
+  font-weight: 800;
+}
+
+.empty-slot-label {
+  display: block;
+  margin-top: 6px;
+  font-style: italic;
 }
 
 .card-actions {
@@ -188,6 +252,13 @@ small {
   text-align: left;
 }
 
+.slot-button,
+.enemy-slot {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
 .formation-slot.locked {
   border-style: solid;
   background: #e8edf1;
@@ -250,10 +321,7 @@ small {
 }
 
 .event-list li {
-  display: grid;
-  grid-template-columns: 54px 150px 1fr;
-  gap: 10px;
-  align-items: baseline;
+  line-height: 1.5;
 }
 
 .summary-grid {
@@ -321,6 +389,10 @@ small {
   }
 
   .battle-action-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .choice-list {
     grid-template-columns: 1fr;
   }
 

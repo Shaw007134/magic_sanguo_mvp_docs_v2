@@ -6,10 +6,12 @@ import { createBattleEnemy } from "../run/nodes/BattleNode.js";
 import { RunManager } from "../run/RunManager.js";
 import type { RunActionResult, RunChoice, RunState } from "../run/RunState.js";
 import { ChestPanel } from "./components/ChestPanel.js";
+import { ChoiceCard } from "./components/ChoiceCard.js";
 import { CombatReplay } from "./components/CombatReplay.js";
 import { EnemyPreview } from "./components/EnemyPreview.js";
 import { FormationEditor } from "./components/FormationEditor.js";
 import { ResultSummary } from "./components/ResultSummary.js";
+import { RunStatusBar } from "./components/RunStatusBar.js";
 
 type Selection =
   | { readonly kind: "CHEST"; readonly cardInstanceId: string }
@@ -125,12 +127,7 @@ export function App() {
           <h1>Magic Sanguo</h1>
           <p>{runState.currentNode.label}</p>
         </div>
-        <div className="run-stats">
-          <span>{runState.gold} gold</span>
-          <span>Lv {runState.level}</span>
-          <span>{runState.exp}/{runState.expToNextLevel} EXP</span>
-          <span>{runState.currentHp}/{runState.maxHp} HP</span>
-        </div>
+        <RunStatusBar state={runState} />
         <button className="secondary-action" type="button" onClick={handleNewRun}>
           New Run
         </button>
@@ -150,6 +147,7 @@ export function App() {
           <NodeActions
             state={runState}
             combatResult={combatResult}
+            cardDefinitionsById={cardDefinitionsById}
             onChoice={handleChoice}
             onStartBattle={handleStartBattle}
             onCompleteBattle={handleCompleteBattle}
@@ -178,7 +176,14 @@ export function App() {
 
       {combatResult ? (
         <section className="post-combat">
-          <CombatReplay timeline={combatResult.replayTimeline} />
+          <CombatReplay
+            timeline={combatResult.replayTimeline}
+            cardInstancesById={toCardInstanceMap([
+              ...runState.ownedCards,
+              ...(runState.currentEnemyCardInstances ?? [])
+            ])}
+            cardDefinitionsById={cardDefinitionsById}
+          />
           <ResultSummary summary={combatResult.summary} />
           <div className="dev-log">
             <label>
@@ -206,6 +211,7 @@ export function App() {
 function NodeActions(props: {
   readonly state: RunState;
   readonly combatResult?: CombatResult;
+  readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly onChoice: (choice: RunChoice) => void;
   readonly onStartBattle: () => void;
   readonly onCompleteBattle: () => void;
@@ -218,9 +224,12 @@ function NodeActions(props: {
     return (
       <div className="choice-list">
         {props.state.currentChoices.map((choice) => (
-          <button key={choice.id} type="button" onClick={() => props.onChoice(choice)}>
-            {formatChoice(choice)}
-          </button>
+          <ChoiceCard
+            key={choice.id}
+            choice={choice}
+            cardDefinitionsById={props.cardDefinitionsById}
+            onChoose={props.onChoice}
+          />
         ))}
       </div>
     );
@@ -241,16 +250,6 @@ function NodeActions(props: {
       Continue
     </button>
   );
-}
-
-function formatChoice(choice: RunChoice): string {
-  if (choice.type === "SHOP_CARD") {
-    return `${choice.cardDefinitionId} · ${choice.cost}g`;
-  }
-  if ("label" in choice) {
-    return choice.label;
-  }
-  return "Choice";
 }
 
 function toCardInstanceMap(cards: readonly CardInstance[]): ReadonlyMap<string, CardInstance> {

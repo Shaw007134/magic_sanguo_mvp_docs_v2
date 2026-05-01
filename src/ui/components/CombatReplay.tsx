@@ -1,11 +1,14 @@
+import type { CardDefinition, CardInstance } from "../../model/card.js";
 import type { ReplayTimeline } from "../../model/result.js";
-import { formatTicksAsSeconds } from "../../replay/time.js";
+import { formatReplayEvent } from "../presentation/replayDisplay.js";
 
 export interface CombatReplayProps {
   readonly timeline: ReplayTimeline;
+  readonly cardInstancesById: ReadonlyMap<string, CardInstance>;
+  readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
 }
 
-export function CombatReplay({ timeline }: CombatReplayProps) {
+export function CombatReplay({ timeline, cardInstancesById, cardDefinitionsById }: CombatReplayProps) {
   return (
     <section className="panel replay-panel">
       <div className="panel-heading">
@@ -15,20 +18,10 @@ export function CombatReplay({ timeline }: CombatReplayProps) {
       <ol className="event-list">
         {timeline.events.map((event, index) => (
           <li key={`${event.tick}-${event.type}-${index}`}>
-            <span className="event-tick">{formatTicksAsSeconds(event.tick)}</span>
-            <strong>{event.type}</strong>
-            <span>{formatEventPayload(event.payload)}</span>
+            {formatReplayEvent(event, { cardInstancesById, cardDefinitionsById })}
           </li>
         ))}
       </ol>
     </section>
   );
-}
-
-function formatEventPayload(payload: Readonly<Record<string, unknown>> | undefined): string {
-  if (!payload) {
-    return "";
-  }
-  const visibleEntries = Object.entries(payload).filter(([key]) => key !== "enemyFormationId" && key !== "playerFormationId");
-  return visibleEntries.map(([key, value]) => `${key}: ${String(value)}`).join(" · ");
 }
