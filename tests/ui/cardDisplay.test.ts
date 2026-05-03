@@ -18,7 +18,7 @@ describe("cardDisplay", () => {
     expect(display("rusty-blade")).toMatchObject({
       name: "Rusty Blade",
       typeLabel: "Active",
-      tier: "BRONZE",
+      tier: "Bronze",
       size: 1,
       cooldown: 45,
       summary: "Damage: 2"
@@ -46,8 +46,10 @@ describe("cardDisplay", () => {
   it("summarizes Fire Echo Seal", () => {
     expect(display("fire-echo-seal")).toMatchObject({
       typeLabel: "Passive",
-      summary: "Trigger: OnStatusApplied -> Damage: 1"
+      summary: "When you apply Burn: Damage: 1."
     });
+    expect(display("fire-echo-seal").summary).not.toContain("OnStatusApplied");
+    expect(display("fire-echo-seal").summary).not.toMatch(/On(Card|Damage|Burn|Cooldown|Combat|Status)|hook/i);
   });
 
   it("formats whole-second cooldown modifications without raw tick suffixes", () => {

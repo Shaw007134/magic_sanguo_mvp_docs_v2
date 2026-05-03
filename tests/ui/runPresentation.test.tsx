@@ -59,6 +59,23 @@ describe("run presentation", () => {
     expect(display.meta).toContain("Price: 0");
   });
 
+  it("event card display uses full card detail instead of a terse card label", () => {
+    const display = getChoiceDisplayInfo(
+      {
+        id: "event-card",
+        type: "EVENT_CARD",
+        label: "Take a Flame Spear",
+        cardDefinitionId: "flame-spear"
+      },
+      cardDefinitionsById
+    );
+
+    expect(display.title).toBe("Flame Spear");
+    expect(display.meta).toEqual(expect.arrayContaining(["Active", "Bronze", "Size 1", "Cooldown 1.25s"]));
+    expect(display.meta).not.toContain("Card: Flame Spear");
+    expect(display.summary).toContain("Burn: 2 damage/sec for 2s");
+  });
+
   it("card metadata cooldown display uses seconds instead of raw ticks", () => {
     const card = { instanceId: "rusty", definitionId: "rusty-blade" };
     const definition = cardDefinitionsById.get("rusty-blade");
@@ -70,6 +87,20 @@ describe("run presentation", () => {
     expect(html).toContain("0.75s");
     expect(html).not.toContain("45t");
     expect(html).not.toMatch(/tick/i);
+  });
+
+  it("upgraded card display keeps base name as primary title", () => {
+    const definition = cardDefinitionsById.get("rusty-blade");
+    if (!definition) {
+      throw new Error("Missing rusty-blade.");
+    }
+    const html = renderToStaticMarkup(
+      <CardView card={{ instanceId: "rusty", definitionId: "rusty-blade", tierOverride: "SILVER" }} definition={definition} />
+    );
+
+    expect(html).toContain("Rusty Blade");
+    expect(html).not.toContain("Rusty Blade (SILVER)");
+    expect(html).toContain("Silver");
   });
 
   it("reward upgrade display shows tier transition clearly", () => {

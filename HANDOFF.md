@@ -78,21 +78,30 @@ Run node order begins with starter shop, starter event, easy battle, reward, sho
 At level 10, the next generated battle node is the final boss; boss win sets VICTORY and boss loss/draw sets DEFEAT.
 Shop and event resolution grant 1 EXP once. Battle wins grant 1 encounter EXP + 3 win EXP. Level-up threshold is 10 EXP.
 Level-ups increase max HP by ceil(10%), heal current HP to max HP, and generate deterministic level-up reward choices.
+Level-up progression now pauses on LEVEL_UP_REWARD until the player explicitly chooses one deterministic pending level-up reward, then returns to the interrupted node/progression.
+Level-up choices prioritize skill, upgrade, and gold options so the MVP reward surface always includes real run-control decisions when available.
 Shop purchases no longer auto-advance; bought shop choices are marked purchased/sold out and leaveShop() grants shop EXP once.
+All player-facing card acquisition paths use RunManager.gainCardOrUpgradeDuplicate(): same-card same-effective-tier duplicates upgrade the existing owned card when possible instead of adding another copy.
+Duplicate auto-upgrade messages include before/after tier and key stat preview; max-tier duplicates can still be added if chest capacity allows.
 Reward reveal state records defeated monster name plus used monster card definition ids before reward choice selection.
 Reward choices now support deterministic card, gold, upgrade, and skill choices; battle rewards prioritize used monster cards, then monster rewardPool, then fallback.
 Minimal skills exist under src/run/skills and are owned through RunState. Skills currently instantiate existing ModifierSystem modifiers only.
+Owned skills stay separate from ownedCards, render near formation, and are included in player FormationSnapshot creation without going through chest inventory.
 Card upgrades use CardInstance.tierOverride plus effective card definitions so upgraded tiers scale combat values/cooldowns and normal UI display.
 Battle nodes use Phase 9 MonsterGenerator and existing CombatEngine; no separate monster battle system was added.
 DRAW is treated as DEFEAT for MVP run completion.
 Player-facing replay UI displays seconds via formatTicksAsSeconds and event-specific friendly text instead of raw payload fields.
 RunStatusBar renders labeled Gold, Level, EXP, and HP values with spacing so Level 1 and 0 / 10 EXP cannot visually merge.
 Choice UI renders readable shop/event/reward cards using card names, metadata, cooldown seconds, prices, gold/heal amounts, and upgrade tier transitions.
+Event card choices use the same readable card metadata as shop/reward cards rather than short raw card labels.
 Card summaries and card metadata are player-facing seconds-only: Burn duration and ModifyCooldown amounts no longer show raw tick suffixes in normal UI.
+Passive trigger summaries are player-facing phrases, such as "When you apply Burn", and do not expose internal hook names such as OnStatusApplied.
+ResultSummary resolves card/source ids to readable card names, hides zero-value rows, and shows top contributors plus readable Burn/status damage.
 Empty player/enemy slots render separate Slot N and Empty labels.
 Debug replay export helper exists at scripts/exportSampleCombatReplay.ts. Run `pnpm export:sample-replay` to build TS and write JSON under debug/combat-replays/.
 The root debug/ folder is gitignored; browser UI does not write to the local filesystem.
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree, save/load, or new trigger hook/status/resource system exists yet.
+Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns, but future save/load must persist the override and any pending upgrade choice/message context exactly.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, and expanded RunManager tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, branching map, async PvP, and complex content expansion are not implemented yet.
 ```

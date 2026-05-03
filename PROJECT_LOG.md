@@ -611,6 +611,44 @@ Next recommended task:
 
 ---
 
+Date: 2026-05-04
+Phase: 11B run-control and choice readability patch
+Task: Paused level-up progression until explicit reward selection, added duplicate card auto-upgrades across acquisition paths, and cleaned player-facing choice/passive/result summary text before Phase 12.
+Files changed:
+- src/content/cards/effectiveCardDefinition.ts
+- src/run/RunManager.ts
+- src/run/rewards/RewardGenerator.ts
+- src/ui/App.tsx
+- src/ui/components/EnemyPreview.tsx
+- src/ui/components/ResultSummary.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/ui/presentation/choiceDisplay.ts
+- tests/run/runManager.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/ui/resultSummary.test.tsx
+- tests/ui/runPresentation.test.tsx
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Level-up thresholds create deterministic pending choices and pause progression until selection.
+- Level-up skill, upgrade, and gold choices apply through RunManager state.
+- Shop, event, reward, and level-up card acquisition use duplicate auto-upgrade behavior.
+- Event card choice display uses full readable card metadata.
+- Passive trigger summaries hide code hook names such as OnStatusApplied.
+- ResultSummary resolves raw source ids to readable card names, hides zero rows, and shows top contributors/status damage.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Save/load is not implemented; Phase 12 should persist/restore RunState, including pendingLevelUpChoices, shopStates, ownedSkills, tierOverride, and duplicate-upgrade messages/state as needed.
+- Skills remain minimal standalone owned rewards, not a skill tree.
+- Raw ids and ticks may still appear in dev CombatLog/debug JSON only.
+Next recommended task:
+- Phase 12: Save And Load.
+
+---
+
 Date: 2026-05-01
 Phase: 11 playable loop completion
 Task: Completed playable deterministic MVP run loop to level 10 and wired UI to RunManager.

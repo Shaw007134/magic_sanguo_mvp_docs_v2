@@ -27,7 +27,7 @@ export function getChoiceDisplayInfo(
     const display = getCardDisplayInfo(card);
     return {
       title: display.name,
-      subtitle: "Shop card",
+      subtitle: "Buy Card",
       meta: [
         display.typeLabel,
         display.tier,
@@ -41,11 +41,24 @@ export function getChoiceDisplayInfo(
 
   if (choice.type === "EVENT_CARD") {
     const card = choice.cardDefinitionId ? cardDefinitionsById.get(choice.cardDefinitionId) : undefined;
+    if (card) {
+      const display = getCardDisplayInfo(card);
+      return {
+        title: display.name,
+        subtitle: "Event card",
+        meta: [
+          display.typeLabel,
+          display.tier,
+          `Size ${display.size}`,
+          ...(display.cooldown !== undefined ? [`Cooldown ${formatTicksAsSeconds(display.cooldown)}`] : [])
+        ],
+        summary: display.summary
+      };
+    }
     return {
       title: choice.label,
       subtitle: "Event",
-      meta: card ? [`Card: ${card.name}`] : [],
-      summary: card ? getCardDisplayInfo(card).summary : undefined
+      meta: []
     };
   }
 
@@ -101,7 +114,7 @@ export function getChoiceDisplayInfo(
     const skill = choice.skillDefinitionId ? getSkillDefinitionsById().get(choice.skillDefinitionId) : undefined;
     return {
       title: skill ? choice.label : choice.label,
-      subtitle: "Skill reward",
+      subtitle: "Learn Skill",
       meta: skill ? [skill.name, skill.tier] : [],
       summary: skill?.description
     };

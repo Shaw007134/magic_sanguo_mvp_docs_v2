@@ -14,7 +14,7 @@ export function getCardDisplayInfo(card: CardDefinition): CardDisplayInfo {
   return {
     name: card.name,
     typeLabel: card.type === "ACTIVE" ? "Active" : card.type === "PASSIVE" ? "Passive" : "Other",
-    tier: card.tier,
+    tier: formatTier(card.tier),
     size: card.size,
     cooldown: card.cooldownTicks,
     summary: getCardSummary(card)
@@ -30,11 +30,42 @@ export function getCardSummary(card: CardDefinition): string {
 }
 
 function formatTrigger(trigger: TriggerDefinition): string {
-  const hook = typeof trigger["hook"] === "string" ? trigger["hook"] : "Trigger";
+  const hook = formatTriggerHook(trigger);
   const effects = Array.isArray(trigger["effects"])
     ? trigger["effects"].map(formatEffect).join(" + ")
     : "Effect";
-  return `Trigger: ${hook} -> ${effects}`;
+  return `${hook}: ${effects}.`;
+}
+
+function formatTriggerHook(trigger: TriggerDefinition): string {
+  const hook = trigger["hook"];
+  const conditions = isRecord(trigger["conditions"]) ? trigger["conditions"] : {};
+  if (hook === "OnStatusApplied" && conditions["status"] === "Burn" && conditions["appliedByOwner"] === true) {
+    return "When you apply Burn";
+  }
+  if (hook === "OnStatusApplied" && conditions["status"] === "Burn") {
+    return "When Burn is applied";
+  }
+  switch (hook) {
+    case "OnCardActivated":
+      return "When a card activates";
+    case "OnDamageDealt":
+      return "When damage is dealt";
+    case "OnDamageTaken":
+      return "When damage is taken";
+    case "OnBurnTick":
+      return "When Burn deals damage";
+    case "OnCooldownModified":
+      return "When cooldown changes";
+    case "OnCombatStart":
+      return "At combat start";
+    case "OnCombatEnd":
+      return "At combat end";
+    case "OnStatusApplied":
+      return "When a status is applied";
+    default:
+      return "When triggered";
+  }
 }
 
 function formatEffect(effect: EffectDefinition): string {
@@ -64,4 +95,12 @@ function formatSignedTickDuration(value: number): string {
 function formatTickDuration(value: number): string {
   const formatted = formatTicksAsSeconds(value);
   return formatted.replace(/\.00s$/, "s").replace(/(\.\d)0s$/, "$1s");
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
+}
+
+function formatTier(tier: string): string {
+  return tier.charAt(0).toUpperCase() + tier.slice(1).toLowerCase();
 }

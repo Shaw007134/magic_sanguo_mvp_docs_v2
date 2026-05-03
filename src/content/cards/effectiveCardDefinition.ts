@@ -20,7 +20,7 @@ export function getEffectiveCardDefinition(card: CardInstance, baseDefinition: C
   return {
     ...baseDefinition,
     id: getEffectiveCardDefinitionId(card),
-    name: `${baseDefinition.name} (${effectiveTier})`,
+    name: baseDefinition.name,
     tier: effectiveTier,
     cooldownTicks:
       baseDefinition.cooldownTicks === undefined

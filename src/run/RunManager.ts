@@ -3,7 +3,7 @@ import type { Modifier } from "../combat/modifiers/Modifier.js";
 import {
   createEffectiveCardDefinitionMap,
   createEffectiveCardInstances,
-  getEffectiveCardDefinition,
+  describeUpgradePreview,
   getEffectiveCardDefinitionId
 } from "../content/cards/effectiveCardDefinition.js";
 import { getMonsterCardDefinitionsById } from "../content/cards/monsterCards.js";
@@ -142,6 +142,35 @@ export class RunManager {
   }
 
   addCardToChest(cardDefinitionId: string): RunActionResult {
+    return this.addNewCardToChest(cardDefinitionId);
+  }
+
+  gainCardOrUpgradeDuplicate(cardDefinitionId: string): RunActionResult {
+    const baseDefinition = this.cardDefinitionsById.get(cardDefinitionId);
+    if (!baseDefinition) {
+      return this.fail(`Unknown card definition: ${cardDefinitionId}`);
+    }
+    const duplicate = this.state.ownedCards.find((card) => {
+      const definition = this.cardDefinitionsById.get(card.definitionId);
+      const effectiveTier = card.tierOverride ?? definition?.tier;
+      return card.definitionId === cardDefinitionId && effectiveTier === baseDefinition.tier;
+    });
+    if (!duplicate) {
+      return this.addNewCardToChest(cardDefinitionId);
+    }
+    const fromTier = duplicate.tierOverride ?? baseDefinition.tier;
+    const toTier = CARD_TIER_UPGRADES[fromTier as keyof typeof CARD_TIER_UPGRADES];
+    if (!toTier) {
+      return this.addNewCardToChest(cardDefinitionId);
+    }
+    const upgradeResult = this.upgradeOwnedCard(duplicate.instanceId, toTier);
+    if (!upgradeResult.ok) {
+      return upgradeResult;
+    }
+    return this.ok(`Duplicate ${baseDefinition.name} upgraded existing ${baseDefinition.name}: ${fromTier} -> ${toTier}. ${this.createUpgradePreview(duplicate, toTier)}`);
+  }
+
+  private addNewCardToChest(cardDefinitionId: string): RunActionResult {
     if (!this.cardDefinitionsById.has(cardDefinitionId)) {
       return this.fail(`Unknown card definition: ${cardDefinitionId}`);
     }
@@ -157,7 +186,7 @@ export class RunManager {
       ...this.state,
       ownedCards: [...this.state.ownedCards, card]
     };
-    return this.ok();
+    return this.ok("Added card.");
   }
 
   moveCardFromChestToFormation(cardInstanceId: string, slotIndex: number): RunActionResult {
@@ -238,10 +267,7 @@ export class RunManager {
     if (this.state.gold < choice.cost) {
       return this.fail("Not enough gold.");
     }
-    if (this.state.ownedCards.length >= this.state.chestCapacity) {
-      return this.fail("Chest capacity is full.");
-    }
-    const addResult = this.addCardToChest(choice.cardDefinitionId);
+    const addResult = this.gainCardOrUpgradeDuplicate(choice.cardDefinitionId);
     if (!addResult.ok) {
       return addResult;
     }
@@ -254,7 +280,7 @@ export class RunManager {
       }))
     };
     this.state = refreshCurrentChoices(this.state, this.cardDefinitionsById);
-    return this.ok("Purchased card.");
+    return this.ok(addResult.message ?? "Purchased card.");
   }
 
   leaveShop(): RunActionResult {
@@ -293,7 +319,7 @@ export class RunManager {
       if (!choice.cardDefinitionId) {
         return this.fail("Event card option is missing card definition.");
       }
-      const addResult = this.addCardToChest(choice.cardDefinitionId);
+      const addResult = this.gainCardOrUpgradeDuplicate(choice.cardDefinitionId);
       if (!addResult.ok) {
         return addResult;
       }
@@ -550,7 +576,7 @@ export class RunManager {
     if (!choice.cardDefinitionId) {
       return this.fail("Reward card option is missing card definition.");
     }
-    return this.addCardToChest(choice.cardDefinitionId);
+    return this.gainCardOrUpgradeDuplicate(choice.cardDefinitionId);
   }
 
   private applyLevelUpChoice(choice: LevelUpRewardChoice): RunActionResult {
@@ -570,7 +596,7 @@ export class RunManager {
     if (!choice.cardDefinitionId) {
       return this.fail("Level-up card option is missing card definition.");
     }
-    return this.addCardToChest(choice.cardDefinitionId);
+    return this.gainCardOrUpgradeDuplicate(choice.cardDefinitionId);
   }
 
   private upgradeOwnedCard(cardInstanceId: string | undefined, requestedTier: CardTier | undefined): RunActionResult {
@@ -594,11 +620,12 @@ export class RunManager {
     if (!upgraded) {
       return this.fail("No upgrade is available for that card.");
     }
+    const message = this.createUpgradeMessage(cardInstanceId, requestedTier);
     this.state = {
       ...this.state,
       ownedCards
     };
-    return this.ok(this.createUpgradeMessage(cardInstanceId, requestedTier));
+    return this.ok(message);
   }
 
   private addSkill(skillDefinitionId: string | undefined): RunActionResult {
@@ -632,7 +659,15 @@ export class RunManager {
     }
     const toTier = requestedTier ?? card.tierOverride;
     const fromTier = previousTier(toTier) ?? baseDefinition.tier;
-    return `${baseDefinition.name} upgraded: ${fromTier} -> ${toTier ?? "?"}.`;
+    return `${baseDefinition.name} upgraded: ${fromTier} -> ${toTier ?? "?"}. ${this.createUpgradePreview(card, toTier)}`;
+  }
+
+  private createUpgradePreview(card: CardInstance, toTier: CardTier | undefined): string {
+    const baseDefinition = this.cardDefinitionsById.get(card.definitionId);
+    if (!baseDefinition || !toTier) {
+      return "";
+    }
+    return describeUpgradePreview({ card, baseDefinition, toTier });
   }
 
   private ok(message?: string): RunActionResult {

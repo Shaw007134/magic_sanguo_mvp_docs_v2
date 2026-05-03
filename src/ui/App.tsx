@@ -165,6 +165,7 @@ export function App() {
           onSlotClick={handleFormationSlotClick}
           onRemove={handleRemoveFromFormation}
         />
+        <SkillPanel skills={runState.ownedSkills} />
         <ChestPanel
           cards={chestCards}
           selectedCardId={selection?.kind === "CHEST" ? selection.cardInstanceId : undefined}
@@ -174,7 +175,6 @@ export function App() {
           onCardClick={handleChestCardClick}
           onSell={handleSell}
         />
-        <SkillPanel skills={runState.ownedSkills} />
       </section>
 
       {combatResult ? (
@@ -187,7 +187,14 @@ export function App() {
             ])}
             cardDefinitionsById={cardDefinitionsById}
           />
-          <ResultSummary summary={combatResult.summary} />
+          <ResultSummary
+            summary={combatResult.summary}
+            cardInstancesById={toCardInstanceMap([
+              ...runState.ownedCards,
+              ...(runState.currentEnemyCardInstances ?? [])
+            ])}
+            cardDefinitionsById={cardDefinitionsById}
+          />
           <div className="dev-log">
             <label>
               <input
@@ -232,6 +239,12 @@ function NodeActions(props: {
             <strong>Victory</strong>
             <span>Defeated: {props.state.pendingRewardSource.defeatedMonsterName ?? "Enemy"}</span>
             <span>Dropped reward choices</span>
+          </div>
+        ) : null}
+        {props.state.currentNode.type === "LEVEL_UP_REWARD" ? (
+          <div className="reward-reveal">
+            <strong>Level Up!</strong>
+            <span>Choose one reward</span>
           </div>
         ) : null}
         <div className="choice-list">

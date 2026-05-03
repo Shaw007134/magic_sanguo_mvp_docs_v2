@@ -155,6 +155,44 @@ describe("RunManager", () => {
     expect(manager.state.exp).toBeLessThan(10);
   });
 
+  it("level-up pauses progression until a reward is selected", () => {
+    const manager = createNewRun("level-pause");
+    manager.gainExp(10, "test");
+
+    expect(manager.state.currentNode.type).toBe("LEVEL_UP_REWARD");
+    expect(manager.state.pendingLevelUpChoices.map((choice) => choice.type)).toEqual([
+      "LEVEL_SKILL",
+      "LEVEL_GOLD",
+      "LEVEL_CARD"
+    ]);
+    expect(manager.state.currentNodeIndex).toBe(0);
+    expect(manager.getCurrentNode().type).toBe("LEVEL_UP_REWARD");
+
+    const goldBefore = manager.state.gold;
+    const goldChoice = manager.state.pendingLevelUpChoices.find((choice) => choice.type === "LEVEL_GOLD");
+    expect(goldChoice).toBeDefined();
+    expect(manager.chooseLevelUpReward(goldChoice!.id).ok).toBe(true);
+    expect(manager.state.gold).toBeGreaterThan(goldBefore);
+    expect(manager.getCurrentNode().type).toBe("SHOP");
+  });
+
+  it("level-up upgrade upgrades a card and level-up skill adds to ownedSkills", () => {
+    const upgradeManager = createNewRun("level-up-upgrade");
+    upgradeManager.addCardToChest("rusty-blade");
+    upgradeManager.gainExp(10, "test");
+    const upgradeChoice = upgradeManager.state.pendingLevelUpChoices.find((choice) => choice.type === "LEVEL_UPGRADE");
+    expect(upgradeChoice).toBeDefined();
+    expect(upgradeManager.chooseLevelUpReward(upgradeChoice!.id).ok).toBe(true);
+    expect(upgradeManager.state.ownedCards[0]?.tierOverride).toBe("SILVER");
+
+    const skillManager = createNewRun("level-up-skill");
+    skillManager.gainExp(10, "test");
+    const skillChoice = skillManager.state.pendingLevelUpChoices.find((choice) => choice.type === "LEVEL_SKILL");
+    expect(skillChoice).toBeDefined();
+    expect(skillManager.chooseLevelUpReward(skillChoice!.id).ok).toBe(true);
+    expect(skillManager.state.ownedSkills).toHaveLength(1);
+  });
+
   it("shop purchase, reward card, chest derivation, formation moves, and capacity are enforced", () => {
     const manager = createNewRun("inventory");
     chooseFirstShop(manager);
@@ -201,6 +239,62 @@ describe("RunManager", () => {
     manager.state = { ...manager.state, currentNode: { id: "starter-shop-1", type: "SHOP", day: 1, label: "Starter Shop" }, currentNodeIndex: 0 };
     expect(manager.leaveShop().ok).toBe(true);
     expect(manager.state.exp).toBe(1);
+  });
+
+  it("buying duplicate same-tier shop card upgrades existing card and does not add duplicate", () => {
+    const manager = createNewRun("shop-duplicate");
+    manager.addCardToChest("rusty-blade");
+    const result = chooseFirstShop(manager);
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("Duplicate Rusty Blade upgraded existing Rusty Blade: BRONZE -> SILVER");
+    expect(manager.state.ownedCards).toHaveLength(1);
+    expect(manager.state.ownedCards[0]?.tierOverride).toBe("SILVER");
+  });
+
+  it("event and reward duplicate card grants upgrade existing cards", () => {
+    const eventManager = createNewRun("event-duplicate");
+    eventManager.addCardToChest("rusty-blade");
+    eventManager.advanceToNextNode();
+    const eventChoice = eventManager.state.currentChoices.find(
+      (choice) => choice.type === "EVENT_CARD" && choice.cardDefinitionId === "rusty-blade"
+    );
+    expect(eventChoice).toBeDefined();
+    expect(eventManager.chooseEventOption(eventChoice!.id).ok).toBe(true);
+    expect(eventManager.state.ownedCards).toHaveLength(1);
+    expect(eventManager.state.ownedCards[0]?.tierOverride).toBe("SILVER");
+
+    const rewardManager = createNewRun("reward-duplicate");
+    rewardManager.addCardToChest("training-staff");
+    reachFirstBattle(rewardManager);
+    completeFakeBattleWin(rewardManager);
+    const rewardChoice = rewardManager.state.currentChoices.find(
+      (choice) => choice.type === "REWARD_CARD" && choice.cardDefinitionId === "training-staff"
+    );
+    expect(rewardChoice).toBeDefined();
+    expect(rewardManager.chooseRewardOption(rewardChoice!.id).ok).toBe(true);
+    expect(rewardManager.state.ownedCards).toHaveLength(2);
+    expect(rewardManager.state.ownedCards.find((card) => card.definitionId === "training-staff")?.tierOverride).toBe("SILVER");
+  });
+
+  it("non-duplicate card is added normally and max-tier duplicate can add when capacity allows", () => {
+    const manager = createNewRun("non-duplicate");
+    manager.addCardToChest("rusty-blade");
+    expect(manager.gainCardOrUpgradeDuplicate("wooden-shield").ok).toBe(true);
+    expect(manager.state.ownedCards.map((card) => card.definitionId)).toEqual(["rusty-blade", "wooden-shield"]);
+
+    const celestialCard = {
+      ...manager.cardDefinitionsById.get("rusty-blade")!,
+      id: "celestial-blade",
+      tier: "CELESTIAL" as const
+    };
+    const customManager = RunManager.createNewRun(
+      "max-tier-duplicate",
+      new Map([...manager.cardDefinitionsById, [celestialCard.id, celestialCard]])
+    );
+    customManager.addCardToChest(celestialCard.id);
+    expect(customManager.gainCardOrUpgradeDuplicate(celestialCard.id).ok).toBe(true);
+    expect(customManager.state.ownedCards).toHaveLength(2);
   });
 
   it("cannot place unowned or duplicate cards, and removing from formation works at full capacity", () => {

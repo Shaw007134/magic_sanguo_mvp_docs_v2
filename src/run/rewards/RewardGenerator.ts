@@ -109,54 +109,42 @@ export function createLevelUpRewardChoices(input: {
   );
   const cardDefinitionId = shuffledCards[0] ?? "rusty-blade";
   const skillDefinition = findUnownedSkill(input.ownedSkills ?? [], `${input.seed}:level-skill:${input.level}`);
-  const choices = [
-    {
-      id: `level-${input.level}-gold`,
-      type: "LEVEL_GOLD" as const,
-      label: "Gain 6 gold",
-      gold: 6
-    },
-    {
+  const upgrade = findUpgradeableCard(input.ownedCards, input.cardDefinitionsById);
+  const choices: LevelUpRewardChoice[] = [];
+  if (skillDefinition) {
+    choices.push({
+      id: `level-${input.level}-skill`,
+      type: "LEVEL_SKILL",
+      label: `Learn ${skillDefinition.name}`,
+      skillDefinitionId: skillDefinition.id
+    });
+  }
+  if (upgrade) {
+    choices.push({
+      id: `level-${input.level}-upgrade`,
+      type: "LEVEL_UPGRADE",
+      label: `Upgrade ${input.cardDefinitionsById.get(upgrade.card.definitionId)?.name ?? upgrade.card.definitionId}`,
+      cardInstanceId: upgrade.card.instanceId,
+      fromTier: upgrade.fromTier,
+      toTier: upgrade.toTier,
+      preview: upgrade.preview
+    });
+  }
+  choices.push({
+    id: `level-${input.level}-gold`,
+    type: "LEVEL_GOLD",
+    label: "Gain 6 gold",
+    gold: 6
+  });
+  if (choices.length < 3) {
+    choices.push({
       id: `level-${input.level}-card`,
-      type: "LEVEL_CARD" as const,
+      type: "LEVEL_CARD",
       label: `Add ${input.cardDefinitionsById.get(cardDefinitionId)?.name ?? cardDefinitionId}`,
       cardDefinitionId
-    },
-    ...(skillDefinition
-      ? [
-          {
-            id: `level-${input.level}-skill`,
-            type: "LEVEL_SKILL" as const,
-            label: `Learn ${skillDefinition.name}`,
-            skillDefinitionId: skillDefinition.id
-          }
-        ]
-      : [])
-  ];
-  const upgrade = findUpgradeableCard(input.ownedCards, input.cardDefinitionsById);
-  return upgrade
-    ? [
-        ...choices,
-        {
-          id: `level-${input.level}-upgrade`,
-          type: "LEVEL_UPGRADE" as const,
-          label: `Upgrade ${input.cardDefinitionsById.get(upgrade.card.definitionId)?.name ?? upgrade.card.definitionId}`,
-          cardInstanceId: upgrade.card.instanceId,
-          fromTier: upgrade.fromTier,
-          toTier: upgrade.toTier,
-          preview: upgrade.preview
-        }
-      ]
-        .slice(0, 3)
-    : [
-        ...choices,
-        {
-          id: `level-${input.level}-gold-2`,
-          type: "LEVEL_GOLD" as const,
-          label: "Gain 3 gold",
-          gold: 3
-        }
-      ].slice(0, 3);
+    });
+  }
+  return choices.slice(0, 3);
 }
 
 function findUpgradeableCard(

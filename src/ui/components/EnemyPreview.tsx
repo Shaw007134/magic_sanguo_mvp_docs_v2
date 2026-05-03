@@ -52,6 +52,18 @@ export function EnemyPreview({ monster, cardDefinitionsById }: EnemyPreviewProps
           );
         })}
       </div>
+      <div className="enemy-skills">
+        <h3>Enemy Skills</h3>
+        {monster.formation.skills.length > 0 ? (
+          <ul>
+            {monster.formation.skills.map((skill) => (
+              <li key={skill.id}>{skill.definitionId ?? skill.id}</li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-slot-label">No enemy skills</p>
+        )}
+      </div>
     </section>
   );
 }
