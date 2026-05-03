@@ -85,6 +85,7 @@ DRAW is treated as DEFEAT for MVP run completion.
 Player-facing replay UI displays seconds via formatTicksAsSeconds and event-specific friendly text instead of raw payload fields.
 RunStatusBar renders labeled Gold, Level, EXP, and HP values with spacing so Level 1 and 0 / 10 EXP cannot visually merge.
 Choice UI renders readable shop/event/reward cards using card names, metadata, cooldown seconds, prices, gold/heal amounts, and upgrade tier transitions.
+Card summaries and card metadata are player-facing seconds-only: Burn duration and ModifyCooldown amounts no longer show raw tick suffixes in normal UI.
 Empty player/enemy slots render separate Slot N and Empty labels.
 Debug replay export helper exists at scripts/exportSampleCombatReplay.ts. Run `pnpm export:sample-replay` to build TS and write JSON under debug/combat-replays/.
 The root debug/ folder is gitignored; browser UI does not write to the local filesystem.

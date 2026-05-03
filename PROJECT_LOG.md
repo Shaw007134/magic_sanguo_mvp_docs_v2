@@ -687,3 +687,31 @@ Known issues:
 - UI remains placeholder MVP presentation without final art or animation polish.
 Next recommended task:
 - Phase 12: Save And Load.
+
+---
+
+Date: 2026-05-04
+Phase: 11 UI card summary readability patch
+Task: Replaced player-facing card summary tick formatting with seconds without changing combat rules or card data.
+Files changed:
+- src/ui/presentation/cardDisplay.ts
+- src/ui/components/CardView.tsx
+- tests/ui/cardDisplay.test.ts
+- tests/ui/runPresentation.test.tsx
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Burn duration displays seconds instead of raw ticks.
+- ModifyCooldown displays signed seconds instead of raw ticks.
+- Card summaries do not include raw tick suffixes for tick values.
+- Card metadata cooldown display renders seconds.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Save/load is not implemented; Phase 12 should persist/restore RunState.
+- Raw ticks may still appear in dev CombatLog/debug JSON only.
+- CardInstance.tierOverride affects run economy/display and reward presentation but does not scale combat stats or card effects yet.
+Next recommended task:
+- Phase 12: Save And Load.

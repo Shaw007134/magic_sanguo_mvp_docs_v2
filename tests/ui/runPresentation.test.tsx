@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { getMonsterCardDefinitionsById } from "../../src/content/cards/monsterCards.js";
 import { createNewRun } from "../../src/run/RunManager.js";
 import type { RunChoice } from "../../src/run/RunState.js";
+import { CardView } from "../../src/ui/components/CardView.js";
 import { FormationEditor } from "../../src/ui/components/FormationEditor.js";
 import { RunStatusBar } from "../../src/ui/components/RunStatusBar.js";
 import { getChoiceDisplayInfo } from "../../src/ui/presentation/choiceDisplay.js";
@@ -56,6 +57,19 @@ describe("run presentation", () => {
     expect(display.title).not.toBe("rusty-blade");
     expect(display.meta).toContain("Cooldown 0.75s");
     expect(display.meta).toContain("Price: 0");
+  });
+
+  it("card metadata cooldown display uses seconds instead of raw ticks", () => {
+    const card = { instanceId: "rusty", definitionId: "rusty-blade" };
+    const definition = cardDefinitionsById.get("rusty-blade");
+    if (!definition) {
+      throw new Error("Missing rusty-blade.");
+    }
+    const html = renderToStaticMarkup(<CardView card={card} definition={definition} />);
+
+    expect(html).toContain("0.75s");
+    expect(html).not.toContain("45t");
+    expect(html).not.toMatch(/tick/i);
   });
 
   it("reward upgrade display shows tier transition clearly", () => {

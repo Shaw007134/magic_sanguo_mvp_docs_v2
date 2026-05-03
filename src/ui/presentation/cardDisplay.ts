@@ -1,4 +1,5 @@
 import type { CardDefinition, EffectDefinition, TriggerDefinition } from "../../model/card.js";
+import { formatTicksAsSeconds } from "../../replay/time.js";
 
 export interface CardDisplayInfo {
   readonly name: string;
@@ -44,18 +45,23 @@ function formatEffect(effect: EffectDefinition): string {
       return typeof effect["amount"] === "number" ? `Armor: ${effect["amount"]}` : "Armor";
     case "ApplyBurn":
       if (typeof effect["amount"] === "number" && typeof effect["durationTicks"] === "number") {
-        return `Burn: ${effect["amount"]} / ${effect["durationTicks"]}t`;
+        return `Burn: ${effect["amount"]} damage/sec for ${formatTickDuration(effect["durationTicks"])}`;
       }
       return "Burn";
     case "ModifyCooldown":
       return typeof effect["amountTicks"] === "number"
-        ? `Cooldown: ${formatSignedTicks(effect["amountTicks"])}`
+        ? `Cooldown: ${formatSignedTickDuration(effect["amountTicks"])}`
         : "Cooldown";
     default:
       return "Effect";
   }
 }
 
-function formatSignedTicks(value: number): string {
-  return `${value > 0 ? "+" : ""}${value}t`;
+function formatSignedTickDuration(value: number): string {
+  return `${value > 0 ? "+" : ""}${formatTickDuration(value)}`;
+}
+
+function formatTickDuration(value: number): string {
+  const formatted = formatTicksAsSeconds(value);
+  return formatted.replace(/\.00s$/, "s").replace(/(\.\d)0s$/, "$1s");
 }

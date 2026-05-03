@@ -30,15 +30,17 @@ describe("cardDisplay", () => {
   });
 
   it("summarizes Flame Spear", () => {
-    expect(display("flame-spear").summary).toBe("Damage: 1 · Burn: 2 / 120t");
+    expect(display("flame-spear").summary).toBe("Damage: 1 · Burn: 2 damage/sec for 2s");
+    expect(display("flame-spear").summary).not.toMatch(/\d+t\b|tick/i);
   });
 
   it("summarizes Spark Drum", () => {
     expect(display("spark-drum")).toMatchObject({
       typeLabel: "Active",
       size: 2,
-      summary: "Cooldown: -30t"
+      summary: "Cooldown: -0.5s"
     });
+    expect(display("spark-drum").summary).not.toMatch(/\d+t\b|tick/i);
   });
 
   it("summarizes Fire Echo Seal", () => {
@@ -46,5 +48,14 @@ describe("cardDisplay", () => {
       typeLabel: "Passive",
       summary: "Trigger: OnStatusApplied -> Damage: 1"
     });
+  });
+
+  it("formats whole-second cooldown modifications without raw tick suffixes", () => {
+    const card = {
+      ...cardsById.get("spark-drum")!,
+      effects: [{ command: "ModifyCooldown", amountTicks: -60 }]
+    };
+
+    expect(getCardDisplayInfo(card).summary).toBe("Cooldown: -1s");
   });
 });

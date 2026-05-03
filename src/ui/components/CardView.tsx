@@ -1,4 +1,5 @@
 import type { CardDefinition, CardInstance } from "../../model/card.js";
+import { formatTicksAsSeconds } from "../../replay/time.js";
 import { getCardDisplayInfo } from "../presentation/cardDisplay.js";
 
 export interface CardViewProps {
@@ -16,7 +17,7 @@ export function CardView({ card, definition, selected = false, compact = false, 
       <div className="card-title">{display.name}</div>
       <div className="card-meta">
         {display.typeLabel} · {display.tier} · size {display.size}
-        {display.cooldown !== undefined ? ` · ${display.cooldown}t` : ""}
+        {display.cooldown !== undefined ? ` · ${formatTicksAsSeconds(display.cooldown)}` : ""}
       </div>
       <div className="card-summary">{display.summary}</div>
       {!compact ? <p>{definition.description}</p> : null}
