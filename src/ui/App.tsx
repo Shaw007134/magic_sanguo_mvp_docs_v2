@@ -12,6 +12,7 @@ import { EnemyPreview } from "./components/EnemyPreview.js";
 import { FormationEditor } from "./components/FormationEditor.js";
 import { ResultSummary } from "./components/ResultSummary.js";
 import { RunStatusBar } from "./components/RunStatusBar.js";
+import { SkillPanel } from "./components/SkillPanel.js";
 
 type Selection =
   | { readonly kind: "CHEST"; readonly cardInstanceId: string }
@@ -47,7 +48,7 @@ export function App() {
 
   function sync(result: RunActionResult, fallbackMessage: string): void {
     setRunState({ ...manager.state });
-    setMessage(result.ok ? fallbackMessage : (result.error ?? "Action failed."));
+    setMessage(result.ok ? (result.message ?? fallbackMessage) : (result.error ?? "Action failed."));
   }
 
   function handleNewRun(): void {
@@ -151,6 +152,7 @@ export function App() {
             onChoice={handleChoice}
             onStartBattle={handleStartBattle}
             onCompleteBattle={handleCompleteBattle}
+            onLeaveShop={() => sync(manager.leaveShop(), "Left shop.")}
             onContinue={handleContinue}
           />
         </section>
@@ -172,6 +174,7 @@ export function App() {
           onCardClick={handleChestCardClick}
           onSell={handleSell}
         />
+        <SkillPanel skills={runState.ownedSkills} />
       </section>
 
       {combatResult ? (
@@ -215,6 +218,7 @@ function NodeActions(props: {
   readonly onChoice: (choice: RunChoice) => void;
   readonly onStartBattle: () => void;
   readonly onCompleteBattle: () => void;
+  readonly onLeaveShop: () => void;
   readonly onContinue: () => void;
 }) {
   if (props.state.status !== "IN_PROGRESS") {
@@ -222,15 +226,30 @@ function NodeActions(props: {
   }
   if (props.state.currentChoices.length > 0) {
     return (
-      <div className="choice-list">
-        {props.state.currentChoices.map((choice) => (
-          <ChoiceCard
-            key={choice.id}
-            choice={choice}
-            cardDefinitionsById={props.cardDefinitionsById}
-            onChoose={props.onChoice}
-          />
-        ))}
+      <div className="choice-area">
+        {props.state.currentNode.type === "REWARD" && props.state.pendingRewardSource ? (
+          <div className="reward-reveal">
+            <strong>Victory</strong>
+            <span>Defeated: {props.state.pendingRewardSource.defeatedMonsterName ?? "Enemy"}</span>
+            <span>Dropped reward choices</span>
+          </div>
+        ) : null}
+        <div className="choice-list">
+          {props.state.currentChoices.map((choice) => (
+            <ChoiceCard
+              key={choice.id}
+              choice={choice}
+              cardDefinitionsById={props.cardDefinitionsById}
+              onChoose={props.onChoice}
+              disabled={choice.type === "SHOP_CARD" && choice.purchased === true}
+            />
+          ))}
+        </div>
+        {props.state.currentNode.type === "SHOP" ? (
+          <button className="primary-action" type="button" onClick={props.onLeaveShop}>
+            Leave Shop
+          </button>
+        ) : null}
       </div>
     );
   }

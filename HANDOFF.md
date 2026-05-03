@@ -73,13 +73,16 @@ removeCardFromFormation no longer checks chest capacity, because ownedCards alre
 Phase 10 prototype-only owned cards have been replaced in the main UI by real RunManager state.
 Phase 11 RunState and RunManager are implemented under src/run and are intended to be serializable in Phase 12.
 New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
-RunManager owns chest/owned card state, formation placement, selling, deterministic shop/event/reward choices, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
+RunManager owns chest/owned card state, ownedSkills, formation placement, selling, deterministic shop/event/reward choices, shop offer state, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
 Run node order begins with starter shop, starter event, easy battle, reward, shop, normal battle, reward, shop, elite battle, reward, then repeats shop/event -> battle -> reward cycles until level 10.
 At level 10, the next generated battle node is the final boss; boss win sets VICTORY and boss loss/draw sets DEFEAT.
 Shop and event resolution grant 1 EXP once. Battle wins grant 1 encounter EXP + 3 win EXP. Level-up threshold is 10 EXP.
 Level-ups increase max HP by ceil(10%), heal current HP to max HP, and generate deterministic level-up reward choices.
-Reward choices now support deterministic card, gold, and upgrade choices; battle rewards include a monster rewardPool card when available.
-Card upgrades use a simple CardInstance tierOverride for runtime economy/reward purposes; combat card definitions remain unchanged.
+Shop purchases no longer auto-advance; bought shop choices are marked purchased/sold out and leaveShop() grants shop EXP once.
+Reward reveal state records defeated monster name plus used monster card definition ids before reward choice selection.
+Reward choices now support deterministic card, gold, upgrade, and skill choices; battle rewards prioritize used monster cards, then monster rewardPool, then fallback.
+Minimal skills exist under src/run/skills and are owned through RunState. Skills currently instantiate existing ModifierSystem modifiers only.
+Card upgrades use CardInstance.tierOverride plus effective card definitions so upgraded tiers scale combat values/cooldowns and normal UI display.
 Battle nodes use Phase 9 MonsterGenerator and existing CombatEngine; no separate monster battle system was added.
 DRAW is treated as DEFEAT for MVP run completion.
 Player-facing replay UI displays seconds via formatTicksAsSeconds and event-specific friendly text instead of raw payload fields.
@@ -89,7 +92,7 @@ Card summaries and card metadata are player-facing seconds-only: Burn duration a
 Empty player/enemy slots render separate Slot N and Empty labels.
 Debug replay export helper exists at scripts/exportSampleCombatReplay.ts. Run `pnpm export:sample-replay` to build TS and write JSON under debug/combat-replays/.
 The root debug/ folder is gitignored; browser UI does not write to the local filesystem.
-Known limitation: CardInstance.tierOverride currently affects run economy/display and reward presentation, but does not scale combat stats or card effects.
+Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree, save/load, or new trigger hook/status/resource system exists yet.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, and expanded RunManager tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, branching map, async PvP, and complex content expansion are not implemented yet.
 ```
@@ -112,7 +115,7 @@ Reminder: save/load is Phase 12 and should persist/restore the new RunState rath
 1. Run pnpm dev.
 2. Open the shown localhost URL.
 3. Confirm the run starts at level 1, 0 EXP, 10 gold, 40/40 HP, 0 owned cards, and a starter shop.
-4. Pick a starter shop card, then pick a starter event option, and confirm EXP increases by 1 per resolved node.
+4. Buy one or more starter shop cards, confirm the shop stays open, then click Leave Shop and confirm shop EXP is granted once.
 5. Select a chest card, click a formation slot, and confirm the card moves out of chest view.
 6. Start battle, confirm Replay and Summary populate, then click Continue to reach reward or defeat.
 7. Choose reward and continue through repeated shop/event, battle, and reward nodes.

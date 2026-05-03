@@ -1,6 +1,7 @@
 import type { CardInstance, CardTier } from "../model/card.js";
 import type { FormationSnapshot } from "../model/formation.js";
 import type { CombatResult } from "../model/result.js";
+import type { SkillInstance } from "./skills/Skill.js";
 
 export type RunStatus = "IN_PROGRESS" | "VICTORY" | "DEFEAT";
 export type RunNodeType = "SHOP" | "EVENT" | "BATTLE" | "REWARD" | "LEVEL_UP_REWARD" | "RUN_RESULT";
@@ -26,6 +27,7 @@ export interface ShopChoice {
   readonly type: "SHOP_CARD";
   readonly cardDefinitionId: string;
   readonly cost: number;
+  readonly purchased?: boolean;
 }
 
 export interface EventChoice {
@@ -39,27 +41,44 @@ export interface EventChoice {
 
 export interface RewardChoice {
   readonly id: string;
-  readonly type: "REWARD_CARD" | "REWARD_GOLD" | "REWARD_UPGRADE";
+  readonly type: "REWARD_CARD" | "REWARD_GOLD" | "REWARD_UPGRADE" | "REWARD_SKILL";
   readonly label: string;
   readonly cardDefinitionId?: string;
   readonly gold?: number;
   readonly cardInstanceId?: string;
   readonly fromTier?: CardTier;
   readonly toTier?: CardTier;
+  readonly skillDefinitionId?: string;
+  readonly preview?: string;
 }
 
 export interface LevelUpRewardChoice {
   readonly id: string;
-  readonly type: "LEVEL_GOLD" | "LEVEL_CARD" | "LEVEL_UPGRADE";
+  readonly type: "LEVEL_GOLD" | "LEVEL_CARD" | "LEVEL_UPGRADE" | "LEVEL_SKILL";
   readonly label: string;
   readonly gold?: number;
   readonly cardDefinitionId?: string;
   readonly cardInstanceId?: string;
   readonly fromTier?: CardTier;
   readonly toTier?: CardTier;
+  readonly skillDefinitionId?: string;
+  readonly preview?: string;
 }
 
 export type RunChoice = ShopChoice | EventChoice | RewardChoice | LevelUpRewardChoice;
+
+export interface RunShopState {
+  readonly nodeId: string;
+  readonly choices: readonly ShopChoice[];
+  readonly purchasedOptionIds: readonly string[];
+  readonly expGranted: boolean;
+}
+
+export interface PendingRewardSource {
+  readonly defeatedMonsterId?: string;
+  readonly defeatedMonsterName?: string;
+  readonly usedCardDefinitionIds: readonly string[];
+}
 
 export interface RunState {
   readonly runId: string;
@@ -73,6 +92,7 @@ export interface RunState {
   readonly currentHp: number;
   readonly maxHp: number;
   readonly ownedCards: readonly CardInstance[];
+  readonly ownedSkills: readonly SkillInstance[];
   readonly formationSlots: readonly RunFormationSlot[];
   readonly formationSlotCount: number;
   readonly chestCapacity: number;
@@ -84,6 +104,8 @@ export interface RunState {
   readonly pendingBattleResult?: CombatResult;
   readonly pendingRewardChoices: readonly RewardChoice[];
   readonly pendingLevelUpChoices: readonly LevelUpRewardChoice[];
+  readonly pendingRewardSource?: PendingRewardSource;
+  readonly shopStates: readonly RunShopState[];
   readonly completedEncounterCount: number;
   readonly defeatedBattleCount: number;
   readonly classId: string;
@@ -98,4 +120,5 @@ export interface RunActionResult {
   readonly ok: boolean;
   readonly state: RunState;
   readonly error?: string;
+  readonly message?: string;
 }

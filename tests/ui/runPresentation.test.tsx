@@ -79,9 +79,12 @@ describe("run presentation", () => {
       label: "Upgrade Rusty Blade",
       cardInstanceId: "card-1",
       fromTier: "BRONZE",
-      toTier: "SILVER"
+      toTier: "SILVER",
+      preview: "Damage 2 -> 3, Cooldown 0.75s -> 0.75s"
     };
 
-    expect(getChoiceDisplayInfo(choice, cardDefinitionsById).meta).toContain("Upgrade tier: BRONZE -> SILVER");
+    const display = getChoiceDisplayInfo(choice, cardDefinitionsById);
+    expect(display.meta).toContain("Upgrade tier: BRONZE -> SILVER");
+    expect(display.summary).toBe("Damage 2 -> 3, Cooldown 0.75s -> 0.75s");
   });
 });

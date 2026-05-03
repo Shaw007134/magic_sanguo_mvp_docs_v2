@@ -17,6 +17,7 @@ export function createSampleCombatReplayExport(seed = "debug-sample-combat"): Sa
     throw new Error("Sample run could not find a starter shop card.");
   }
   manager.chooseShopOption(shopChoice.id);
+  manager.leaveShop();
   const eventChoice = manager.state.currentChoices.find((choice) => choice.type === "EVENT_CARD" || choice.type === "EVENT_GOLD");
   if (!eventChoice) {
     throw new Error("Sample run could not find a starter event choice.");

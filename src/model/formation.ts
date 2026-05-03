@@ -7,6 +7,7 @@ export type CombatantKind = (typeof COMBATANT_KINDS)[number];
 
 export interface SkillSnapshot {
   readonly id: string;
+  readonly definitionId?: string;
 }
 
 export interface RelicSnapshot {

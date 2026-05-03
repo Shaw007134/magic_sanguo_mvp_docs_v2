@@ -1,7 +1,10 @@
 import type { CardDefinition, CardInstance, CardTier } from "../../model/card.js";
 import { getMonsterTemplateById } from "../../content/monsters/monsterTemplates.js";
+import { describeUpgradePreview } from "../../content/cards/effectiveCardDefinition.js";
 import { shuffleDeterministic } from "../deterministic.js";
 import type { LevelUpRewardChoice, RewardChoice } from "../RunState.js";
+import { SKILL_DEFINITIONS } from "../skills/skillDefinitions.js";
+import type { SkillInstance } from "../skills/Skill.js";
 
 const CARD_TIER_UPGRADES = {
   BRONZE: "SILVER",
@@ -14,26 +17,33 @@ export function createRewardChoices(input: {
   readonly seed: string;
   readonly nodeIndex: number;
   readonly defeatedMonsterId?: string;
+  readonly usedCardDefinitionIds?: readonly string[];
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly ownedCards?: readonly CardInstance[];
+  readonly ownedSkills?: readonly SkillInstance[];
 }): readonly RewardChoice[] {
   const rewardPool = input.defeatedMonsterId
     ? (getMonsterTemplateById(input.defeatedMonsterId)?.rewardPool ?? [])
     : [];
   const poolCards = rewardPool.filter((cardId) => input.cardDefinitionsById.has(cardId));
-  const shuffledCards = shuffleDeterministic(
-    [...new Set([...poolCards, ...input.cardDefinitionsById.keys()])],
+  const usedCards = (input.usedCardDefinitionIds ?? []).filter((cardId) => input.cardDefinitionsById.has(cardId));
+  const fallbackCards = shuffleDeterministic(
+    [...input.cardDefinitionsById.keys()],
     `${input.seed}:reward:${input.nodeIndex}:${input.defeatedMonsterId ?? "none"}`
   );
-  const firstCard = poolCards[0] ?? shuffledCards[0] ?? "rusty-blade";
-  const choices: RewardChoice[] = [
-    {
-      id: `reward-${input.nodeIndex}-card-0`,
-      type: "REWARD_CARD",
-      label: `Take ${input.cardDefinitionsById.get(firstCard)?.name ?? firstCard}`,
-      cardDefinitionId: firstCard
+  const orderedCards = [...new Set([...usedCards, ...poolCards, ...fallbackCards])];
+  const choices: RewardChoice[] = [];
+  for (const cardDefinitionId of orderedCards) {
+    if (choices.length >= 2) {
+      break;
     }
-  ];
+    choices.push({
+      id: `reward-${input.nodeIndex}-card-${choices.length}`,
+      type: "REWARD_CARD",
+      label: `Take ${input.cardDefinitionsById.get(cardDefinitionId)?.name ?? cardDefinitionId}`,
+      cardDefinitionId
+    });
+  }
 
   const upgrade = findUpgradeableCard(input.ownedCards ?? [], input.cardDefinitionsById);
   if (upgrade) {
@@ -43,18 +53,32 @@ export function createRewardChoices(input: {
       label: `Upgrade ${input.cardDefinitionsById.get(upgrade.card.definitionId)?.name ?? upgrade.card.definitionId}`,
       cardInstanceId: upgrade.card.instanceId,
       fromTier: upgrade.fromTier,
-      toTier: upgrade.toTier
+      toTier: upgrade.toTier,
+      preview: upgrade.preview
     });
   }
 
-  choices.push({
-    id: `reward-${input.nodeIndex}-gold`,
-    type: "REWARD_GOLD",
-    label: "Take 4 gold",
-    gold: 4
-  });
+  if (choices.length < 3) {
+    const skillDefinition = findUnownedSkill(input.ownedSkills ?? []);
+    if (skillDefinition) {
+      choices.push({
+        id: `reward-${input.nodeIndex}-skill`,
+        type: "REWARD_SKILL",
+        label: `Learn ${skillDefinition.name}`,
+        skillDefinitionId: skillDefinition.id
+      });
+    }
+  }
+  if (choices.length < 3) {
+    choices.push({
+      id: `reward-${input.nodeIndex}-gold`,
+      type: "REWARD_GOLD",
+      label: "Take 4 gold",
+      gold: 4
+    });
+  }
 
-  for (const cardDefinitionId of shuffledCards) {
+  for (const cardDefinitionId of orderedCards) {
     if (choices.length >= 3) {
       break;
     }
@@ -76,6 +100,7 @@ export function createLevelUpRewardChoices(input: {
   readonly seed: string;
   readonly level: number;
   readonly ownedCards: readonly CardInstance[];
+  readonly ownedSkills?: readonly SkillInstance[];
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
 }): readonly LevelUpRewardChoice[] {
   const shuffledCards = shuffleDeterministic(
@@ -83,6 +108,7 @@ export function createLevelUpRewardChoices(input: {
     `${input.seed}:level-up:${input.level}`
   );
   const cardDefinitionId = shuffledCards[0] ?? "rusty-blade";
+  const skillDefinition = findUnownedSkill(input.ownedSkills ?? [], `${input.seed}:level-skill:${input.level}`);
   const choices = [
     {
       id: `level-${input.level}-gold`,
@@ -95,7 +121,17 @@ export function createLevelUpRewardChoices(input: {
       type: "LEVEL_CARD" as const,
       label: `Add ${input.cardDefinitionsById.get(cardDefinitionId)?.name ?? cardDefinitionId}`,
       cardDefinitionId
-    }
+    },
+    ...(skillDefinition
+      ? [
+          {
+            id: `level-${input.level}-skill`,
+            type: "LEVEL_SKILL" as const,
+            label: `Learn ${skillDefinition.name}`,
+            skillDefinitionId: skillDefinition.id
+          }
+        ]
+      : [])
   ];
   const upgrade = findUpgradeableCard(input.ownedCards, input.cardDefinitionsById);
   return upgrade
@@ -107,9 +143,11 @@ export function createLevelUpRewardChoices(input: {
           label: `Upgrade ${input.cardDefinitionsById.get(upgrade.card.definitionId)?.name ?? upgrade.card.definitionId}`,
           cardInstanceId: upgrade.card.instanceId,
           fromTier: upgrade.fromTier,
-          toTier: upgrade.toTier
+          toTier: upgrade.toTier,
+          preview: upgrade.preview
         }
       ]
+        .slice(0, 3)
     : [
         ...choices,
         {
@@ -118,7 +156,7 @@ export function createLevelUpRewardChoices(input: {
           label: "Gain 3 gold",
           gold: 3
         }
-      ];
+      ].slice(0, 3);
 }
 
 function findUpgradeableCard(
@@ -129,9 +167,19 @@ function findUpgradeableCard(
     const definition = cardDefinitionsById.get(card.definitionId);
     const fromTier = card.tierOverride ?? definition?.tier;
     const toTier = fromTier ? CARD_TIER_UPGRADES[fromTier as keyof typeof CARD_TIER_UPGRADES] : undefined;
-    if (fromTier && toTier) {
-      return { card, fromTier, toTier };
+    if (definition && fromTier && toTier) {
+      return {
+        card,
+        fromTier,
+        toTier,
+        preview: describeUpgradePreview({ card, baseDefinition: definition, toTier })
+      };
     }
   }
   return undefined;
+}
+
+function findUnownedSkill(ownedSkills: readonly SkillInstance[], seed = "skill-reward") {
+  const ownedDefinitionIds = new Set(ownedSkills.map((skill) => skill.definitionId));
+  return shuffleDeterministic(SKILL_DEFINITIONS, seed).find((skill) => !ownedDefinitionIds.has(skill.id));
 }

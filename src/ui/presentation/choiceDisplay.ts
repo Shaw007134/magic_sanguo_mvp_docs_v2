@@ -1,6 +1,7 @@
 import type { CardDefinition } from "../../model/card.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
 import type { RunChoice } from "../../run/RunState.js";
+import { getSkillDefinitionsById } from "../../run/skills/skillDefinitions.js";
 import { getCardDisplayInfo } from "./cardDisplay.js";
 
 export interface ChoiceDisplayInfo {
@@ -96,12 +97,22 @@ export function getChoiceDisplayInfo(
     };
   }
 
+  if (choice.type === "REWARD_SKILL" || choice.type === "LEVEL_SKILL") {
+    const skill = choice.skillDefinitionId ? getSkillDefinitionsById().get(choice.skillDefinitionId) : undefined;
+    return {
+      title: skill ? choice.label : choice.label,
+      subtitle: "Skill reward",
+      meta: skill ? [skill.name, skill.tier] : [],
+      summary: skill?.description
+    };
+  }
+
   if (choice.type === "REWARD_UPGRADE" || choice.type === "LEVEL_UPGRADE") {
     return {
       title: choice.label,
       subtitle: "Upgrade reward",
       meta: [`Upgrade tier: ${choice.fromTier ?? "?"} -> ${choice.toTier ?? "?"}`],
-      summary: "Tier upgrade affects run economy/display only in this MVP patch."
+      summary: choice.preview
     };
   }
 

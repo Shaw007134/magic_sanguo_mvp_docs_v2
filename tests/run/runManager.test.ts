@@ -11,6 +11,14 @@ function chooseFirstShop(manager: RunManager) {
   return manager.chooseShopOption(choice.id);
 }
 
+function leaveShop(manager: RunManager) {
+  const result = manager.leaveShop();
+  if (!result.ok) {
+    throw new Error(result.error ?? "Failed to leave shop.");
+  }
+  return result;
+}
+
 function chooseFirstEvent(manager: RunManager) {
   const choice = manager.state.currentChoices.find((candidate) => candidate.type === "EVENT_CARD" || candidate.type === "EVENT_GOLD");
   if (!choice) {
@@ -61,6 +69,7 @@ function fakeCombatResult(winner: CombatResult["winner"], playerFinalHp = 12): C
 
 function reachFirstBattle(manager: RunManager) {
   chooseFirstShop(manager);
+  leaveShop(manager);
   chooseFirstEvent(manager);
   expect(manager.getCurrentNode().type).toBe("BATTLE");
 }
@@ -81,7 +90,8 @@ function completeFakeBattleWin(manager: RunManager, playerFinalHp = 12) {
       skills: [],
       relics: [],
       aiProfile: { id: "training-dummy" }
-    }
+    },
+    currentEnemyCardInstances: [{ instanceId: "dummy-staff", definitionId: "training-staff" }]
   };
   return manager.completeBattle();
 }
@@ -103,6 +113,8 @@ describe("RunManager", () => {
     expect(manager.getCurrentNode().type).toBe("SHOP");
     expect(manager.state.currentChoices.some((choice) => choice.type === "SHOP_CARD" && choice.cost <= 10)).toBe(true);
     chooseFirstShop(manager);
+    expect(manager.getCurrentNode().type).toBe("SHOP");
+    leaveShop(manager);
     expect(manager.getCurrentNode().type).toBe("EVENT");
   });
 
@@ -110,6 +122,8 @@ describe("RunManager", () => {
     const manager = createNewRun("exp");
 
     chooseFirstShop(manager);
+    expect(manager.state.exp).toBe(0);
+    leaveShop(manager);
     expect(manager.state.exp).toBe(1);
     chooseFirstEvent(manager);
     expect(manager.state.exp).toBe(2);
@@ -153,6 +167,7 @@ describe("RunManager", () => {
     expect(manager.removeCardFromFormationToChest(card.instanceId).ok).toBe(true);
     expect(manager.getChestCards()).toEqual([card]);
 
+    leaveShop(manager);
     chooseFirstEvent(manager);
     expect(manager.getCurrentNode().type).toBe("BATTLE");
     completeFakeBattleWin(manager);
@@ -165,6 +180,27 @@ describe("RunManager", () => {
       expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
     }
     expect(manager.addCardToChest("rusty-blade").ok).toBe(false);
+  });
+
+  it("shop can buy multiple cards and leave grants shop exp once", () => {
+    const manager = createNewRun("multi-shop");
+    const choices = manager.state.currentChoices.filter((choice) => choice.type === "SHOP_CARD");
+
+    expect(manager.chooseShopOption(choices[0]!.id).ok).toBe(true);
+    expect(manager.getCurrentNode().type).toBe("SHOP");
+    const purchasedChoice = manager.state.currentChoices.find(
+      (choice): choice is typeof choices[number] => choice.id === choices[0]!.id && choice.type === "SHOP_CARD"
+    );
+    expect(purchasedChoice?.purchased).toBe(true);
+    expect(manager.chooseShopOption(choices[1]!.id).ok).toBe(true);
+    expect(manager.state.ownedCards).toHaveLength(2);
+
+    expect(manager.leaveShop().ok).toBe(true);
+    expect(manager.state.exp).toBe(1);
+    expect(manager.getCurrentNode().type).toBe("EVENT");
+    manager.state = { ...manager.state, currentNode: { id: "starter-shop-1", type: "SHOP", day: 1, label: "Starter Shop" }, currentNodeIndex: 0 };
+    expect(manager.leaveShop().ok).toBe(true);
+    expect(manager.state.exp).toBe(1);
   });
 
   it("cannot place unowned or duplicate cards, and removing from formation works at full capacity", () => {
@@ -228,6 +264,53 @@ describe("RunManager", () => {
 
     expect(manager.getCurrentNode().type).toBe("REWARD");
     expect(manager.state.currentChoices.some((choice) => choice.type === "REWARD_CARD" && choice.cardDefinitionId === "rusty-blade")).toBe(true);
+  });
+
+  it("battle victory reveals reward source and can prioritize monster-used cards", () => {
+    const manager = createNewRun("reward-reveal");
+    reachFirstBattle(manager);
+    completeFakeBattleWin(manager);
+
+    expect(manager.state.pendingRewardSource?.defeatedMonsterName).toBe("Training Dummy");
+    expect(manager.state.pendingRewardChoices.length).toBeGreaterThan(0);
+    expect(manager.state.currentChoices.some((choice) => choice.type === "REWARD_CARD" && choice.cardDefinitionId === "training-staff")).toBe(true);
+  });
+
+  it("RunState includes owned skills and skill rewards can be learned", () => {
+    const manager = createNewRun("skill-reward");
+    manager.gainExp(10, "test");
+    const skillChoice = manager.state.currentChoices.find((choice) => choice.type === "LEVEL_SKILL");
+    expect(manager.state.ownedSkills).toEqual([]);
+    expect(skillChoice).toBeDefined();
+    if (!skillChoice) {
+      throw new Error("Missing skill choice.");
+    }
+
+    expect(manager.chooseLevelUpReward(skillChoice.id).ok).toBe(true);
+    expect(manager.state.ownedSkills).toHaveLength(1);
+    expect(manager.getPlayerFormationSnapshot().skills).toEqual([
+      { id: "run-skill-1", definitionId: manager.state.ownedSkills[0]?.definitionId }
+    ]);
+  });
+
+  it("upgraded card affects combat result compared with base card", () => {
+    const base = createNewRun("upgrade-combat-base");
+    const upgraded = createNewRun("upgrade-combat-upgraded");
+    for (const manager of [base, upgraded]) {
+      manager.addCardToChest("rusty-blade");
+      manager.moveCardFromChestToFormation(manager.state.ownedCards[0]!.instanceId, 1);
+      manager.advanceToNextNode();
+      manager.advanceToNextNode();
+    }
+    upgraded.state = {
+      ...upgraded.state,
+      ownedCards: [{ ...upgraded.state.ownedCards[0]!, tierOverride: "GOLD" }]
+    };
+
+    expect(base.startBattle().ok).toBe(true);
+    expect(upgraded.startBattle().ok).toBe(true);
+    expect(upgraded.state.pendingCombatResult!.summary.damageByCard[upgraded.state.ownedCards[0]!.instanceId])
+      .toBeGreaterThan(base.state.pendingCombatResult!.summary.damageByCard[base.state.ownedCards[0]!.instanceId] ?? 0);
   });
 
   it("loss and draw set run status DEFEAT", () => {

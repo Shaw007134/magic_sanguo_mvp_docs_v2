@@ -1,4 +1,5 @@
 import type { CombatResultSummary } from "../../model/result.js";
+import { formatTicksAsSeconds } from "../../replay/time.js";
 
 export interface ResultSummaryProps {
   readonly summary: CombatResultSummary;
@@ -13,8 +14,8 @@ export function ResultSummary({ summary }: ResultSummaryProps) {
       </div>
       <div className="summary-grid">
         <div>
-          <strong>{summary.ticksElapsed}</strong>
-          <span>Ticks</span>
+          <strong>{formatTicksAsSeconds(summary.ticksElapsed)}</strong>
+          <span>Duration</span>
         </div>
         <div>
           <strong>{summary.playerFinalHp}</strong>

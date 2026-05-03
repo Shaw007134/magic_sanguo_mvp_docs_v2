@@ -140,7 +140,9 @@ small {
 
 .card-list,
 .formation-grid,
-.choice-list {
+.choice-area,
+.choice-list,
+.skill-list {
   display: grid;
   gap: 10px;
 }
@@ -161,6 +163,21 @@ small {
   background: #f8fbfd;
   color: inherit;
   text-align: left;
+}
+
+.choice-card:disabled {
+  cursor: default;
+  opacity: 0.58;
+}
+
+.reward-reveal,
+.skill-card {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid #b9c1c8;
+  border-radius: 6px;
+  background: #f5f8fa;
 }
 
 .choice-card strong {

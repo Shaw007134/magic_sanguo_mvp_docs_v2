@@ -715,3 +715,47 @@ Known issues:
 - CardInstance.tierOverride affects run economy/display and reward presentation but does not scale combat stats or card effects yet.
 Next recommended task:
 - Phase 12: Save And Load.
+
+---
+
+Date: 2026-05-04
+Phase: 11B
+Task: Patched run-loop correctness before Phase 12: shop leave flow, reward reveal/drop priority, minimal skill ownership, and effective upgrade scaling.
+Files changed:
+- src/content/cards/effectiveCardDefinition.ts
+- src/index.ts
+- src/model/formation.ts
+- src/run/RunManager.ts
+- src/run/RunState.ts
+- src/run/rewards/RewardGenerator.ts
+- src/run/skills/Skill.ts
+- src/run/skills/skillDefinitions.ts
+- src/debug/sampleCombatReplayExport.ts
+- src/ui/App.tsx
+- src/ui/components/CardView.tsx
+- src/ui/components/ChoiceCard.tsx
+- src/ui/components/ResultSummary.tsx
+- src/ui/components/SkillPanel.tsx
+- src/ui/presentation/choiceDisplay.ts
+- src/ui/styles.css
+- tests/run/runManager.test.ts
+- tests/ui/runPresentation.test.tsx
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Shop purchase stays on shop node, supports multiple buys, marks purchased choices, and leaveShop grants EXP once.
+- Event choice still auto-advances.
+- Battle victory records reward reveal source and prioritizes monster-used cards before rewardPool/fallback.
+- RunState includes ownedSkills, skill rewards can be selected, and player FormationSnapshot includes owned skills.
+- Upgraded card tierOverride affects combat result through effective card definitions.
+- Upgrade preview shows before/after values and cooldown seconds.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Save/load is not implemented; Phase 12 should persist/restore RunState including shopStates, ownedSkills, pending rewards, and tierOverride.
+- Skills are minimal modifier-based rewards only; no skill tree or new skill hooks/statuses/resources were added.
+- Raw ticks may still appear in dev CombatLog/debug JSON only.
+Next recommended task:
+- Phase 12: Save And Load.

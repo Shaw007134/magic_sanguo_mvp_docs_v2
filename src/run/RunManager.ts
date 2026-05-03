@@ -1,4 +1,11 @@
 import { CombatEngine } from "../combat/CombatEngine.js";
+import type { Modifier } from "../combat/modifiers/Modifier.js";
+import {
+  createEffectiveCardDefinitionMap,
+  createEffectiveCardInstances,
+  getEffectiveCardDefinition,
+  getEffectiveCardDefinitionId
+} from "../content/cards/effectiveCardDefinition.js";
 import { getMonsterCardDefinitionsById } from "../content/cards/monsterCards.js";
 import type { CardDefinition, CardInstance, CardTier } from "../model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
@@ -11,6 +18,7 @@ import { createLevelUpRewardChoices, createRewardChoices } from "./rewards/Rewar
 import type {
   EventChoice,
   LevelUpRewardChoice,
+  PendingRewardSource,
   RewardChoice,
   RunActionResult,
   RunChoice,
@@ -19,6 +27,8 @@ import type {
   RunState,
   ShopChoice
 } from "./RunState.js";
+import type { SkillInstance } from "./skills/Skill.js";
+import { createSkillModifiers, getSkillDefinitionsById } from "./skills/skillDefinitions.js";
 
 const FORMATION_SLOT_COUNT = 4;
 const PLAYER_STARTING_MAX_HP = 40;
@@ -73,6 +83,7 @@ export class RunManager {
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   state: RunState;
   #nextCardInstanceNumber = 1;
+  #nextSkillInstanceNumber = 1;
 
   private constructor(state: RunState, cardDefinitionsById: ReadonlyMap<string, CardDefinition>) {
     this.state = state;
@@ -97,6 +108,7 @@ export class RunManager {
         currentHp: PLAYER_STARTING_MAX_HP,
         maxHp: PLAYER_STARTING_MAX_HP,
         ownedCards: [],
+        ownedSkills: [],
         formationSlots: createEmptyFormationSlots(FORMATION_SLOT_COUNT),
         formationSlotCount: FORMATION_SLOT_COUNT,
         chestCapacity: FORMATION_SLOT_COUNT * 2,
@@ -104,6 +116,7 @@ export class RunManager {
         currentChoices: [],
         pendingRewardChoices: [],
         pendingLevelUpChoices: [],
+        shopStates: [],
         completedEncounterCount: 0,
         defeatedBattleCount: 0,
         classId: CLASS_ID_PLACEHOLDER,
@@ -122,6 +135,10 @@ export class RunManager {
   getChestCards(): readonly CardInstance[] {
     const placed = getPlacedCardIds(this.state.formationSlots);
     return this.state.ownedCards.filter((card) => !placed.has(card.instanceId));
+  }
+
+  getPlayerFormationSnapshot(): FormationSnapshot {
+    return createPlayerFormationSnapshot(this.state);
   }
 
   addCardToChest(cardDefinitionId: string): RunActionResult {
@@ -206,11 +223,17 @@ export class RunManager {
   }
 
   chooseShopOption(optionId: string): RunActionResult {
+    if (this.state.currentNode.type !== "SHOP") {
+      return this.fail("Current node is not a shop.");
+    }
     const choice = this.state.currentChoices.find(
       (candidate): candidate is ShopChoice => candidate.id === optionId && candidate.type === "SHOP_CARD"
     );
     if (!choice) {
       return this.fail("Shop option is not available.");
+    }
+    if (choice.purchased || getCurrentShopState(this.state)?.purchasedOptionIds.includes(optionId)) {
+      return this.fail("Shop option is already sold out.");
     }
     if (this.state.gold < choice.cost) {
       return this.fail("Not enough gold.");
@@ -224,9 +247,28 @@ export class RunManager {
     }
     this.state = {
       ...this.state,
-      gold: this.state.gold - choice.cost
+      gold: this.state.gold - choice.cost,
+      shopStates: updateCurrentShopState(this.state, (shopState) => ({
+        ...shopState,
+        purchasedOptionIds: [...shopState.purchasedOptionIds, optionId]
+      }))
     };
-    this.gainExp(1, "SHOP");
+    this.state = refreshCurrentChoices(this.state, this.cardDefinitionsById);
+    return this.ok("Purchased card.");
+  }
+
+  leaveShop(): RunActionResult {
+    if (this.state.currentNode.type !== "SHOP") {
+      return this.fail("Current node is not a shop.");
+    }
+    const shopState = getCurrentShopState(this.state);
+    if (!shopState?.expGranted) {
+      this.state = {
+        ...this.state,
+        shopStates: updateCurrentShopState(this.state, (current) => ({ ...current, expGranted: true }))
+      };
+      this.gainExp(1, "SHOP");
+    }
     return this.continueAfterEncounter(true);
   }
 
@@ -320,14 +362,20 @@ export class RunManager {
       seed: this.state.seed,
       cardDefinitionsById: this.cardDefinitionsById
     });
+    const effectivePlayerCards = createEffectiveCardInstances(this.state.ownedCards);
+    const effectiveDefinitionsById = createEffectiveCardDefinitionMap({
+      cardInstances: this.state.ownedCards,
+      baseDefinitionsById: this.cardDefinitionsById
+    });
     const result = new CombatEngine().simulate({
       playerFormation,
       enemyFormation: enemy.formation,
       cardInstancesById: new Map([
-        ...this.state.ownedCards.map((card) => [card.instanceId, card] as const),
+        ...effectivePlayerCards.map((card) => [card.instanceId, card] as const),
         ...enemy.cardInstances.map((card) => [card.instanceId, card] as const)
       ]),
-      cardDefinitionsById: this.cardDefinitionsById,
+      cardDefinitionsById: effectiveDefinitionsById,
+      modifiers: createSkillModifiers({ ownedSkills: this.state.ownedSkills, ownerId: "player" }),
       maxCombatTicks: 720
     });
     this.state = {
@@ -357,12 +405,20 @@ export class RunManager {
     }
 
     const defeatedMonsterId = this.state.currentEnemySnapshot?.aiProfile?.id ?? this.state.currentNode.monsterTemplateId;
+    const rewardSource: PendingRewardSource = {
+      defeatedMonsterId,
+      defeatedMonsterName: this.state.currentEnemySnapshot?.displayName,
+      usedCardDefinitionIds: uniqueValues(
+        (this.state.currentEnemyCardInstances ?? []).map((card) => card.definitionId)
+      )
+    };
     const nextState = {
       ...this.state,
       currentHp: Math.max(1, pendingResult.playerFinalHp),
       defeatedBattleCount: this.state.defeatedBattleCount + 1,
       completedEncounterCount: this.state.completedEncounterCount + 1,
       defeatedMonsters: appendDefined(this.state.defeatedMonsters, defeatedMonsterId),
+      pendingRewardSource: rewardSource,
       completedNodes: this.state.completedNodes.includes(this.state.currentNode.id)
         ? this.state.completedNodes
         : [...this.state.completedNodes, this.state.currentNode.id],
@@ -420,6 +476,7 @@ export class RunManager {
       seed: this.state.seed,
       level: nextLevel,
       ownedCards: this.state.ownedCards,
+      ownedSkills: this.state.ownedSkills,
       cardDefinitionsById: this.cardDefinitionsById
     });
     this.state = {
@@ -440,6 +497,7 @@ export class RunManager {
   advanceToNextNode(): RunActionResult {
     const nextIndex = this.state.currentNode.type === "RUN_RESULT" ? this.state.currentNodeIndex : this.state.currentNodeIndex + 1;
     const nextNode = getNodeForIndex(nextIndex, this.state.level, this.state.status);
+    const leavingReward = this.state.currentNode.type === "REWARD";
     this.state = withNodeDerivedState(
       {
         ...this.state,
@@ -450,6 +508,7 @@ export class RunManager {
         currentEnemyCardInstances: undefined,
         pendingCombatResult: undefined,
         pendingBattleResult: undefined,
+        pendingRewardSource: leavingReward ? undefined : this.state.pendingRewardSource,
         completedNodes: this.state.completedNodes.includes(this.state.currentNode.id)
           ? this.state.completedNodes
           : [...this.state.completedNodes, this.state.currentNode.id]
@@ -485,6 +544,9 @@ export class RunManager {
     if (choice.type === "REWARD_UPGRADE") {
       return this.upgradeOwnedCard(choice.cardInstanceId, choice.toTier);
     }
+    if (choice.type === "REWARD_SKILL") {
+      return this.addSkill(choice.skillDefinitionId);
+    }
     if (!choice.cardDefinitionId) {
       return this.fail("Reward card option is missing card definition.");
     }
@@ -501,6 +563,9 @@ export class RunManager {
     }
     if (choice.type === "LEVEL_UPGRADE") {
       return this.upgradeOwnedCard(choice.cardInstanceId, choice.toTier);
+    }
+    if (choice.type === "LEVEL_SKILL") {
+      return this.addSkill(choice.skillDefinitionId);
     }
     if (!choice.cardDefinitionId) {
       return this.fail("Level-up card option is missing card definition.");
@@ -533,11 +598,45 @@ export class RunManager {
       ...this.state,
       ownedCards
     };
-    return this.ok();
+    return this.ok(this.createUpgradeMessage(cardInstanceId, requestedTier));
   }
 
-  private ok(): RunActionResult {
-    return { ok: true, state: this.state };
+  private addSkill(skillDefinitionId: string | undefined): RunActionResult {
+    if (!skillDefinitionId) {
+      return this.fail("Skill reward is missing skill definition.");
+    }
+    const skillDefinition = getSkillDefinitionsById().get(skillDefinitionId);
+    if (!skillDefinition) {
+      return this.fail(`Unknown skill definition: ${skillDefinitionId}`);
+    }
+    if (this.state.ownedSkills.some((skill) => skill.definitionId === skillDefinitionId)) {
+      return this.fail("Skill is already owned.");
+    }
+    const skill: SkillInstance = {
+      instanceId: `run-skill-${this.#nextSkillInstanceNumber}`,
+      definitionId: skillDefinitionId
+    };
+    this.#nextSkillInstanceNumber += 1;
+    this.state = {
+      ...this.state,
+      ownedSkills: [...this.state.ownedSkills, skill]
+    };
+    return this.ok(`Learned ${skillDefinition.name}.`);
+  }
+
+  private createUpgradeMessage(cardInstanceId: string, requestedTier: CardTier | undefined): string {
+    const card = this.state.ownedCards.find((candidate) => candidate.instanceId === cardInstanceId);
+    const baseDefinition = card ? this.cardDefinitionsById.get(card.definitionId) : undefined;
+    if (!card || !baseDefinition) {
+      return "Card upgraded.";
+    }
+    const toTier = requestedTier ?? card.tierOverride;
+    const fromTier = previousTier(toTier) ?? baseDefinition.tier;
+    return `${baseDefinition.name} upgraded: ${fromTier} -> ${toTier ?? "?"}.`;
+  }
+
+  private ok(message?: string): RunActionResult {
+    return { ok: true, state: this.state, message };
   }
 
   private fail(error: string): RunActionResult {
@@ -600,21 +699,22 @@ function getNodeForIndex(index: number, level: number, status: RunState["status"
 }
 
 function withNodeDerivedState(
-  state: Omit<RunState, "currentChoices" | "pendingRewardChoices"> & {
+  state: Omit<RunState, "currentChoices" | "pendingRewardChoices" | "shopStates"> & {
     readonly currentChoices: readonly RunChoice[];
     readonly pendingRewardChoices: readonly RewardChoice[];
+    readonly shopStates: RunState["shopStates"];
   },
   cardDefinitionsById: ReadonlyMap<string, CardDefinition>
 ): RunState {
   const node = state.currentNode;
+  const shopStates = node.type === "SHOP" ? ensureShopState(state, cardDefinitionsById) : state.shopStates;
+  const shopState = shopStates.find((candidate) => candidate.nodeId === node.id);
   const currentChoices =
     node.type === "SHOP"
-      ? createShopChoices({
-          seed: state.seed,
-          nodeIndex: state.currentNodeIndex,
-          cardDefinitionsById,
-          starter: state.currentNodeIndex === 0
-        })
+      ? (shopState?.choices.map((choice) => ({
+          ...choice,
+          purchased: shopState.purchasedOptionIds.includes(choice.id)
+        })) ?? [])
       : node.type === "EVENT"
         ? createEventChoices({
             seed: state.seed,
@@ -625,16 +725,63 @@ function withNodeDerivedState(
           ? createRewardChoices({
               seed: state.seed,
               nodeIndex: state.currentNodeIndex,
-              defeatedMonsterId: state.defeatedMonsters[state.defeatedMonsters.length - 1],
+              defeatedMonsterId: state.pendingRewardSource?.defeatedMonsterId,
+              usedCardDefinitionIds: state.pendingRewardSource?.usedCardDefinitionIds,
               cardDefinitionsById,
-              ownedCards: state.ownedCards
+              ownedCards: state.ownedCards,
+              ownedSkills: state.ownedSkills
             })
           : [];
   return {
     ...state,
+    shopStates,
     currentChoices,
     pendingRewardChoices: node.type === "REWARD" ? (currentChoices as readonly RewardChoice[]) : []
   };
+}
+
+function refreshCurrentChoices(
+  state: RunState,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): RunState {
+  return withNodeDerivedState({ ...state, currentChoices: [], pendingRewardChoices: [] }, cardDefinitionsById);
+}
+
+function ensureShopState(
+  state: Pick<RunState, "shopStates" | "currentNode" | "currentNodeIndex" | "seed">,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): RunState["shopStates"] {
+  if (state.shopStates.some((shopState) => shopState.nodeId === state.currentNode.id)) {
+    return state.shopStates;
+  }
+  const choices = createShopChoices({
+    seed: state.seed,
+    nodeIndex: state.currentNodeIndex,
+    cardDefinitionsById,
+    starter: state.currentNodeIndex === 0
+  });
+  return [
+    ...state.shopStates,
+    {
+      nodeId: state.currentNode.id,
+      choices,
+      purchasedOptionIds: [],
+      expGranted: false
+    }
+  ];
+}
+
+function getCurrentShopState(state: RunState) {
+  return state.shopStates.find((shopState) => shopState.nodeId === state.currentNode.id);
+}
+
+function updateCurrentShopState(
+  state: RunState,
+  update: (shopState: NonNullable<ReturnType<typeof getCurrentShopState>>) => NonNullable<ReturnType<typeof getCurrentShopState>>
+) {
+  return state.shopStates.map((shopState) =>
+    shopState.nodeId === state.currentNode.id ? update(shopState) : shopState
+  );
 }
 
 function createEmptyFormationSlots(slotCount: number): readonly RunFormationSlot[] {
@@ -684,7 +831,7 @@ function createPlayerFormationSnapshot(state: RunState): FormationSnapshot {
     maxHp: state.currentHp,
     startingArmor: 0,
     slots: state.formationSlots.map(toFormationSlot),
-    skills: [],
+    skills: state.ownedSkills.map((skill) => ({ id: skill.instanceId, definitionId: skill.definitionId })),
     relics: []
   };
 }
@@ -745,4 +892,23 @@ function clearCardFootprint(
 
 function appendDefined(values: readonly string[], value: string | undefined): readonly string[] {
   return value === undefined ? values : [...values, value];
+}
+
+function uniqueValues(values: readonly string[]): readonly string[] {
+  return [...new Set(values)];
+}
+
+function previousTier(tier: CardTier | undefined): CardTier | undefined {
+  switch (tier) {
+    case "SILVER":
+      return "BRONZE";
+    case "GOLD":
+      return "SILVER";
+    case "JADE":
+      return "GOLD";
+    case "CELESTIAL":
+      return "JADE";
+    default:
+      return undefined;
+  }
 }
