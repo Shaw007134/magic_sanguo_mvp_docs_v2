@@ -797,3 +797,36 @@ Known issues:
 - Raw ticks may still appear in dev CombatLog/debug JSON only.
 Next recommended task:
 - Phase 12: Save And Load.
+
+---
+
+Date: 2026-05-04
+Phase: 11B reward upgrade/scaling patch
+Task: Removed direct upgrade choices from normal battle rewards and made tier upgrades produce meaningful visible/combat stat changes before Phase 12.
+Files changed:
+- src/content/cards/effectiveCardDefinition.ts
+- src/run/RunManager.ts
+- src/run/rewards/RewardGenerator.ts
+- src/ui/App.tsx
+- tests/content/effectiveCardDefinition.test.ts
+- tests/run/runManager.test.ts
+- tests/ui/runPresentation.test.tsx
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Battle reward choices do not include REWARD_UPGRADE.
+- Level-up choices can still include LEVEL_UPGRADE with a non-empty preview.
+- Duplicate dropped card reward selection auto-upgrades the existing owned same-tier card.
+- Rusty Blade SILVER -> GOLD changes an effective stat and combat damage event amount.
+- Upgrade previews omit unchanged cooldown rows.
+- Meaningful-upgrade helper rejects no-op tier comparisons.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Save/load is not implemented; Phase 12 should persist/restore RunState and tierOverride exactly.
+- Normal battle rewards no longer offer direct upgrade choices; duplicate dropped cards can still auto-upgrade through RunManager acquisition rules.
+- Skills remain minimal standalone owned rewards, not a skill tree.
+Next recommended task:
+- Phase 12: Save And Load.

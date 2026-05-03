@@ -1,6 +1,6 @@
 import type { CardDefinition, CardInstance, CardTier } from "../../model/card.js";
 import { getMonsterTemplateById } from "../../content/monsters/monsterTemplates.js";
-import { describeUpgradePreview } from "../../content/cards/effectiveCardDefinition.js";
+import { describeUpgradePreview, hasMeaningfulUpgrade } from "../../content/cards/effectiveCardDefinition.js";
 import { shuffleDeterministic } from "../deterministic.js";
 import type { LevelUpRewardChoice, RewardChoice } from "../RunState.js";
 import { SKILL_DEFINITIONS } from "../skills/skillDefinitions.js";
@@ -42,19 +42,6 @@ export function createRewardChoices(input: {
       type: "REWARD_CARD",
       label: `Take ${input.cardDefinitionsById.get(cardDefinitionId)?.name ?? cardDefinitionId}`,
       cardDefinitionId
-    });
-  }
-
-  const upgrade = findUpgradeableCard(input.ownedCards ?? [], input.cardDefinitionsById);
-  if (upgrade) {
-    choices.push({
-      id: `reward-${input.nodeIndex}-upgrade`,
-      type: "REWARD_UPGRADE",
-      label: `Upgrade ${input.cardDefinitionsById.get(upgrade.card.definitionId)?.name ?? upgrade.card.definitionId}`,
-      cardInstanceId: upgrade.card.instanceId,
-      fromTier: upgrade.fromTier,
-      toTier: upgrade.toTier,
-      preview: upgrade.preview
     });
   }
 
@@ -155,7 +142,7 @@ function findUpgradeableCard(
     const definition = cardDefinitionsById.get(card.definitionId);
     const fromTier = card.tierOverride ?? definition?.tier;
     const toTier = fromTier ? CARD_TIER_UPGRADES[fromTier as keyof typeof CARD_TIER_UPGRADES] : undefined;
-    if (definition && fromTier && toTier) {
+    if (definition && fromTier && toTier && hasMeaningfulUpgrade({ card, baseDefinition: definition, toTier })) {
       return {
         card,
         fromTier,

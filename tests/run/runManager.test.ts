@@ -96,6 +96,13 @@ function completeFakeBattleWin(manager: RunManager, playerFinalHp = 12) {
   return manager.completeBattle();
 }
 
+function firstDamageAmount(result: CombatResult, sourceId: string): number {
+  const event = result.replayTimeline.events.find((candidate) => (
+    candidate.type === "DamageDealt" && candidate.sourceId === sourceId
+  ));
+  return typeof event?.payload?.["amount"] === "number" ? event.payload["amount"] : 0;
+}
+
 describe("RunManager", () => {
   it("new run starts with MVP resources and first two safe growth nodes", () => {
     const manager = createNewRun("start");
@@ -182,6 +189,7 @@ describe("RunManager", () => {
     upgradeManager.gainExp(10, "test");
     const upgradeChoice = upgradeManager.state.pendingLevelUpChoices.find((choice) => choice.type === "LEVEL_UPGRADE");
     expect(upgradeChoice).toBeDefined();
+    expect(upgradeChoice?.preview).toBeTruthy();
     expect(upgradeManager.chooseLevelUpReward(upgradeChoice!.id).ok).toBe(true);
     expect(upgradeManager.state.ownedCards[0]?.tierOverride).toBe("SILVER");
 
@@ -360,6 +368,15 @@ describe("RunManager", () => {
     expect(manager.state.currentChoices.some((choice) => choice.type === "REWARD_CARD" && choice.cardDefinitionId === "rusty-blade")).toBe(true);
   });
 
+  it("battle reward choices do not include direct upgrade rewards", () => {
+    const manager = createNewRun("reward-no-direct-upgrade");
+    manager.addCardToChest("rusty-blade");
+    reachFirstBattle(manager);
+    completeFakeBattleWin(manager);
+
+    expect(manager.state.currentChoices.some((choice) => choice.type === "REWARD_UPGRADE")).toBe(false);
+  });
+
   it("battle victory reveals reward source and can prioritize monster-used cards", () => {
     const manager = createNewRun("reward-reveal");
     reachFirstBattle(manager);
@@ -368,6 +385,24 @@ describe("RunManager", () => {
     expect(manager.state.pendingRewardSource?.defeatedMonsterName).toBe("Training Dummy");
     expect(manager.state.pendingRewardChoices.length).toBeGreaterThan(0);
     expect(manager.state.currentChoices.some((choice) => choice.type === "REWARD_CARD" && choice.cardDefinitionId === "training-staff")).toBe(true);
+  });
+
+  it("selecting a duplicate dropped card auto-upgrades the existing owned card", () => {
+    const manager = createNewRun("duplicate-drop-upgrade");
+    manager.addCardToChest("training-staff");
+    reachFirstBattle(manager);
+    completeFakeBattleWin(manager);
+
+    const rewardChoice = manager.state.currentChoices.find(
+      (choice) => choice.type === "REWARD_CARD" && choice.cardDefinitionId === "training-staff"
+    );
+    expect(rewardChoice).toBeDefined();
+    const result = manager.chooseRewardOption(rewardChoice!.id);
+
+    expect(result.ok).toBe(true);
+    expect(result.message).toContain("Duplicate Training Staff upgraded existing Training Staff");
+    expect(manager.state.ownedCards.filter((card) => card.definitionId === "training-staff")).toHaveLength(1);
+    expect(manager.state.ownedCards.find((card) => card.definitionId === "training-staff")?.tierOverride).toBe("SILVER");
   });
 
   it("RunState includes owned skills and skill rewards can be learned", () => {
@@ -403,8 +438,32 @@ describe("RunManager", () => {
 
     expect(base.startBattle().ok).toBe(true);
     expect(upgraded.startBattle().ok).toBe(true);
-    expect(upgraded.state.pendingCombatResult!.summary.damageByCard[upgraded.state.ownedCards[0]!.instanceId])
-      .toBeGreaterThan(base.state.pendingCombatResult!.summary.damageByCard[base.state.ownedCards[0]!.instanceId] ?? 0);
+    expect(firstDamageAmount(upgraded.state.pendingCombatResult!, upgraded.state.ownedCards[0]!.instanceId))
+      .toBeGreaterThan(firstDamageAmount(base.state.pendingCombatResult!, base.state.ownedCards[0]!.instanceId));
+  });
+
+  it("upgraded card affects combat result compared with previous upgraded tier", () => {
+    const silver = createNewRun("upgrade-combat-silver");
+    const gold = createNewRun("upgrade-combat-gold");
+    for (const manager of [silver, gold]) {
+      manager.addCardToChest("rusty-blade");
+      manager.moveCardFromChestToFormation(manager.state.ownedCards[0]!.instanceId, 1);
+      manager.advanceToNextNode();
+      manager.advanceToNextNode();
+    }
+    silver.state = {
+      ...silver.state,
+      ownedCards: [{ ...silver.state.ownedCards[0]!, tierOverride: "SILVER" }]
+    };
+    gold.state = {
+      ...gold.state,
+      ownedCards: [{ ...gold.state.ownedCards[0]!, tierOverride: "GOLD" }]
+    };
+
+    expect(silver.startBattle().ok).toBe(true);
+    expect(gold.startBattle().ok).toBe(true);
+    expect(firstDamageAmount(gold.state.pendingCombatResult!, gold.state.ownedCards[0]!.instanceId))
+      .toBeGreaterThan(firstDamageAmount(silver.state.pendingCombatResult!, silver.state.ownedCards[0]!.instanceId));
   });
 
   it("loss and draw set run status DEFEAT", () => {

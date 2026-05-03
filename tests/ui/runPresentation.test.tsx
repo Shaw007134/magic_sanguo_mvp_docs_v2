@@ -111,11 +111,11 @@ describe("run presentation", () => {
       cardInstanceId: "card-1",
       fromTier: "BRONZE",
       toTier: "SILVER",
-      preview: "Damage 2 -> 3, Cooldown 0.75s -> 0.75s"
+      preview: "Damage 2 -> 3"
     };
 
     const display = getChoiceDisplayInfo(choice, cardDefinitionsById);
     expect(display.meta).toContain("Upgrade tier: BRONZE -> SILVER");
-    expect(display.summary).toBe("Damage 2 -> 3, Cooldown 0.75s -> 0.75s");
+    expect(display.summary).toBe("Damage 2 -> 3");
   });
 });

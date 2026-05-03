@@ -339,7 +339,9 @@ export class RunManager {
     if (!applyResult.ok) {
       return applyResult;
     }
-    return this.advanceToNextNode();
+    const message = applyResult.message;
+    const advanceResult = this.advanceToNextNode();
+    return advanceResult.ok ? this.ok(message ?? advanceResult.message) : advanceResult;
   }
 
   chooseLevelUpReward(optionId: string): RunActionResult {

@@ -238,7 +238,7 @@ function NodeActions(props: {
           <div className="reward-reveal">
             <strong>Victory</strong>
             <span>Defeated: {props.state.pendingRewardSource.defeatedMonsterName ?? "Enemy"}</span>
-            <span>Dropped reward choices</span>
+            <span>Choose one dropped reward</span>
           </div>
         ) : null}
         {props.state.currentNode.type === "LEVEL_UP_REWARD" ? (

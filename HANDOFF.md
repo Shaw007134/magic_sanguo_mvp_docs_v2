@@ -84,10 +84,13 @@ Shop purchases no longer auto-advance; bought shop choices are marked purchased/
 All player-facing card acquisition paths use RunManager.gainCardOrUpgradeDuplicate(): same-card same-effective-tier duplicates upgrade the existing owned card when possible instead of adding another copy.
 Duplicate auto-upgrade messages include before/after tier and key stat preview; max-tier duplicates can still be added if chest capacity allows.
 Reward reveal state records defeated monster name plus used monster card definition ids before reward choice selection.
-Reward choices now support deterministic card, gold, upgrade, and skill choices; battle rewards prioritize used monster cards, then monster rewardPool, then fallback.
+Battle reward choices now support deterministic dropped cards, skill, gold, and fallback cards; direct REWARD_UPGRADE choices are intentionally excluded from normal battle rewards.
+Battle reward cards still prioritize used monster cards, then monster rewardPool, then generic fallback.
+Level-up rewards still support LEVEL_UPGRADE choices when an owned card has a meaningful visible/combat stat change available.
 Minimal skills exist under src/run/skills and are owned through RunState. Skills currently instantiate existing ModifierSystem modifiers only.
 Owned skills stay separate from ownedCards, render near formation, and are included in player FormationSnapshot creation without going through chest inventory.
 Card upgrades use CardInstance.tierOverride plus effective card definitions so upgraded tiers scale combat values/cooldowns and normal UI display.
+Effective upgrade scaling guarantees upgraded DealDamage, GainArmor, and ApplyBurn amounts increase by at least 1 over the previous effective tier; previews and messages show only changed stats and omit unchanged cooldowns.
 Battle nodes use Phase 9 MonsterGenerator and existing CombatEngine; no separate monster battle system was added.
 DRAW is treated as DEFEAT for MVP run completion.
 Player-facing replay UI displays seconds via formatTicksAsSeconds and event-specific friendly text instead of raw payload fields.
