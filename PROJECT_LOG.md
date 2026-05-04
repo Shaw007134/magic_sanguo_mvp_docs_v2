@@ -947,3 +947,31 @@ Known issues:
 - Saves remain local-only MVP saves with no cloud/account sync.
 Next recommended task:
 - Continue post-MVP iteration or add explicit save migration only when the RunState schema changes.
+
+---
+
+Date: 2026-05-04
+Phase: 13A correctness patch
+Task: Patched Phase 13A skill/content correctness before Phase 13B.
+Files changed:
+- data/skills/mvp_skills.json
+- docs/BALANCE_NOTES.md
+- tests/content/activeContentRegistry.test.ts
+- tests/content/skillDefinitions.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Fire Study modifies fire-tagged direct card damage and safely no-ops on non-fire direct damage.
+- All 8 MVP skills now have concrete effect or safe no-op coverage.
+- Passive trigger validation now requires non-empty known conditions when present, internalCooldownTicks > 0, and maxTriggersPerTick > 0.
+- Starter shop/event and first battle reward availability sanity checks cover active and early-tier cards.
+- Phase 13A card availability is checked through shop, event, and monster reward routes.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Fire support remains tag-based until card DealDamage supports explicit damageType or Burn source attribution exists.
+- Burn tick damage is still not attributed to applying cards.
+Next recommended task:
+- Phase 13B or playtest/tuning pass using the corrected Phase 13A content.

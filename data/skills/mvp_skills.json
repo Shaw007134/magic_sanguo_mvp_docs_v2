@@ -17,12 +17,12 @@
     "id": "fire-study",
     "name": "Fire Study",
     "tier": "BRONZE",
-    "description": "Fire damage is multiplied by 1.25.",
+    "description": "Fire-tagged cards deal 25% more direct damage.",
     "modifierTemplates": [
       {
         "hook": "BeforeDealDamage",
         "priority": 20,
-        "condition": { "damageType": "FIRE" },
+        "condition": { "sourceHasTag": "fire" },
         "operation": { "type": "MULTIPLY_DAMAGE", "value": 1.25 }
       }
     ]
@@ -45,13 +45,13 @@
     "id": "quick-hands",
     "name": "Quick Hands",
     "tier": "SILVER",
-    "description": "Cooldowns recover 25% faster.",
+    "description": "Cooldowns recover 1 point faster.",
     "modifierTemplates": [
       {
         "hook": "BeforeCooldownRecover",
         "priority": 10,
         "condition": { "always": true },
-        "operation": { "type": "MULTIPLY_COOLDOWN_RECOVERY_RATE", "value": 1.25 }
+        "operation": { "type": "ADD_COOLDOWN_RECOVERY_RATE", "value": 1 }
       }
     ]
   },
@@ -73,13 +73,13 @@
     "id": "drumline-training",
     "name": "Drumline Training",
     "tier": "SILVER",
-    "description": "Drum cards recover cooldowns 25% faster.",
+    "description": "Drum cards recover cooldowns 1 point faster.",
     "modifierTemplates": [
       {
         "hook": "BeforeCooldownRecover",
         "priority": 10,
         "condition": { "sourceHasTag": "drum" },
-        "operation": { "type": "MULTIPLY_COOLDOWN_RECOVERY_RATE", "value": 1.25 }
+        "operation": { "type": "ADD_COOLDOWN_RECOVERY_RATE", "value": 1 }
       }
     ]
   },

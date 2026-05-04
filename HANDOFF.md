@@ -88,6 +88,8 @@ Phase 13A active content registry lives at src/content/cards/activeCards.ts and 
 RunManager, ShopNode, EventNode, RewardGenerator through RunManager, MonsterGenerator, SaveManager defaults, UI App cardDefinitionsById, debug replay export, and content tests now use the active registry.
 Expanded card content exists under data/cards/general/ and data/cards/class_iron_warlord/. Legacy ids in data/cards/monster_cards.json remain available for saves/tests.
 Expanded skill content is data-driven through data/skills/mvp_skills.json and still instantiates only existing ModifierSystem modifiers.
+Fire Study is intentionally tag-based in Phase 13A patch: it uses sourceHasTag "fire" to boost direct damage from fire-tagged cards. It does not use damageType FIRE because DealDamageCommand currently emits DIRECT damage for card effects and Burn tick source attribution is deferred.
+Quick Hands and Drumline Training use ADD_COOLDOWN_RECOVERY_RATE instead of a small multiplier because cooldown recovery modifiers round to integer MVP values; a 1.25x multiplier on base recovery 1 is effectively a no-op.
 Phase 13A monster templates include Bandit Duelist, Oil Raider, Shield Sergeant, Drum Adept, Siege Trainee, Banner Guard, Cinder Captain, and Iron Patrol.
 Phase 13A boss templates include Gate Captain Elite, Siege Marshal, and Cinder Strategist. Only Gate Captain Elite is wired as the current final boss.
 docs/BALANCE_NOTES.md documents the content pack, Iron Warlord identity, card roles, skills, monsters, bosses, risky combos, readability risks, and intentionally deferred systems.
@@ -124,9 +126,10 @@ Empty player/enemy slots render separate Slot N and Empty labels.
 Debug replay export helper exists at scripts/exportSampleCombatReplay.ts. Run `pnpm export:sample-replay` to build TS and write JSON under debug/combat-replays/.
 The root debug/ folder is gitignored; browser UI does not write to the local filesystem.
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
+Known limitation: Burn tick damage is not attributed to applying cards, so fire-tagged skills affect direct damage from fire-tagged card effects but not Burn ticks.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
 Known limitation: save format version is 1 with fail-fast validation; future RunState schema changes need explicit migration or a clear unsupported-version failure.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, UI state, expanded RunManager, and SaveManager tests pass.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
 Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
 ```
 

@@ -80,7 +80,7 @@ Iron Warlord should feel like discipline, formation timing, armor-backed aggress
 | Skill | Role | Archetype support | Complexity | Risk note |
 | --- | --- | --- | --- | --- |
 | Weapon Drill | scaler | Blade Tempo, Hybrid Bruiser | simple | too much burst |
-| Fire Study | scaler | Burn Engine, Siege Fire | simple | Burn source tracking currently limits some value |
+| Fire Study | scaler | Burn Engine, Siege Fire | simple | tag-based direct damage only |
 | Lasting Embers | scaler | Burn Engine, Siege Fire | simple | too much Burn pressure |
 | Quick Hands | engine | All cooldown builds | simple | infinite cooldown loop risk |
 | Shield Craft | defense | Armor Counter | simple | too much Armor stall |
@@ -119,6 +119,8 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 - Armor cards use larger numbers than damage cards because Armor does not end fights.
 - Cooldown reduction is adjacency-limited and has long enough cooldowns to avoid self-sustaining loops.
 - Size-2 cards should be powerful enough to justify formation space but slow enough to need support.
+- Current fire support is tag-based. Fire Study checks `sourceHasTag: "fire"` and boosts direct damage from fire-tagged cards, because DealDamage does not yet support explicit damageType in card JSON.
+- Burn tick damage is still not attributed to the applying card, so fire-tagged skill support does not increase Burn tick damage yet.
 
 ## Known Risky Combos
 
@@ -138,7 +140,8 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 
 - Add monster rotation once the run supports it cleanly.
 - Consider better enemy preview grouping by archetype after UI scope expands.
-- Tune Burn after source attribution is implemented, because fire skills currently affect direct Fire damage more reliably than Burn ticks.
+- Tune Burn after source attribution is implemented, because fire skills currently affect direct damage from fire-tagged cards rather than Burn ticks.
+- Revisit damageType-based fire support after DealDamage supports explicit damageType or Burn source attribution exists.
 - Consider explicit size-2 adjacency UI hints before adding more large cards.
 
 ## Intentionally Not Implemented Yet

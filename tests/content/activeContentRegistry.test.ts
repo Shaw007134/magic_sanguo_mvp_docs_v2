@@ -37,6 +37,8 @@ const ironWarlordJsonCards = [
   ...classSiegeFireJson
 ] as readonly CardDefinition[];
 const activeCardsById = getActiveCardDefinitionsById();
+const PHASE_13A_CARD_IDS = new Set([...generalJsonCards, ...ironWarlordJsonCards].map((card) => card.id));
+const EARLY_REWARD_TIERS = new Set(["BRONZE", "SILVER"]);
 
 const NEW_MONSTER_IDS = [
   "bandit-duelist",
@@ -96,6 +98,9 @@ describe("active MVP content registry", () => {
         expect(["ADD_DAMAGE", "MULTIPLY_DAMAGE", "ADD_COOLDOWN_RECOVERY_RATE", "MULTIPLY_COOLDOWN_RECOVERY_RATE", "ADD_STATUS_DURATION", "MULTIPLY_STATUS_DURATION"]).toContain(template.operation.type);
       }
     }
+    expect(SKILL_DEFINITIONS.find((skill) => skill.id === "fire-study")?.modifierTemplates[0]?.condition).toEqual({
+      sourceHasTag: "fire"
+    });
   });
 
   it("monster and boss templates reference known active cards and generate valid snapshots", () => {
@@ -171,6 +176,37 @@ describe("active MVP content registry", () => {
     expect(loaded.ok).toBe(true);
   });
 
+  it("Phase 13A cards can appear through shop, event, and monster reward routes", () => {
+    const shopCanOfferPhase13Card = Array.from({ length: 40 }, (_, index) =>
+      createShopChoices({
+        seed: `phase-13-shop-${index}`,
+        nodeIndex: 4,
+        cardDefinitionsById: activeCardsById
+      })
+    ).some((choices) => choices.some((choice) => PHASE_13A_CARD_IDS.has(choice.cardDefinitionId)));
+    expect(shopCanOfferPhase13Card).toBe(true);
+
+    const eventCanOfferPhase13Card = Array.from({ length: 40 }, (_, index) =>
+      createEventChoices({
+        seed: `phase-13-event-${index}`,
+        nodeIndex: 4,
+        cardDefinitionsById: activeCardsById
+      })
+    ).some((choices) =>
+      choices.some((choice) => choice.type === "EVENT_CARD" && PHASE_13A_CARD_IDS.has(choice.cardDefinitionId ?? ""))
+    );
+    expect(eventCanOfferPhase13Card).toBe(true);
+
+    const rewardChoices = createRewardChoices({
+      seed: "phase-13-monster-reward",
+      nodeIndex: 4,
+      defeatedMonsterId: "oil-raider",
+      usedCardDefinitionIds: ["oil-flask", "ember-banner"],
+      cardDefinitionsById: activeCardsById
+    });
+    expect(rewardChoices.some((choice) => choice.type === "REWARD_CARD" && PHASE_13A_CARD_IDS.has(choice.cardDefinitionId ?? ""))).toBe(true);
+  });
+
   it("starter onboarding still offers active cards before first combat", () => {
     const manager = RunManager.createNewRun("starter-onboarding");
     expect(manager.state.currentNode.type).toBe("SHOP");
@@ -183,6 +219,51 @@ describe("active MVP content registry", () => {
     expect(manager.leaveShop().ok).toBe(true);
     expect(manager.state.currentNode.type).toBe("EVENT");
     expect(manager.state.currentChoices.some((choice) => choice.type === "EVENT_CARD" && activeCardsById.get(choice.cardDefinitionId ?? "")?.type === "ACTIVE")).toBe(true);
+  });
+
+  it("starter shop, starter event, and first battle rewards stay onboarding-safe", () => {
+    const starterShopChoices = createShopChoices({
+      seed: "starter-shop-sanity",
+      nodeIndex: 0,
+      starter: true,
+      cardDefinitionsById: activeCardsById
+    });
+    expect(
+      starterShopChoices.some(
+        (choice) =>
+          choice.cost <= 10 &&
+          activeCardsById.get(choice.cardDefinitionId)?.type === "ACTIVE"
+      )
+    ).toBe(true);
+
+    const starterEventChoices = createEventChoices({
+      seed: "starter-event-sanity",
+      nodeIndex: 1,
+      starter: true,
+      cardDefinitionsById: activeCardsById
+    });
+    expect(
+      starterEventChoices.some(
+        (choice) =>
+          choice.type === "EVENT_CARD" &&
+          activeCardsById.get(choice.cardDefinitionId ?? "")?.type === "ACTIVE"
+      )
+    ).toBe(true);
+
+    const firstBattleRewards = createRewardChoices({
+      seed: "first-battle-reward-sanity",
+      nodeIndex: 3,
+      defeatedMonsterId: "training-dummy",
+      usedCardDefinitionIds: ["training-staff"],
+      cardDefinitionsById: activeCardsById
+    });
+    const rewardCards = firstBattleRewards
+      .filter((choice) => choice.type === "REWARD_CARD")
+      .map((choice) => activeCardsById.get(choice.cardDefinitionId ?? ""))
+      .filter((card): card is CardDefinition => card !== undefined);
+    expect(rewardCards.length).toBeGreaterThan(0);
+    expect(rewardCards.some((card) => EARLY_REWARD_TIERS.has(card.tier))).toBe(true);
+    expect(rewardCards.every((card) => ["GOLD", "JADE", "CELESTIAL"].includes(card.tier))).toBe(false);
   });
 
   it.each([
@@ -233,18 +314,42 @@ function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: strin
 function validateTrigger(trigger: Readonly<Record<string, unknown>>, cardId: string): void {
   expect(["OnCombatStart", "OnCardActivated", "OnDamageDealt", "OnDamageTaken", "OnStatusApplied", "OnBurnTick", "OnCooldownModified", "OnCombatEnd"], `${cardId}:hook`).toContain(trigger["hook"]);
   expect(trigger["internalCooldownTicks"], `${cardId}:internalCooldownTicks`).toBeTypeOf("number");
+  expect(trigger["internalCooldownTicks"], `${cardId}:internalCooldownTicks`).toBeGreaterThan(0);
   expect(trigger["maxTriggersPerTick"], `${cardId}:maxTriggersPerTick`).toBeTypeOf("number");
+  expect(trigger["maxTriggersPerTick"], `${cardId}:maxTriggersPerTick`).toBeGreaterThan(0);
   if (trigger["conditions"] !== undefined) {
-    expect(Object.keys(trigger["conditions"] as Record<string, unknown>), `${cardId}:conditions`).toEqual(
-      expect.arrayContaining([])
-    );
-    for (const key of Object.keys(trigger["conditions"] as Record<string, unknown>)) {
+    expect(isRecord(trigger["conditions"]), `${cardId}:conditions`).toBe(true);
+    const conditions = trigger["conditions"] as Record<string, unknown>;
+    const conditionKeys = Object.keys(conditions);
+    expect(conditionKeys.length, `${cardId}:conditions`).toBeGreaterThan(0);
+    for (const key of conditionKeys) {
       expect(["status", "appliedByOwner", "sourceHasTag", "cardIsAdjacent", "ownerHpBelowPercent", "targetHpBelowPercent"], `${cardId}:condition:${key}`).toContain(key);
+    }
+    if (conditions["status"] !== undefined) {
+      expect(conditions["status"], `${cardId}:conditions.status`).toBe("Burn");
+    }
+    for (const booleanKey of ["appliedByOwner", "cardIsAdjacent"]) {
+      if (conditions[booleanKey] !== undefined) {
+        expect(conditions[booleanKey], `${cardId}:conditions.${booleanKey}`).toBeTypeOf("boolean");
+      }
+    }
+    for (const numberKey of ["ownerHpBelowPercent", "targetHpBelowPercent"]) {
+      if (conditions[numberKey] !== undefined) {
+        expect(conditions[numberKey], `${cardId}:conditions.${numberKey}`).toBeTypeOf("number");
+      }
+    }
+    if (conditions["sourceHasTag"] !== undefined) {
+      expect(conditions["sourceHasTag"], `${cardId}:conditions.sourceHasTag`).toBeTypeOf("string");
+      expect((conditions["sourceHasTag"] as string).trim().length, `${cardId}:conditions.sourceHasTag`).toBeGreaterThan(0);
     }
   }
   for (const effect of (trigger["effects"] as readonly Readonly<Record<string, unknown>>[] | undefined) ?? []) {
     validateEffect(effect, cardId);
   }
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function createInstances(prefix: string, definitionIds: readonly string[]): readonly CardInstance[] {
