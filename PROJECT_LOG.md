@@ -1477,3 +1477,41 @@ Known issues:
 - Starter Blade can still stall against Armor-heavy enemies.
 Next recommended task:
 - Phase 15C: decide between enemy/boss durability tuning, contributor name/readability polish, or the next small mechanic after manual playtests.
+
+---
+
+Date: 2026-05-04
+Phase: 15C
+Task: Implemented enemy/boss durability tuning and report attribution readability.
+Files changed:
+- data/monsters/gate_captain_elite.json
+- data/monsters/siege_marshal.json
+- data/monsters/cinder_strategist.json
+- src/debug/BalanceReport.ts
+- tests/debug/balanceReport.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Balance report baseline now covers 84 entries from 12 sample builds against 7 enemies, including Cinder Strategist.
+- Markdown report tests now assert Boss Challenge Summary, Build Legitimacy Notes, Outcome Attribution Snapshot, likely design causes, and readable contributor names.
+- Boss challenge tests assert every boss/sample entry exists and fragile boss wins receive report-only warning flags.
+Tuning notes:
+- Gate Captain Elite gained durability, starting Armor, and a fuller Armor-backed Blade Tempo support shell.
+- Siege Marshal gained durability, starting Armor, and clearer Drum/Siege support around its slow terminal plan.
+- Cinder Strategist entered the boss report suite and uses Fire Echo Seal pressure instead of the sharper Cinder Seal snowball.
+Report warning changes observed:
+- Latest report has 84 fights and 56 player wins.
+- Starter Blade, Starter Burn, and Starter Poison now lose authored boss checks.
+- Remaining risks are concentrated in Armor Terminal / Late 16-slot fast boss kills, Cinder pressure against fragile samples, and a few cooldown/stall outliers.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+- pnpm balance:report
+Known issues:
+- Armor Terminal and Late 16-slot Combo Build still produce BOSS_TOO_FRAGILE and TERMINAL_TOO_BURSTY warnings against some bosses.
+- Cinder Strategist is intentionally punishing and still kills several fragile builds quickly.
+- Haste / Drum Tempo remains an engine shell without enough output endpoint pressure.
+Next recommended task:
+- Phase 15D: run manual playtests against the Phase 15C boss suite, then either tune terminal burst/boss pressure further or add one small mechanic only if current report risks are accepted.

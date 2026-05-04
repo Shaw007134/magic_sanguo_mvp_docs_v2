@@ -2,13 +2,15 @@
   "id": "siege-marshal",
   "name": "Siege Marshal",
   "difficulty": "BOSS",
-  "slotCount": 4,
-  "maxHp": 54,
-  "startingArmor": 4,
+  "slotCount": 7,
+  "maxHp": 320,
+  "startingArmor": 12,
   "requiredCards": [
     { "cardId": "burning-trebuchet", "slot": 1 },
     { "cardId": "war-drum", "slot": 3 },
-    { "cardId": "siege-brazier", "slot": 4 }
+    { "cardId": "siege-brazier", "slot": 4 },
+    { "cardId": "flame-ram", "slot": 5 },
+    { "cardId": "siege-command", "slot": 7 }
   ],
   "optionalCards": [],
   "defenseStyle": "MODERATE_HP",

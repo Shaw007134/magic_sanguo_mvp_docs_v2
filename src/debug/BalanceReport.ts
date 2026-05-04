@@ -26,7 +26,11 @@ export const BALANCE_WARNING_FLAGS = [
   "LOW_READABILITY_TRIGGER_SPAM",
   "LOW_CARD_CONTRIBUTION",
   "NO_CLEAR_TERMINAL",
-  "TOO_MANY_ZERO_CONTRIBUTORS"
+  "TOO_MANY_ZERO_CONTRIBUTORS",
+  "STARTER_BEATS_BOSS",
+  "BOSS_TOO_FRAGILE",
+  "LATE_BUILD_UNDERPERFORMS",
+  "NO_OUTPUT_ENDPOINT"
 ] as const;
 
 export type BalanceWarningFlag = (typeof BALANCE_WARNING_FLAGS)[number];
@@ -35,6 +39,9 @@ export interface BalanceSampleBuild {
   readonly id: string;
   readonly name: string;
   readonly archetype: string;
+  readonly intendedPhase: "STARTER" | "MID" | "LATE" | "STRESS";
+  readonly expectedBossViable: boolean;
+  readonly expectedWeakness: string;
   readonly level: number;
   readonly maxHp: number;
   readonly formationSlotCount: number;
@@ -76,7 +83,7 @@ export interface BalanceReportEntry {
 export interface BalanceReport {
   readonly generatedAt: string;
   readonly seed: string;
-  readonly sampleBuilds: readonly Pick<BalanceSampleBuild, "id" | "name" | "archetype" | "level" | "formationSlotCount" | "explanation">[];
+  readonly sampleBuilds: readonly Pick<BalanceSampleBuild, "id" | "name" | "archetype" | "intendedPhase" | "expectedBossViable" | "expectedWeakness" | "level" | "formationSlotCount" | "explanation">[];
   readonly entries: readonly BalanceReportEntry[];
 }
 
@@ -100,6 +107,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "starter-blade",
     name: "Starter Blade",
     archetype: "Blade Tempo",
+    intendedPhase: "STARTER",
+    expectedBossViable: false,
+    expectedWeakness: "Armor-heavy enemies and bosses should outlast small physical chip unless a terminal is added.",
     level: 2,
     maxHp: 44,
     formationSlotCount: 4,
@@ -110,6 +120,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "starter-burn",
     name: "Starter Burn",
     archetype: "Burn Engine",
+    intendedPhase: "STARTER",
+    expectedBossViable: false,
+    expectedWeakness: "Decaying Burn should pressure early Armor but should not carry boss fights alone.",
     level: 2,
     maxHp: 44,
     formationSlotCount: 4,
@@ -120,6 +133,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "starter-poison",
     name: "Starter Poison",
     archetype: "Poison Inevitable",
+    intendedPhase: "STARTER",
+    expectedBossViable: false,
+    expectedWeakness: "Poison needs time and protection; bosses should punish this starter shell before inevitability takes over.",
     level: 2,
     maxHp: 44,
     formationSlotCount: 4,
@@ -130,6 +146,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "armor-terminal",
     name: "Armor Terminal",
     archetype: "Armor Terminal",
+    intendedPhase: "LATE",
+    expectedBossViable: true,
+    expectedWeakness: "Needs time to build Armor; fast Burn/status pressure can win before the terminal cycle stabilizes.",
     level: 8,
     maxHp: 72,
     formationSlotCount: 12,
@@ -141,6 +160,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "crit-execution",
     name: "Crit Execution",
     archetype: "Crit Execution",
+    intendedPhase: "LATE",
+    expectedBossViable: true,
+    expectedWeakness: "Needs chip damage before execute scaling matters and has limited defense.",
     level: 8,
     maxHp: 68,
     formationSlotCount: 12,
@@ -152,6 +174,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "siege-burn",
     name: "Siege Burn",
     archetype: "Siege Fire",
+    intendedPhase: "LATE",
+    expectedBossViable: true,
+    expectedWeakness: "Slow siege setup can be raced or disrupted before terminals repeat.",
     level: 8,
     maxHp: 70,
     formationSlotCount: 12,
@@ -163,6 +188,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "poison-heal",
     name: "Poison + Heal",
     archetype: "Poison Inevitable / Medic Support",
+    intendedPhase: "MID",
+    expectedBossViable: true,
+    expectedWeakness: "Can be pressured down before Poison stacks enough damage.",
     level: 7,
     maxHp: 66,
     formationSlotCount: 10,
@@ -173,6 +201,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "burn-reaction",
     name: "Burn + Reaction",
     archetype: "Status Reaction",
+    intendedPhase: "MID",
+    expectedBossViable: true,
+    expectedWeakness: "Needs both Burn density and reaction cards; low status uptime leaves passives quiet.",
     level: 7,
     maxHp: 64,
     formationSlotCount: 10,
@@ -183,6 +214,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "haste-drum-tempo",
     name: "Haste / Drum Tempo",
     archetype: "Drum Command",
+    intendedPhase: "MID",
+    expectedBossViable: false,
+    expectedWeakness: "Engine-heavy shell lacks a dedicated output endpoint and can stall or lose to stronger threats.",
     level: 7,
     maxHp: 64,
     formationSlotCount: 10,
@@ -194,6 +228,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "control-slow-freeze",
     name: "Control Slow / Freeze",
     archetype: "Control Tempo",
+    intendedPhase: "MID",
+    expectedBossViable: false,
+    expectedWeakness: "Control buys time but has no strong terminal, so durable bosses can survive it.",
     level: 7,
     maxHp: 64,
     formationSlotCount: 10,
@@ -204,6 +241,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "frequency-status-soup",
     name: "Frequency Status Soup",
     archetype: "Frequency / Status Reaction",
+    intendedPhase: "LATE",
+    expectedBossViable: true,
+    expectedWeakness: "Many small pieces can become noisy if no reaction payoff becomes a top contributor.",
     level: 8,
     maxHp: 70,
     formationSlotCount: 12,
@@ -214,6 +254,9 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     id: "late-16-slot-combo",
     name: "Late 16-slot Combo Build",
     archetype: "Mixed 16-slot Combo",
+    intendedPhase: "STRESS",
+    expectedBossViable: true,
+    expectedWeakness: "Stress build should beat bosses, but if it wins instantly the boss durability target is too low.",
     level: 10,
     maxHp: 84,
     formationSlotCount: 16,
@@ -241,8 +284,11 @@ const ENEMY_SUITE = [
   { id: "drum-adept", day: 5 },
   { id: "cinder-captain", day: 7 },
   { id: "gate-captain-elite", day: 10 },
-  { id: "siege-marshal", day: 10 }
+  { id: "siege-marshal", day: 10 },
+  { id: "cinder-strategist", day: 10 }
 ] as const;
+
+const BOSS_ENEMY_IDS = new Set(["gate-captain-elite", "siege-marshal", "cinder-strategist"]);
 
 export function createBalanceReport(seed = REPORT_SEED): BalanceReport {
   const cardDefinitionsById = getActiveCardDefinitionsById();
@@ -271,6 +317,9 @@ export function createBalanceReport(seed = REPORT_SEED): BalanceReport {
       id: build.id,
       name: build.name,
       archetype: build.archetype,
+      intendedPhase: build.intendedPhase,
+      expectedBossViable: build.expectedBossViable,
+      expectedWeakness: build.expectedWeakness,
       level: build.level,
       formationSlotCount: build.formationSlotCount,
       explanation: build.explanation
@@ -439,7 +488,7 @@ function collectWarningFlags(input: {
 }): readonly BalanceWarningFlag[] {
   const flags = new Set<BalanceWarningFlag>();
   const elapsedSeconds = input.result.ticksElapsed / LOGIC_TICKS_PER_SECOND;
-  const isBoss = input.enemyId.includes("boss") || input.enemyId.includes("marshal") || input.enemyId.includes("strategist") || input.enemyId.includes("elite");
+  const isBoss = BOSS_ENEMY_IDS.has(input.enemyId);
   const enemyActivationTotal = Object.entries(input.summary.activationsByCard)
     .filter(([sourceId]) => sourceId.startsWith("monster") || sourceId.startsWith(input.enemyId) || sourceId.includes(":"))
     .reduce((total, [, amount]) => total + amount, 0);
@@ -447,6 +496,9 @@ function collectWarningFlags(input: {
   if (elapsedSeconds >= 55) flags.add("TIMEOUT_OR_NEAR_TIMEOUT");
   if (input.result.winner === "ENEMY" && elapsedSeconds <= 10) flags.add("PLAYER_DEAD_TOO_FAST");
   if (input.result.winner === "PLAYER" && isBoss && elapsedSeconds < 8) flags.add("ENEMY_DEAD_TOO_FAST");
+  if (input.result.winner === "PLAYER" && isBoss && input.build.intendedPhase === "STARTER") flags.add("STARTER_BEATS_BOSS");
+  if (input.result.winner === "PLAYER" && isBoss && elapsedSeconds < 12) flags.add("BOSS_TOO_FRAGILE");
+  if (input.result.winner !== "PLAYER" && (input.build.intendedPhase === "LATE" || input.build.intendedPhase === "STRESS") && !isBoss) flags.add("LATE_BUILD_UNDERPERFORMS");
   if (elapsedSeconds >= 45 && (input.healing + input.armorGained + input.summary.armorBlocked) > input.totalDirectDamage) flags.add("STALL_RISK");
   if (Math.max(0, ...Object.values(input.summary.activationsByCard)) >= 55) flags.add("RUNAWAY_COOLDOWN_RISK");
   if (sumValues(input.freezeApplications) >= 8 || (sumValues(input.freezeApplications) >= 4 && enemyActivationTotal <= 2)) flags.add("FREEZE_LOCK_RISK");
@@ -457,6 +509,7 @@ function collectWarningFlags(input: {
   if (isBoss && elapsedSeconds < 15 && Math.max(0, ...Object.values(input.summary.damageByCard)) >= 50) flags.add("TERMINAL_TOO_BURSTY");
   if (Math.max(0, ...Object.values(input.triggerCountByCard)) > 35) flags.add("LOW_READABILITY_TRIGGER_SPAM");
   if (input.build.level >= 7 && input.summary.topContributors.length > 0 && input.summary.topContributors[0]?.score < 8 && elapsedSeconds >= 15) flags.add("NO_CLEAR_TERMINAL");
+  if (!input.build.expectedBossViable && isBoss && elapsedSeconds >= 25 && input.result.winner !== "PLAYER") flags.add("NO_OUTPUT_ENDPOINT");
   if (elapsedSeconds >= 8 && Object.values(input.summary.damageByCard).filter((value) => value <= 0).length >= 4) flags.add("TOO_MANY_ZERO_CONTRIBUTORS");
   if (elapsedSeconds >= 8 && input.summary.topContributors.some((entry) => entry.score <= 1)) flags.add("LOW_CARD_CONTRIBUTION");
 
@@ -472,12 +525,14 @@ function roundSeconds(value: number): number {
 }
 
 export function renderMarkdownReport(report: BalanceReport): string {
+  const cardDefinitionsById = getActiveCardDefinitionsById();
   const warningCounts = countWarnings(report.entries);
   const totalFights = report.entries.length;
   const playerWins = report.entries.filter((entry) => entry.winner === "PLAYER").length;
   const timeoutCount = warningCounts.TIMEOUT_OR_NEAR_TIMEOUT ?? 0;
   const buildSummaries = summarizeByBuild(report.entries);
-  const bossEntries = report.entries.filter((entry) => entry.enemyId === "gate-captain-elite" || entry.enemyId === "siege-marshal");
+  const bossEntries = report.entries.filter((entry) => BOSS_ENEMY_IDS.has(entry.enemyId));
+  const bossSummaries = summarizeBosses(bossEntries);
   const hotspots = report.entries
     .filter((entry) => entry.warningFlags.some((flag) => isSeriousWarning(flag)))
     .sort(compareEntryRisk)
@@ -485,7 +540,7 @@ export function renderMarkdownReport(report: BalanceReport): string {
   const triggerOutliers = collectOutliers(report.entries, "triggerCountByCard", 20);
   const activationOutliers = collectOutliers(report.entries, "cardActivationsByCard", 45);
   const lines = [
-    "# Phase 15B Balance Report",
+    "# Phase 15C Balance Report",
     "",
     `Seed: ${report.seed}`,
     "",
@@ -512,23 +567,36 @@ export function renderMarkdownReport(report: BalanceReport): string {
       `| ${entry.buildName} | ${entry.enemyName} | ${entry.winner} | ${entry.timeElapsedSeconds}s | ${entry.warningFlags.join(", ") || "None"} |`
     ),
     "",
+    "## Boss Challenge Summary",
+    "",
+    "| Boss | Player Win Rate | Avg Time | Fast-Kill Count | Too-Fast Builds | Losing Builds |",
+    "| --- | ---: | ---: | ---: | --- | --- |",
+    ...bossSummaries.map((summary) =>
+      `| ${summary.enemyName} | ${formatPercent(summary.playerWins / summary.fights)} | ${roundSeconds(summary.totalTime / summary.fights)}s | ${summary.fastKillCount} | ${summary.fastKillBuilds.join(", ") || "None"} | ${summary.losingBuilds.join(", ") || "None"} |`
+    ),
+    "",
+    "## Build Legitimacy Notes",
+    "",
+    ...createBuildLegitimacyNotes(report),
+    "",
     "## Warning Hotspots",
     "",
-    hotspots.length > 0 ? "| Build | Enemy | Winner | Time | Warnings |" : "No serious warning hotspots.",
+    hotspots.length > 0 ? "| Build | Enemy | Winner | Time | Warnings | Likely Design Cause |" : "No serious warning hotspots.",
     ...(hotspots.length > 0 ? [
-      "| --- | --- | --- | ---: | --- |",
+      "| --- | --- | --- | ---: | --- | --- |",
       ...hotspots.map((entry) =>
-        `| ${entry.buildName} | ${entry.enemyName} | ${entry.winner} | ${entry.timeElapsedSeconds}s | ${entry.warningFlags.join(", ")} |`
+        `| ${entry.buildName} | ${entry.enemyName} | ${entry.winner} | ${entry.timeElapsedSeconds}s | ${entry.warningFlags.join(", ")} | ${getLikelyDesignCause(entry)} |`
       )
     ] : []),
     "",
-    "## Top Contributor Snapshot",
+    "## Outcome Attribution Snapshot",
     "",
-    "| Build | Enemy | Top Contributor | Score |",
-    "| --- | --- | --- | ---: |",
+    "| Build | Enemy | Winner | Player Top | Enemy Top | Outcome Note |",
+    "| --- | --- | --- | --- | --- | --- |",
     ...report.entries.map((entry) => {
-      const top = entry.topContributors[0];
-      return `| ${entry.buildName} | ${entry.enemyName} | ${top?.sourceId ?? "None"} | ${top?.score ?? 0} |`;
+      const playerTop = findTopContributor(entry, "PLAYER");
+      const enemyTop = findTopContributor(entry, "ENEMY");
+      return `| ${entry.buildName} | ${entry.enemyName} | ${entry.winner} | ${formatContributor(playerTop, entry, cardDefinitionsById)} | ${formatContributor(enemyTop, entry, cardDefinitionsById)} | ${createOutcomeNote(entry)} |`;
     }),
     "",
     "## Trigger / Activation Outliers",
@@ -562,6 +630,17 @@ interface BuildReportSummary {
   readonly playerWins: number;
   readonly totalTime: number;
   readonly warningCounts: Partial<Record<BalanceWarningFlag, number>>;
+}
+
+interface BossReportSummary {
+  readonly enemyId: string;
+  readonly enemyName: string;
+  readonly fights: number;
+  readonly playerWins: number;
+  readonly totalTime: number;
+  readonly fastKillCount: number;
+  readonly fastKillBuilds: readonly string[];
+  readonly losingBuilds: readonly string[];
 }
 
 interface ReportOutlier {
@@ -600,6 +679,43 @@ function summarizeByBuild(entries: readonly BalanceReportEntry[]): readonly Buil
   return [...byBuild.values()];
 }
 
+function summarizeBosses(entries: readonly BalanceReportEntry[]): readonly BossReportSummary[] {
+  const byBoss = new Map<string, {
+    enemyId: string;
+    enemyName: string;
+    fights: number;
+    playerWins: number;
+    totalTime: number;
+    fastKillCount: number;
+    fastKillBuilds: string[];
+    losingBuilds: string[];
+  }>();
+  for (const entry of entries) {
+    const summary = byBoss.get(entry.enemyId) ?? {
+      enemyId: entry.enemyId,
+      enemyName: entry.enemyName,
+      fights: 0,
+      playerWins: 0,
+      totalTime: 0,
+      fastKillCount: 0,
+      fastKillBuilds: [],
+      losingBuilds: []
+    };
+    summary.fights += 1;
+    summary.playerWins += entry.winner === "PLAYER" ? 1 : 0;
+    summary.totalTime += entry.timeElapsedSeconds;
+    if (entry.warningFlags.includes("BOSS_TOO_FRAGILE") || entry.warningFlags.includes("ENEMY_DEAD_TOO_FAST")) {
+      summary.fastKillCount += 1;
+      summary.fastKillBuilds.push(entry.buildName);
+    }
+    if (entry.winner !== "PLAYER") {
+      summary.losingBuilds.push(entry.buildName);
+    }
+    byBoss.set(entry.enemyId, summary);
+  }
+  return [...byBoss.values()];
+}
+
 function countWarnings(entries: readonly BalanceReportEntry[]): Partial<Record<BalanceWarningFlag, number>> {
   const counts: Partial<Record<BalanceWarningFlag, number>> = {};
   for (const entry of entries) {
@@ -624,11 +740,122 @@ function formatWarningCounts(
 function isSeriousWarning(flag: BalanceWarningFlag): boolean {
   return flag === "TIMEOUT_OR_NEAR_TIMEOUT" ||
     flag === "PLAYER_DEAD_TOO_FAST" ||
+    flag === "STARTER_BEATS_BOSS" ||
+    flag === "BOSS_TOO_FRAGILE" ||
+    flag === "LATE_BUILD_UNDERPERFORMS" ||
+    flag === "NO_OUTPUT_ENDPOINT" ||
     flag === "STALL_RISK" ||
     flag === "RUNAWAY_COOLDOWN_RISK" ||
     flag === "FREEZE_LOCK_RISK" ||
     flag === "POISON_HEAL_STALL_RISK" ||
     flag === "TERMINAL_TOO_BURSTY";
+}
+
+function findTopContributor(
+  entry: BalanceReportEntry,
+  side: "PLAYER" | "ENEMY"
+): CombatResultSummary["topContributors"][number] | undefined {
+  return entry.topContributors.find((contributor) => (
+    side === "PLAYER" ? contributor.sourceId.startsWith(`${entry.buildId}-card-`) : contributor.sourceId.startsWith(`${entry.enemyId}:`)
+  ));
+}
+
+function formatContributor(
+  contributor: CombatResultSummary["topContributors"][number] | undefined,
+  entry: BalanceReportEntry,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): string {
+  if (!contributor) {
+    return "None";
+  }
+  return `${resolveSourceName(contributor.sourceId, entry, cardDefinitionsById)} (${contributor.score})`;
+}
+
+function resolveSourceName(
+  sourceId: string,
+  entry: BalanceReportEntry,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): string {
+  const build = SAMPLE_BUILDS.find((candidate) => candidate.id === entry.buildId);
+  const playerMatch = sourceId.match(new RegExp(`^${escapeRegExp(entry.buildId)}-card-(\\d+)$`));
+  if (playerMatch && build) {
+    const cardId = build.cardIds[Number(playerMatch[1]) - 1];
+    return cardId ? cardDefinitionsById.get(cardId)?.name ?? sourceId : sourceId;
+  }
+
+  const enemyPrefix = `${entry.enemyId}:`;
+  if (sourceId.startsWith(enemyPrefix)) {
+    const afterPrefix = sourceId.slice(enemyPrefix.length);
+    const cardId = afterPrefix.replace(/:\d+$/, "");
+    return cardDefinitionsById.get(cardId)?.name ?? sourceId;
+  }
+
+  return sourceId;
+}
+
+function createOutcomeNote(entry: BalanceReportEntry): string {
+  if (entry.warningFlags.includes("STARTER_BEATS_BOSS")) {
+    return "Starter shell beat a boss; this is a diagnostic mismatch warning.";
+  }
+  if (entry.warningFlags.includes("BOSS_TOO_FRAGILE")) {
+    return "Boss died before its engine could fully express.";
+  }
+  if (entry.warningFlags.includes("NO_OUTPUT_ENDPOINT")) {
+    return "Engine/control shell lacks a clear output endpoint.";
+  }
+  if (entry.warningFlags.includes("STALL_RISK") || entry.warningFlags.includes("TIMEOUT_OR_NEAR_TIMEOUT")) {
+    return "Likely stall or Armor mirror; inspect terminal contribution.";
+  }
+  if (entry.winner === "PLAYER") {
+    return BOSS_ENEMY_IDS.has(entry.enemyId) ? "Player build cleared boss check." : "Player build handled this matchup.";
+  }
+  return "Enemy pressure beat this build.";
+}
+
+function getLikelyDesignCause(entry: BalanceReportEntry): string {
+  if (entry.warningFlags.includes("ENEMY_DEAD_TOO_FAST") || entry.warningFlags.includes("BOSS_TOO_FRAGILE")) {
+    return "Boss durability too low or terminal burst too high.";
+  }
+  if (entry.warningFlags.includes("STARTER_BEATS_BOSS")) {
+    return "Starter shell is overperforming against boss durability.";
+  }
+  if (entry.warningFlags.includes("STALL_RISK") || entry.warningFlags.includes("TIMEOUT_OR_NEAR_TIMEOUT")) {
+    return "Insufficient terminal pressure or Armor mirror.";
+  }
+  if (entry.warningFlags.includes("RUNAWAY_COOLDOWN_RISK")) {
+    return "Activation count too high.";
+  }
+  if (entry.warningFlags.includes("PLAYER_DEAD_TOO_FAST")) {
+    return "Build lacks defense or enemy pressure spikes too hard.";
+  }
+  if (entry.warningFlags.includes("SLOW_STALL_RISK")) {
+    return "Control uptime too high or enemy lacks alternate threat.";
+  }
+  if (entry.warningFlags.includes("NO_OUTPUT_ENDPOINT")) {
+    return "Engine has no clear terminal/output endpoint.";
+  }
+  if (entry.warningFlags.includes("LATE_BUILD_UNDERPERFORMS")) {
+    return "Late build is failing below expected matchup tier.";
+  }
+  return "Review warning combination manually.";
+}
+
+function createBuildLegitimacyNotes(report: BalanceReport): readonly string[] {
+  const lines = [
+    "- Starter builds are diagnostic boss mismatch checks. If they beat a boss, the report flags that as a balance warning rather than treating it as expected progression."
+  ];
+  lines.push(...report.sampleBuilds.map((build) =>
+    `- ${build.name}: ${build.intendedPhase} build. Boss viable: ${build.expectedBossViable ? "yes" : "no"}. Weakness: ${build.expectedWeakness}`
+  ));
+  const starterBossWins = report.entries.filter((entry) => entry.warningFlags.includes("STARTER_BEATS_BOSS"));
+  if (starterBossWins.length > 0) {
+    lines.push(`- Starter boss wins are diagnostic balance warnings, not expected progression wins: ${starterBossWins.map((entry) => `${entry.buildName} vs ${entry.enemyName}`).join("; ")}.`);
+  }
+  return lines;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function compareEntryRisk(a: BalanceReportEntry, b: BalanceReportEntry): number {
@@ -658,6 +885,9 @@ function createTuningNotes(counts: Partial<Record<BalanceWarningFlag, number>>):
   const notes: string[] = [];
   if ((counts.TERMINAL_TOO_BURSTY ?? 0) > 0) {
     notes.push("- Terminal burst remains present; check Armor and missing-HP terminal numbers before adding stronger bosses.");
+  }
+  if ((counts.STARTER_BEATS_BOSS ?? 0) > 0 || (counts.BOSS_TOO_FRAGILE ?? 0) > 0) {
+    notes.push("- Starter boss wins or fragile boss warnings mean enemy durability/pressure still needs review before judging player builds solved.");
   }
   if ((counts.RUNAWAY_COOLDOWN_RISK ?? 0) > 0) {
     notes.push("- Cooldown engine outliers remain; keep adjacent cooldown and broad Haste values modest.");

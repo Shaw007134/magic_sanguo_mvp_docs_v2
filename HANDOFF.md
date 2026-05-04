@@ -180,10 +180,16 @@ Phase 14D implemented OnStatusTicked and OnHealReceived status reaction/combo su
 Phase 14E implemented Burn decay identity polish while preserving Poison persistence and reaction safety.
 Phase 15A implemented formation growth, fixed 16-card owned capacity, a 24-card combo-testing content pack, curated pool updates, and deterministic balance/readability reports.
 Phase 15B tuned existing card numbers only: slower Phase 15A Burn/Poison frequency cards, softer cooldown/Haste engines, shorter/lower Slow, reduced Armor terminal scaling, and toned-down execution terminal scaling/crit pressure.
-Phase 15B Markdown reports now include Executive Summary, Build Summary, Boss Summary, Warning Hotspots, Top Contributor Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
+Phase 15C tuned boss/enemy durability and pressure while keeping enemy formations readable and without adding player mechanics.
+Gate Captain Elite now has a larger Armor-backed Blade Tempo formation so starter builds lose the final-boss diagnostic check and late builds see more of its engine.
+Siege Marshal now has more durability and a clearer Drum/Siege support shell so slow siege pressure has time to matter.
+Cinder Strategist is included in the balance report boss suite and now uses a durable Fire Echo Seal / Fire Arrow Cart / Burning Shield / Ember Banner shell instead of the sharper Cinder Seal snowball.
+Phase 15C Markdown reports now include Executive Summary, Build Summary, Boss Summary, Boss Challenge Summary, Build Legitimacy Notes, Warning Hotspots with likely design causes, Outcome Attribution Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
+Outcome Attribution Snapshot separates Player Top Contributor from Enemy Top Contributor and resolves known source ids to readable card names.
 Current report command is `pnpm balance:report`; output location is `debug/balance-reports/latest.json` and `debug/balance-reports/latest.md`.
-Current strongest builds are Armor Terminal, Late 16-slot Combo Build, Burn + Reaction, and Frequency Status Soup. Current weakest/risky builds are Haste / Drum Tempo, Control Slow / Freeze, and Starter Blade into Armor-heavy enemies.
-Remaining Phase 15B risks: current boss HP is low relative to expanded 16-slot builds, Haste/Drum still has activation outliers, Starter Blade can stall into Armor-heavy enemies, and Slow/Freeze control needs more manual feel checks.
+The current save format version is 2. Actual run battles and balance reports share the 3600 tick max combat cap, with 1 second equal to 60 logic ticks.
+Current strongest builds are Armor Terminal, Late 16-slot Combo Build, Siege Burn, Poison + Heal, and Frequency Status Soup. Current weakest/risky builds are Haste / Drum Tempo, Control Slow / Freeze, Starter Blade into Armor-heavy enemies, and starter shells into bosses.
+Remaining Phase 15C risks: Armor Terminal and Late 16-slot Combo Build still create BOSS_TOO_FRAGILE/TERMINAL_TOO_BURSTY warnings, Cinder Strategist still kills several fragile samples quickly, Haste/Drum still has activation outliers, and Starter Blade can stall into Armor-heavy enemies.
 Phase 14A is damage type and source attribution foundation.
 Phase 14B is Poison and Heal.
 Phase 14C implemented Haste, Slow, and Freeze.
@@ -196,10 +202,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 15C:
+Phase 15D:
 
 ```text
-Use Phase 15B report output and manual runs to decide whether the next phase should tune enemy/boss durability, improve contributor naming/readability, or add the next small mechanic.
+Run manual playtests against the Phase 15C boss suite, then either tune terminal burst/boss pressure further or add one small mechanic only if the current report risks are accepted.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.

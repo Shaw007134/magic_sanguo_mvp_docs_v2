@@ -370,7 +370,7 @@ Report readability changes:
 - Slow stall and terminal burst flags are more timing-aware.
 - Warning names are exported as a stable list for tests.
 
-Current report snapshot after tuning:
+Phase 15B report snapshot before Phase 15C enemy tuning:
 
 - Total fights: 72.
 - Player win rate: about 93%.
@@ -391,6 +391,45 @@ Current weakest or riskiest builds:
 - Haste / Drum Tempo still has cooldown outliers and can lose into Gate Captain Elite.
 - Control Slow / Freeze can still trip one Slow stall warning and can lose into Siege Marshal.
 - Starter Blade can still stall against Armor-heavy enemies because both sides generate substantial Armor over long fights.
+
+## Phase 15C Enemy Challenge And Attribution Readability
+
+Phase 15C tuned enemy and boss templates plus report readability only. No player mechanics, commands, statuses, hooks, targeting modes, resources, or combat timing rules were added.
+
+Boss fight target:
+
+- Strong late builds should usually beat bosses in roughly 12-25 seconds.
+- Imperfect but viable builds should usually take 25-45 seconds or lose.
+- Starter builds are diagnostic mismatch checks against bosses; if a starter build wins a boss fight, the report flags it as `STARTER_BEATS_BOSS`.
+- Bosses should stay readable 4-8 card formations, not 16-slot enemy piles or anonymous HP sponges.
+
+Boss and enemy tuning:
+
+| Boss | Change | Design reason |
+| --- | --- | --- |
+| Gate Captain Elite | Increased max HP, starting Armor, slot count, and added War Drum, Battle Standard, Guard Captain support around Saber/Shield Wall | Tests Armor-backed Blade Tempo long enough for its engine to appear, and starters now lose the boss check |
+| Siege Marshal | Increased max HP, starting Armor, slot count, and added War Drum/Siege Command support around Burning Trebuchet, Siege Brazier, and Flame Ram | Tests slow siege terminal race without dying before its siege cards matter |
+| Cinder Strategist | Added to the report boss suite; changed to a durable Burn pressure boss using Fire Echo Seal, Fire Arrow Cart, Burning Shield, and Ember Banner | Tests Burn/status pressure while avoiding the previous Cinder Seal snowball spike |
+
+Latest deterministic report snapshot after Phase 15C:
+
+- Total fights: 84.
+- Player wins: 56/84.
+- Starter Blade, Starter Burn, and Starter Poison all lose the authored boss checks.
+- Remaining common warnings are PLAYER_DEAD_TOO_FAST, TERMINAL_TOO_BURSTY, BOSS_TOO_FRAGILE, RUNAWAY_COOLDOWN_RISK, STALL_RISK, and TIMEOUT_OR_NEAR_TIMEOUT.
+- Armor Terminal and Late 16-slot Combo Build remain the strongest boss killers and still create fast-kill warnings.
+- Haste / Drum Tempo and Control Slow / Freeze remain weaker boss shells because they lack clear output endpoints.
+- Poison + Heal is no longer dominating through stall in the report, but it remains a long-fight archetype to monitor.
+
+Report readability changes:
+
+- Markdown now includes Boss Challenge Summary with per-boss win rate, average time, fast-kill count, too-fast builds, and losing builds.
+- Build Legitimacy Notes classify STARTER, MID, LATE, and STRESS sample builds and state expected boss viability/weakness.
+- Outcome Attribution Snapshot separates Player Top Contributor from Enemy Top Contributor.
+- Contributor ids are resolved to readable card names when possible; raw ids remain in JSON and only surface in Markdown if name lookup fails.
+- Warning Hotspots now include a likely design cause column for serious flags such as fast boss kills, stalls, cooldown runaway, and player deaths.
+
+It is safer to consider a small future mechanic only after manual playtests confirm Phase 15C boss pacing feels good. The report still says terminal burst and boss fragility need human review before raising player card numbers again.
 
 ## Iron Warlord Terminal/Core Cards
 

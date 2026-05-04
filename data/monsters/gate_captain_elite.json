@@ -2,13 +2,15 @@
   "id": "gate-captain-elite",
   "name": "Gate Captain Elite",
   "difficulty": "BOSS",
-  "slotCount": 4,
-  "maxHp": 58,
-  "startingArmor": 8,
+  "slotCount": 6,
+  "maxHp": 300,
+  "startingArmor": 18,
   "requiredCards": [
     { "cardId": "vanguard-saber", "slot": 1 },
     { "cardId": "war-drum", "slot": 2 },
-    { "cardId": "shield-wall", "slot": 3 }
+    { "cardId": "shield-wall", "slot": 3 },
+    { "cardId": "battle-standard", "slot": 5 },
+    { "cardId": "guard-captain", "slot": 6 }
   ],
   "optionalCards": [],
   "defenseStyle": "ARMOR_HP",
