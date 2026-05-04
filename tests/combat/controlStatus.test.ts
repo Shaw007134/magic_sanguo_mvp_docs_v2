@@ -276,7 +276,7 @@ describe("Haste, Slow, and Freeze control statuses", () => {
     const controlDot = activeCard(
       "control-dot",
       [
-        { command: "ApplyBurn", amount: 1, durationTicks: 180 },
+        { command: "ApplyBurn", amount: 2, durationTicks: 180 },
         { command: "ApplyPoison", amount: 1 },
         { command: "ApplyHaste", target: "SELF", percent: 100, durationTicks: 180 },
         { command: "ApplySlow", target: "OPPOSITE_ENEMY_CARD", percent: 75, durationTicks: 180 },

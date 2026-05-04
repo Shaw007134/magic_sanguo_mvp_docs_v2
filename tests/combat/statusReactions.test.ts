@@ -150,6 +150,32 @@ describe("status reaction triggers", () => {
     expect(triggerStatuses).toEqual(["player-card-1:0", "player-card-1:1"]);
   });
 
+  it("OnStatusTicked fires once per actual Burn tick and not for Burn decay or expiration", () => {
+    const applier = activeCard("burn-applier", [
+      { command: "ApplyBurn", amount: 3, durationTicks: 300 }
+    ], 999);
+    const watcher = passiveCard("burn-watcher", [
+      { hook: "OnStatusTicked", conditions: { status: "Burn" }, internalCooldownTicks: 1, maxTriggersPerTick: 1, effects: [] }
+    ]);
+
+    const result = simulate({ playerCards: [watcher, applier], maxCombatTicks: 241 });
+    const burnTicks = result.replayTimeline.events.filter((event) => event.payload?.command === "BurnTick");
+    const triggerTicks = result.replayTimeline.events
+      .filter((event) => event.type === "TriggerFired" && event.payload?.hook === "OnStatusTicked")
+      .map((event) => event.tick);
+
+    expect(burnTicks.map((event) => event.tick)).toEqual([61, 121, 181]);
+    expect(triggerTicks).toEqual([61, 121, 181]);
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 181,
+      type: "StatusExpired",
+      targetId: "enemy",
+      payload: {
+        kind: "BURN"
+      }
+    });
+  });
+
   it("OnHealReceived fires only when HealHP actually restores HP", () => {
     const healer = activeCard("healer", [{ command: "HealHP", amount: 5 }], 999);
     const attacker = activeCard("attacker", [{ command: "DealDamage", amount: 3 }], 999);
@@ -283,6 +309,35 @@ describe("status reaction triggers", () => {
     expect(result.replayTimeline.events.some((event) => event.type === "StackLimitReached")).toBe(false);
   });
 
+  it("reaction-created Burn decays normally and starts ticking on its next DOT clock", () => {
+    const burn = activeCard("burn", [{ command: "ApplyBurn", amount: 2, durationTicks: 180 }], 999);
+    const reactor = passiveCard("more-burn", [
+      {
+        hook: "OnStatusTicked",
+        conditions: { status: "Burn", appliedByOwner: true },
+        internalCooldownTicks: 60,
+        maxTriggersPerTick: 1,
+        effects: [{ command: "ApplyBurn", amount: 2, durationTicks: 180 }]
+      }
+    ]);
+
+    const result = simulate({ playerCards: [reactor, burn], maxCombatTicks: 121 });
+    const burnDamageEvents = result.replayTimeline.events.filter(
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
+    );
+    const reactionApplication = result.replayTimeline.events.find(
+      (event) => event.type === "StatusApplied" && event.sourceId === "player-card-1"
+    );
+
+    expect(burnDamageEvents.map((event) => event.tick)).toEqual([61, 121]);
+    expect(burnDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([2, 3]);
+    expect(reactionApplication?.tick).toBe(61);
+    expect(reactionApplication?.payload).toMatchObject({
+      totalAmount: 3,
+      nextTickAt: 121
+    });
+  });
+
   it("OnHealReceived recursion is still bounded by ResolutionStack safety", () => {
     const healer = activeCard("healer", [{ command: "HealHP", amount: 1 }], 999);
     const attacker = activeCard("attacker", [{ command: "DealDamage", amount: 20 }], 999);
@@ -402,7 +457,7 @@ describe("status reaction triggers", () => {
 
   it("Haste, Slow, and Freeze reactions do not change Burn or Poison tick intervals", () => {
     const applier = activeCard("status-applier", [
-      { command: "ApplyBurn", amount: 1, durationTicks: 180 },
+      { command: "ApplyBurn", amount: 2, durationTicks: 180 },
       { command: "ApplyPoison", amount: 1 }
     ], 999);
     const enemy = activeCard("enemy", [], 999);

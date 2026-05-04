@@ -9,9 +9,9 @@
     "cooldownTicks": 120,
     "effects": [
       { "command": "DealDamage", "amount": 2 },
-      { "command": "ApplyBurn", "amount": 1, "durationTicks": 180 }
+      { "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }
     ],
-    "description": "Every 2 seconds, deal 2 damage and apply 1 Burn for 3 seconds."
+    "description": "Every 2 seconds, deal 2 damage and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
   },
   {
     "id": "siege-brazier",
@@ -48,7 +48,7 @@
       },
       { "command": "ApplyBurn", "amount": 4, "durationTicks": 240 }
     ],
-    "description": "Size 2. Every 5 seconds, deal 5 damage and apply 4 Burn for 4 seconds. 20% chance to crit for 2x damage."
+    "description": "Size 2. Every 5 seconds, deal 5 damage and apply 4 Burn for 4 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage."
   },
   {
     "id": "burning-trebuchet",
@@ -68,7 +68,7 @@
       },
       { "command": "ApplyBurn", "amount": 5, "durationTicks": 300 }
     ],
-    "description": "Size 2. Every 6 seconds, deal 8 damage plus 20% of enemy missing HP and apply 5 Burn for 5 seconds. 20% chance to crit for 2x damage."
+    "description": "Size 2. Every 6 seconds, deal 8 damage plus 20% of enemy missing HP and apply 5 Burn for 5 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage."
   },
   {
     "id": "fire-cart-battery",
@@ -82,7 +82,7 @@
       { "command": "ApplyBurn", "amount": 3, "durationTicks": 240 },
       { "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }
     ],
-    "description": "Size 2. Every 4 seconds, apply 3 Burn for 4 seconds, then 2 Burn for 3 seconds."
+    "description": "Size 2. Every 4 seconds, apply 3 Burn for 4 seconds, then 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
   },
   {
     "id": "siege-command",

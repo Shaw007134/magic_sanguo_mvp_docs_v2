@@ -19,7 +19,7 @@
     "tags": ["fire", "burn", "starter"],
     "cooldownTicks": 90,
     "effects": [{ "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }],
-    "description": "Every 1.5 seconds, apply 2 Burn for 3 seconds."
+    "description": "Every 1.5 seconds, apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
   },
   {
     "id": "iron-guard",
@@ -64,8 +64,8 @@
     "cooldownTicks": 120,
     "effects": [
       { "command": "GainArmor", "amount": 2 },
-      { "command": "ApplyBurn", "amount": 1, "durationTicks": 180 }
+      { "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }
     ],
-    "description": "Every 2 seconds, gain 2 Armor and apply 1 Burn for 3 seconds."
+    "description": "Every 2 seconds, gain 2 Armor and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
   }
 ]

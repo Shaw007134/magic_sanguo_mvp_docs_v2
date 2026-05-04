@@ -33,7 +33,7 @@
       { "command": "DealDamage", "amount": 1 },
       { "command": "ApplyBurn", "amount": 2, "durationTicks": 120 }
     ],
-    "description": "Every 1.25 seconds, deal 1 damage and apply 2 Burn for 2 seconds."
+    "description": "Every 1.25 seconds, deal 1 damage and apply 2 Burn for 2 seconds. Burn loses 1 after each second of damage."
   },
   {
     "id": "wooden-shield",

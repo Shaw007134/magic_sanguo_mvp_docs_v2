@@ -70,6 +70,42 @@ function simulateOnePlayerCard(card: CardDefinition, enemy: FormationSnapshot, m
   });
 }
 
+function simulatePlayerCards(
+  cards: readonly CardDefinition[],
+  enemy: FormationSnapshot,
+  maxCombatTicks: number,
+  initialCooldowns: readonly number[] = []
+) {
+  const instances: CardInstance[] = cards.map((card, index) => ({
+    instanceId: `player-card-${index + 1}`,
+    definitionId: card.id
+  }));
+
+  return new CombatEngine().simulate({
+    playerFormation: createFormation("player", 50, instances.map((instance) => instance.instanceId)),
+    enemyFormation: enemy,
+    cardInstancesById: new Map(instances.map((instance) => [instance.instanceId, instance])),
+    cardDefinitionsById: new Map(cards.map((card) => [card.id, card])),
+    initialCardRuntimeStates: instances.map((instance, index) => {
+      const card = cards[index];
+      return {
+        instanceId: instance.instanceId,
+        definitionId: instance.definitionId,
+        ownerCombatantId: "player",
+        slotIndex: index + 1,
+        cooldownMaxTicks: card.cooldownTicks ?? 999,
+        cooldownRemainingTicks: initialCooldowns[index] ?? 1,
+        cooldownRecoveryRate: 1,
+        disabled: false,
+        silenced: false,
+        frozen: false,
+        activationCount: 0
+      };
+    }),
+    maxCombatTicks
+  });
+}
+
 describe("Armor and Burn", () => {
   it("GainArmorCommand increases Armor", () => {
     const card = createCard("guard", [{ command: "GainArmor", amount: 5 }]);
@@ -246,6 +282,111 @@ describe("Armor and Burn", () => {
       }
     ]);
     expect(result.enemyFinalHp).toBe(15);
+  });
+
+  it("Burn decays after each tick and expires when amount reaches 0", () => {
+    const card = createCard("decay-flame", [{ command: "ApplyBurn", amount: 4, durationTicks: 300 }], 999);
+
+    const result = simulateOnePlayerCard(card, createFormation("enemy", 30, []), 301);
+    const burnDamageEvents = result.replayTimeline.events.filter(
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
+    );
+    const expiryEvents = result.replayTimeline.events.filter((event) => event.type === "StatusExpired");
+
+    expect(burnDamageEvents.map((event) => event.tick)).toEqual([61, 121, 181, 241]);
+    expect(burnDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([4, 3, 2, 1]);
+    expect(expiryEvents).toContainEqual({
+      tick: 241,
+      type: "StatusExpired",
+      targetId: "enemy",
+      payload: {
+        kind: "BURN"
+      }
+    });
+  });
+
+  it("Burn duration remains a max lifetime when duration ends before decay reaches 0", () => {
+    const card = createCard("duration-limited-flame", [{ command: "ApplyBurn", amount: 4, durationTicks: 120 }], 999);
+
+    const result = simulateOnePlayerCard(card, createFormation("enemy", 30, []), 181);
+    const burnDamageEvents = result.replayTimeline.events.filter(
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
+    );
+    const expiryEvents = result.replayTimeline.events.filter((event) => event.type === "StatusExpired");
+
+    expect(burnDamageEvents.map((event) => event.tick)).toEqual([61, 121]);
+    expect(burnDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([4, 3]);
+    expect(expiryEvents).toContainEqual({
+      tick: 121,
+      type: "StatusExpired",
+      targetId: "enemy",
+      payload: {
+        kind: "BURN"
+      }
+    });
+  });
+
+  it("Burn stacking keeps the earlier next tick and extends to the later expiration", () => {
+    const early = createCard("early-flame", [{ command: "ApplyBurn", amount: 2, durationTicks: 120 }], 999);
+    const later = createCard("later-flame", [{ command: "ApplyBurn", amount: 3, durationTicks: 120 }], 999);
+
+    const result = simulatePlayerCards([early, later], createFormation("enemy", 40, []), 151, [1, 30]);
+    const laterApplication = result.replayTimeline.events.find(
+      (event) => event.type === "StatusApplied" && event.sourceId === "player-card-2"
+    );
+    const burnDamageEvents = result.replayTimeline.events.filter(
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
+    );
+
+    expect(laterApplication?.payload).toMatchObject({
+      totalAmount: 5,
+      nextTickAt: 61,
+      expiresAtTick: 150
+    });
+    expect(burnDamageEvents.map((event) => event.tick)).toEqual([61, 121]);
+    expect(burnDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([5, 4]);
+    expect(result.replayTimeline.events).toContainEqual({
+      tick: 150,
+      type: "StatusExpired",
+      targetId: "enemy",
+      payload: {
+        kind: "BURN"
+      }
+    });
+  });
+
+  it("Burn source contribution buckets decay with Burn amount and remove zero buckets deterministically", () => {
+    const first = createCard("first-flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 300 }], 999);
+    const second = createCard("second-flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 300 }], 999);
+
+    const result = simulatePlayerCards([first, second], createFormation("enemy", 30, []), 121);
+    const burnDamageEvents = result.replayTimeline.events.filter(
+      (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
+    );
+
+    expect(burnDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([2, 1]);
+    expect(burnDamageEvents[0]?.payload?.statusSourceContributions).toEqual([
+      {
+        sourceCombatantId: "player",
+        sourceCardInstanceId: "player-card-1",
+        sourceCardDefinitionId: "first-flame",
+        amount: 1
+      },
+      {
+        sourceCombatantId: "player",
+        sourceCardInstanceId: "player-card-2",
+        sourceCardDefinitionId: "second-flame",
+        amount: 1
+      }
+    ]);
+    expect(burnDamageEvents[1]?.payload?.statusSourceContributions).toEqual([
+      {
+        sourceCombatantId: "player",
+        sourceCardInstanceId: "player-card-2",
+        sourceCardDefinitionId: "second-flame",
+        amount: 1
+      }
+    ]);
   });
 
   it("same input produces the same Burn result", () => {

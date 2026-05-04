@@ -7,6 +7,7 @@ import type { ModifierSystem } from "../modifiers/ModifierSystem.js";
 import type { DamageType } from "../DamageCalculator.js";
 import type { StatusDamageSourceContribution, StatusEffect, StatusName, StatusSourceContribution } from "./StatusEffect.js";
 import type { CardDefinition } from "../../model/card.js";
+import { decayBurnAfterTick } from "./Burn.js";
 
 export interface StatusEffectSystemInput {
   readonly tick: number;
@@ -27,7 +28,7 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
         tickStatus(status, combatant, input);
       }
 
-      if (status.expiresAtTick === undefined || input.tick < status.expiresAtTick) {
+      if (isStatusActive(status, input.tick)) {
         remainingStatuses.push(status);
       } else {
         input.replayEvents.push({
@@ -47,6 +48,10 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
 
 function isTickReady(status: StatusEffect, tick: number): boolean {
   return tick >= status.nextTickAt && (status.expiresAtTick === undefined || tick <= status.expiresAtTick);
+}
+
+function isStatusActive(status: StatusEffect, tick: number): boolean {
+  return status.amount > 0 && (status.expiresAtTick === undefined || tick < status.expiresAtTick);
 }
 
 function tickStatus(status: StatusEffect, combatant: RuntimeCombatant, input: StatusEffectSystemInput): void {
@@ -104,7 +109,13 @@ function tickStatus(status: StatusEffect, combatant: RuntimeCombatant, input: St
       triggerDepth: 0
     });
   }
+  // DOT tick order is intentionally narrow: damage and tick reactions resolve from
+  // the pre-decay amount, then the DOT clock advances, then Burn decays. Poison
+  // does not use this path and remains persistent.
   status.nextTickAt += status.tickIntervalTicks;
+  if (status.kind === "BURN") {
+    decayBurnAfterTick(status);
+  }
 }
 
 function getSingleAttributedSource(

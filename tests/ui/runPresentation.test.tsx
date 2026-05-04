@@ -73,7 +73,7 @@ describe("run presentation", () => {
     expect(display.title).toBe("Flame Spear");
     expect(display.meta).toEqual(expect.arrayContaining(["Active", "Bronze", "Size 1", "Cooldown 1.25s"]));
     expect(display.meta).not.toContain("Card: Flame Spear");
-    expect(display.summary).toContain("Burn: 2 damage/sec for 2s");
+    expect(display.summary).toContain("Burn: 2 for 2s; deals current Burn per sec, then loses 1");
   });
 
   it("card metadata cooldown display uses seconds instead of raw ticks", () => {

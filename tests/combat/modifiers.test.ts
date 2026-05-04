@@ -248,7 +248,7 @@ describe("ModifierSystem", () => {
   });
 
   it("status duration modifier changes Burn duration", () => {
-    const card = createActiveCard("flame", [{ command: "ApplyBurn", amount: 1, durationTicks: 60 }], [], 999);
+    const card = createActiveCard("flame", [{ command: "ApplyBurn", amount: 2, durationTicks: 60 }], [], 999);
     const modifier: Modifier = {
       id: "lasting-flame",
       sourceId: "lasting-flame",
@@ -265,7 +265,7 @@ describe("ModifierSystem", () => {
       .map((event) => event.tick);
 
     expect(burnDamageTicks).toEqual([61, 121]);
-    expect(result.enemyFinalHp).toBe(38);
+    expect(result.enemyFinalHp).toBe(37);
   });
 
   it("expired modifier no longer applies", () => {

@@ -153,6 +153,44 @@ describe("Poison and HealHP", () => {
     ]);
   });
 
+  it("Poison amount and source contributions do not decay between ticks", () => {
+    const card = activeCard(
+      "persistent-poison",
+      [
+        { command: "ApplyPoison", amount: 1 },
+        { command: "ApplyPoison", amount: 2 }
+      ],
+      999
+    );
+
+    const result = simulateOnePlayerCard(card, formation("enemy", 30, []), 121);
+    const poisonDamageEvents = result.replayTimeline.events.filter(
+      (event) => event.type === "DamageDealt" && event.payload?.command === "PoisonTick"
+    );
+
+    expect(poisonDamageEvents.map((event) => event.tick)).toEqual([61, 121]);
+    expect(poisonDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([3, 3]);
+    expect(poisonDamageEvents.map((event) => event.payload?.statusSourceContributions)).toEqual([
+      [
+        {
+          sourceCombatantId: "player",
+          sourceCardInstanceId: "player-card",
+          sourceCardDefinitionId: "persistent-poison",
+          amount: 3
+        }
+      ],
+      [
+        {
+          sourceCombatantId: "player",
+          sourceCardInstanceId: "player-card",
+          sourceCardDefinitionId: "persistent-poison",
+          amount: 3
+        }
+      ]
+    ]);
+    expect(result.replayTimeline.events.some((event) => event.type === "StatusExpired")).toBe(false);
+  });
+
   it("HealHP restores HP, caps at max HP, and appears in replay and summary", () => {
     const healer = activeCard("field-medic", [{ command: "HealHP", amount: 5 }], 999);
     const attacker = activeCard("enemy-strike", [{ command: "DealDamage", amount: 8 }], 999);

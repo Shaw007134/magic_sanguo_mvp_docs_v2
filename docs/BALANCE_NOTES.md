@@ -2,7 +2,7 @@
 
 ## Content Pack Summary
 
-Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 13B adds deterministic terminal mechanics for direct DealDamage effects, Phase 14B adds a small controlled Poison/Heal pack, Phase 14C adds a small Haste/Slow/Freeze control pack, and Phase 14D adds a small status reaction pack:
+Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 13B adds deterministic terminal mechanics for direct DealDamage effects, Phase 14B adds a small controlled Poison/Heal pack, Phase 14C adds a small Haste/Slow/Freeze control pack, Phase 14D adds a small status reaction pack, and Phase 14E gives Burn its decay identity:
 
 - 37 general cards in `data/cards/general/`.
 - 20 Iron Warlord cards in `data/cards/class_iron_warlord/`.
@@ -15,8 +15,9 @@ Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 1
 - Persistent Poison and capped HP healing.
 - Temporary Haste/Slow/Freeze card-control effects.
 - Deterministic status reaction triggers for status damage and real healing.
+- Burn as burst DOT that loses 1 Burn after each Burn damage event.
 
-All content uses only DealDamage, GainArmor, ApplyBurn, ApplyPoison, HealHP, ModifyCooldown, ApplyHaste, ApplySlow, ApplyFreeze, Armor, Burn, Poison, existing trigger hooks/conditions, and existing ModifierSystem operations. Phase 14D does not add new resources, lifesteal keywords, overheal, absorb layers, cleanse/silence, card movement/destruction, control payoff conditions, or new statuses.
+All content uses only DealDamage, GainArmor, ApplyBurn, ApplyPoison, HealHP, ModifyCooldown, ApplyHaste, ApplySlow, ApplyFreeze, Armor, Burn, Poison, existing trigger hooks/conditions, and existing ModifierSystem operations. Phase 14E does not add new resources, lifesteal keywords, overheal, absorb layers, cleanse/silence, card movement/destruction, control payoff conditions, or new statuses.
 
 ## Iron Warlord Identity
 
@@ -25,7 +26,7 @@ Iron Warlord should feel like discipline, formation timing, armor-backed aggress
 ## Archetype Overview
 
 - Blade Tempo: fast Weapon activations and adjacent timing payoffs.
-- Burn Engine: frequent Burn application plus triggers when Burn is applied.
+- Burn Engine: frequent Burn application, short-term pressure, and triggers when Burn is applied or deals damage.
 - Poison Inevitable: low immediate pressure that keeps ticking through long fights and Armor-heavy enemies.
 - Medic Support: capped HP recovery that buys time without creating overheal or absorb layers.
 - Control Tempo: temporary Haste, Slow, and Freeze timing pressure without permanent lockouts.
@@ -147,7 +148,7 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 
 ## Early Balance Assumptions
 
-- Burn ignores Armor, so Burn values stay conservative.
+- Burn ignores Armor and decays by 1 after each Burn damage event, so Burn should feel like burst pressure rather than long-term inevitability.
 - Poison ignores Armor and does not naturally expire, so Poison values and application cadence stay very conservative.
 - Heal is capped at max HP and has slow cooldowns so it buys time without resetting every fight.
 - Haste is temporary acceleration only: it increases cooldown recovery while active, never instantly reduces current cooldown, and total Haste clamps to +100%.
@@ -155,6 +156,7 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 - Freeze is short, card-targeted hard control only: it prevents cooldown recovery and activation while active, preserves current cooldown progress, and extends to the later expiration when reapplied.
 - Haste, Slow, and Freeze never change Burn or Poison tick intervals, DOT durations, or status clocks.
 - Status reactions never change Burn or Poison base tick intervals; reaction-created statuses start from their own normal one-second DOT clocks.
+- Reaction hooks fire from actual DOT damage events only. Burn decay and Burn expiration do not fire extra status reactions.
 - OnHealReceived reactions fire only for real HP restored and should always have explicit internal cooldowns in content.
 - Passive control reactions can target active runtime cards only; passive cards can anchor adjacent/opposite targeting but cannot be Hasted, Slowed, or Frozen.
 - Armor cards use larger numbers than damage cards because Armor does not end fights.
@@ -162,16 +164,18 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 - Size-2 cards should be powerful enough to justify formation space but slow enough to need support.
 - Current fire support is tag-based. Fire Study checks `sourceHasTag: "fire"` and boosts direct damage from fire-tagged cards. DealDamage now supports explicit DIRECT, PHYSICAL, and FIRE damage types, but current Fire Study tuning has not migrated to damageType-based support.
 - Burn tick damage is attributed to the applying card in replay/summary when source data exists, but fire-tagged skill support still does not increase Burn tick damage.
+- Burn source contribution buckets decay with Burn amount: after each Burn damage event, reduce the largest source bucket by 1, tie-breaking by source combatant id, source card instance id, then source card definition id. Buckets at 0 are removed.
 
 ## Known Risky Combos
 
 - Cinder Seal plus Ember Banner plus multiple Burn applicators could create too much passive pressure.
+- Burn decay reduces long-tail pressure, but repeated Burn applicators can still produce high short-term spikes when stacked before the next damage event.
 - Multiple Poison applicators plus healing could push fights toward timeout if Poison values are raised too quickly.
 - Poison plus Heal plus Slow can create stall pressure if Slow uptime or Heal values are raised too quickly.
 - Freeze chains can become hard locks if Freeze duration approaches the source card cooldown.
 - Haste plus Rally Drummer/War Drum/Command Gong can become cooldown runaway if broad Haste values are pushed above modest tuning.
 - Venom Leech plus Poison density plus Field Medic can create Poison + Heal loop pressure if healing or internal cooldowns are loosened.
-- Fever Drum plus frequent Burn can become Burn tick + Haste runaway if adjacent haste values are raised.
+- Fever Drum plus frequent Burn can become Burn damage + Haste runaway if adjacent haste values are raised.
 - Poisoned Net plus persistent Poison can become Poison + Slow stall if Slow duration approaches its internal cooldown.
 - Burning Remedy-like HealReceived effects can recurse if they create healing; Phase 14D content avoids recursive HealHP on OnHealReceived.
 - Herbal Poultice plus high Armor density could increase stall risk.
@@ -190,13 +194,13 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 
 - Add monster rotation once the run supports it cleanly.
 - Consider better enemy preview grouping by archetype after UI scope expands.
-- Tune Burn after several attributed Burn runs, because summaries can now separate direct damage from Burn damage by applying card.
+- Tune Burn after several decay-era Burn runs. Phase 14E only raised a few amount-1 Burn applications to amount 2 so they still read as meaningful after decay.
 - Tune Poison only after long-fight playtests; its damage should feel inevitable, not explosive.
 - Watch Heal cards in Armor builds to avoid immortal stall loops.
 - Keep Freeze short, low-damage, and attached to longer cooldowns.
 - Keep broad Haste modest; position-limited Haste can be a little stronger than OWNER_ALL_CARDS Haste.
 - Keep Slow clamped and avoid permanent uptime on early cards.
-- Do not haste DOT ticks. Burn and Poison should remain one-second clocks regardless of control effects.
+- Do not haste DOT clocks. Burn and Poison should remain one-second clocks regardless of control effects.
 - Keep reaction cards as connectors/payoffs rather than mandatory engines; every passive reaction should carry internalCooldownTicks and maxTriggersPerTick.
 - Avoid adding control-status payoff conditions until the control kit has more playtest data.
 - Revisit damageType-based fire support later now that DealDamage supports explicit damageType and Burn source attribution exists.
@@ -265,7 +269,23 @@ Reaction safety rules:
 - SELF Haste/Slow/Freeze from a passive source resolves to no active target.
 - Every Phase 14D passive reaction card has internalCooldownTicks and maxTriggersPerTick.
 
-Deferred systems include Burn decay, control-status payoff conditions such as "enemy card is Frozen", cleanse/silence, card movement/destruction, passive-card control behavior, new resources, and new statuses.
+OnStatusTicked is the preferred future hook for DOT reaction content. OnBurnTick remains accepted by TriggerDefinition and TriggerSystem only as legacy Burn-only compatibility; active runtime content should not use it.
+
+Deferred systems include control-status payoff conditions such as "enemy card is Frozen", cleanse/silence, card movement/destruction, passive-card control behavior, new resources, and new statuses.
+
+## Phase 14E Burn Decay Identity
+
+Burn is burst DOT. It ticks every 60 logic ticks, deals the current Burn amount as FIRE damage, ignores Armor by the MVP DOT rule, then loses 1 Burn. Burn expires when its amount reaches 0 or when its expiresAtTick max lifetime is reached. Duration remains a max lifetime rather than a promise that every Burn will last for that many seconds.
+
+Poison is persistent DOT. It ticks every 60 logic ticks, uses POISON damage, ignores Armor, stacks additively, and does not decay. This keeps Poison as long-fight inevitability while Burn stays high short-term pressure.
+
+Burn stacking stays simple and deterministic: total amount adds, nextTickAt remains the earlier next damage time, expiresAtTick extends to the later expiration, and source contribution buckets merge. After each Burn damage event, one source contribution bucket decays by 1. The bucket chosen is the largest current contribution; ties are resolved by sourceCombatantId, then sourceCardInstanceId, then sourceCardDefinitionId. Buckets that reach 0 are removed, and when Burn reaches 0 all Burn source contributions clear with the expired status.
+
+Reaction order after Phase 14E is: Burn is ready, Burn deals current amount, replay/summary attribution records damage, OnStatusTicked fires once, legacy OnBurnTick fires once for compatibility, the DOT clock advances, Burn decays by 1, then Burn expires if amount or duration says it should. Expiration itself does not fire OnStatusTicked, and decay never creates same-time DOT loops. Reaction-created Burn uses the same appliedAt + 60 first-damage timing as normal Burn.
+
+Control statuses still affect active cards only. Haste, Slow, and Freeze do not speed, delay, pause, or extend Burn/Poison clocks, and reaction hooks do not change DOT clocks.
+
+Phase 14E tuning was intentionally conservative: Guarded Torch, Burning Shield, Kindling Spear, and Cinder Seal moved from 1 Burn to 2 Burn so single-application Burn cards do not collapse into invisible one-damage effects after decay. Poison, Heal, control values, and new card count were not raised.
 
 ## Iron Warlord Terminal/Core Cards
 
@@ -329,7 +349,7 @@ Optional-card count is capped in `MonsterGenerator`: tutorial monsters add no op
 
 - No affixes or random stat rolls.
 - No general rarity system beyond current tier fields and curated pool weighting.
-- Burn/Poison source attribution powers replay/summary and status reaction ownership checks; DOT ticks still do not receive source-owned damage modifiers.
+- Burn/Poison source attribution powers replay/summary and status reaction ownership checks; DOT ticks still do not receive source-owned damage modifiers. Burn source buckets decay with Burn amount, while Poison source buckets do not decay.
 - Haste/Slow/Freeze are cooldown/activation control only; there are no control-status payoff conditions, cleanse/silence, card movement, card destruction, or final control UI treatments.
 - No boss rotation unless implemented later.
 - No branching map, async PvP, cloud save/account system, or final art/Pixi/Phaser.

@@ -30,7 +30,7 @@ describe("cardDisplay", () => {
   });
 
   it("summarizes Flame Spear", () => {
-    expect(display("flame-spear").summary).toBe("Damage: 1 · Burn: 2 damage/sec for 2s");
+    expect(display("flame-spear").summary).toBe("Damage: 1 · Burn: 2 for 2s; deals current Burn per sec, then loses 1");
     expect(display("flame-spear").summary).not.toMatch(/\d+t\b|tick/i);
   });
 
@@ -53,9 +53,9 @@ describe("cardDisplay", () => {
   });
 
   it("summarizes Poison and Heal cards without raw tick labels", () => {
-    expect(display("poison-needle").summary).toBe("Poison: 1 damage/sec");
+    expect(display("poison-needle").summary).toBe("Poison: 1 damage/sec; does not decay");
     expect(display("field-medic").summary).toBe("Heal: 5 HP");
-    expect(display("toxic-lance").summary).toBe("Physical damage: 2 · Poison: 1 damage/sec");
+    expect(display("toxic-lance").summary).toBe("Physical damage: 2 · Poison: 1 damage/sec; does not decay");
     expect(display("poison-needle").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
   });
 

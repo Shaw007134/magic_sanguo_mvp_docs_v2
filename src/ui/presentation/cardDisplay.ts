@@ -114,14 +114,14 @@ function formatEffect(effect: EffectDefinition): string {
       return typeof effect["amount"] === "number" ? `Armor: ${effect["amount"]}` : "Armor";
     case "ApplyBurn":
       if (typeof effect["amount"] === "number" && typeof effect["durationTicks"] === "number") {
-        return `Burn: ${effect["amount"]} damage/sec for ${formatTickDuration(effect["durationTicks"])}`;
+        return `Burn: ${effect["amount"]} for ${formatTickDuration(effect["durationTicks"])}; deals current Burn per sec, then loses 1`;
       }
       return "Burn";
     case "ApplyPoison":
       if (typeof effect["amount"] === "number" && typeof effect["durationTicks"] === "number") {
-        return `Poison: ${effect["amount"]} damage/sec for ${formatTickDuration(effect["durationTicks"])}`;
+        return `Poison: ${effect["amount"]} damage/sec for ${formatTickDuration(effect["durationTicks"])}; does not decay`;
       }
-      return typeof effect["amount"] === "number" ? `Poison: ${effect["amount"]} damage/sec` : "Poison";
+      return typeof effect["amount"] === "number" ? `Poison: ${effect["amount"]} damage/sec; does not decay` : "Poison";
     case "HealHP":
       return typeof effect["amount"] === "number" ? `Heal: ${effect["amount"]} HP` : "Heal";
     case "ApplyHaste":

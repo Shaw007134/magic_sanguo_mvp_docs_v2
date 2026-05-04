@@ -11,7 +11,7 @@
       { "command": "DealDamage", "amount": 1 },
       { "command": "ApplyBurn", "amount": 2, "durationTicks": 240 }
     ],
-    "description": "Every 2 seconds, deal 1 damage and apply 2 Burn for 4 seconds."
+    "description": "Every 2 seconds, deal 1 damage and apply 2 Burn for 4 seconds. Burn loses 1 after each second of damage."
   },
   {
     "id": "ember-banner",
@@ -44,10 +44,10 @@
         "conditions": { "status": "Burn", "appliedByOwner": true },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "ApplyBurn", "amount": 1, "durationTicks": 180 }]
+        "effects": [{ "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }]
       }
     ],
-    "description": "When you apply Burn, apply 1 more Burn for 3 seconds. Can trigger once every 2 seconds."
+    "description": "When you apply Burn, apply 2 more Burn for 3 seconds. Can trigger once every 2 seconds."
   },
   {
     "id": "siege-crossbow",
@@ -88,8 +88,8 @@
     "cooldownTicks": 150,
     "effects": [
       { "command": "GainArmor", "amount": 5 },
-      { "command": "ApplyBurn", "amount": 1, "durationTicks": 240 }
+      { "command": "ApplyBurn", "amount": 2, "durationTicks": 240 }
     ],
-    "description": "Every 2.5 seconds, gain 5 Armor and apply 1 Burn for 4 seconds."
+    "description": "Every 2.5 seconds, gain 5 Armor and apply 2 Burn for 4 seconds. Burn loses 1 after each second of damage."
   }
 ]

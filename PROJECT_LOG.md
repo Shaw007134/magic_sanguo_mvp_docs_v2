@@ -1297,3 +1297,51 @@ Known issues:
 - No Burn decay, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, lifesteal keyword, overheal, absorb layer, or new resource was added.
 Next recommended task:
 - Phase 14E: Burn decay identity polish, preserving Phase 14A-D status attribution, reaction safety, and DOT clock readability.
+
+---
+
+Date: 2026-05-04
+Phase: 14E
+Task: Implemented Burn decay identity polish.
+Files changed:
+- data/cards/monster_cards.json
+- data/cards/general/basic_kit.json
+- data/cards/general/fire_support.json
+- data/cards/class_iron_warlord/siege_fire.json
+- src/combat/status/Burn.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/ui/presentation/cardDisplay.ts
+- tests/combat/armorBurn.test.ts
+- tests/combat/poisonHeal.test.ts
+- tests/combat/statusReactions.test.ts
+- tests/combat/controlStatus.test.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/ui/cardDisplay.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Burn ticks every 60 ticks, deals current amount before decay, decays by 1 after each tick, and expires at amount 0.
+- Burn duration remains a max lifetime and can expire Burn before decay reaches 0.
+- Burn stacking adds amount, keeps the earlier nextTickAt, extends to the later expiresAtTick, and remains deterministic.
+- Burn source contribution buckets decay with Burn amount, keep attribution sums aligned on later ticks, and remove zero buckets.
+- The 4 Burn for 5s example now produces 4, 3, 2, 1 damage and expires before the 5s max lifetime tick.
+- Poison remains persistent, additive, one-second, Armor-ignoring DOT and its source contributions do not decay.
+- OnStatusTicked fires once per actual Burn tick and not for Burn decay or expiration.
+- Reaction-created Burn uses the same decay rule and starts ticking at appliedAtTick + 60 rather than the same tick.
+- Haste, Slow, and Freeze regression tests still prove control effects do not change Burn or Poison DOT clocks.
+- Active runtime content is asserted to avoid legacy OnBurnTick while TriggerDefinition/TriggerSystem still accept it.
+- Card display now distinguishes decaying Burn from non-decaying Poison without raw tick labels.
+Tuning/content notes:
+- Guarded Torch, Burning Shield, Kindling Spear, and Cinder Seal moved from 1 Burn to 2 Burn so single-application Burn remains readable after decay.
+- Poison, Heal, Haste, Slow, and Freeze values were not raised.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- OnBurnTick remains as deprecated legacy compatibility and should be removed only in a future save/content compatibility cleanup.
+- Burn/Poison DOT source attribution is still replay/summary/reaction ownership data only; source-owned damage modifiers and Fire Study do not boost DOT ticks.
+- No new statuses, trigger hooks, control payoff conditions, cleanse/silence, card movement/destruction, absorb layers, resources, or PvP work were added.
+Next recommended task:
+- Run a balance/readability playtest pass focused on Burn vs Poison identity, reaction clarity, and terminal build pacing before adding new mechanics.

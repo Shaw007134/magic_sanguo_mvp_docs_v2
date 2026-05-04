@@ -27,6 +27,20 @@ export function mergeBurn(existingBurn: StatusEffect, nextBurn: StatusEffect): v
   mergeSourceContributions(existingBurn, nextBurn.sourceContributions ?? []);
 }
 
+export function decayBurnAfterTick(burn: StatusEffect): void {
+  if (burn.kind !== "BURN") {
+    return;
+  }
+
+  burn.amount = Math.max(0, burn.amount - 1);
+  if (burn.amount <= 0) {
+    burn.sourceContributions = undefined;
+    return;
+  }
+
+  decayLargestSourceContribution(burn);
+}
+
 function mergeSourceContributions(
   existingBurn: StatusEffect,
   nextContributions: readonly StatusSourceContribution[]
@@ -47,4 +61,22 @@ function mergeSourceContributions(
       existingBurn.sourceContributions.push({ ...nextContribution });
     }
   }
+}
+
+function decayLargestSourceContribution(burn: StatusEffect): void {
+  const sourceContributions = burn.sourceContributions?.filter((contribution) => contribution.amount > 0) ?? [];
+  if (sourceContributions.length === 0) {
+    burn.sourceContributions = undefined;
+    return;
+  }
+
+  const contributionToDecay = [...sourceContributions].sort((left, right) =>
+    right.amount - left.amount ||
+    left.sourceCombatantId.localeCompare(right.sourceCombatantId) ||
+    (left.sourceCardInstanceId ?? "").localeCompare(right.sourceCardInstanceId ?? "") ||
+    (left.sourceCardDefinitionId ?? "").localeCompare(right.sourceCardDefinitionId ?? "")
+  )[0];
+
+  contributionToDecay.amount -= 1;
+  burn.sourceContributions = sourceContributions.filter((contribution) => contribution.amount > 0);
 }

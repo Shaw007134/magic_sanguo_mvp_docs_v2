@@ -119,6 +119,14 @@ describe("active MVP content registry", () => {
     }
   });
 
+  it("active runtime content uses OnStatusTicked instead of legacy OnBurnTick", () => {
+    const legacyBurnTickCards = ACTIVE_CARD_DEFINITIONS.filter((card) =>
+      (card.triggers ?? []).some((trigger) => trigger["hook"] === "OnBurnTick")
+    ).map((card) => card.id);
+
+    expect(legacyBurnTickCards).toEqual([]);
+  });
+
   it("all skill JSON loads, validates, and stays modifier-only", () => {
     expect(mvpSkillsJson).toHaveLength(8);
     expect(SKILL_DEFINITIONS).toEqual(mvpSkillsJson);

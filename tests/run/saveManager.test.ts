@@ -144,6 +144,23 @@ describe("SaveManager", () => {
             }
           },
           {
+            tick: 121,
+            type: "DamageDealt",
+            payload: {
+              command: "BurnTick",
+              damageType: "FIRE",
+              hpDamage: 2,
+              statusSourceContributions: [
+                {
+                  sourceCombatantId: "player",
+                  sourceCardInstanceId: "run-card-1",
+                  sourceCardDefinitionId: "oil-flask",
+                  amount: 2
+                }
+              ]
+            }
+          },
+          {
             tick: 61,
             type: "DamageDealt",
             payload: {
@@ -197,8 +214,8 @@ describe("SaveManager", () => {
       },
       summary: {
         ...fakeCombatResult("PLAYER").summary,
-        statusDamage: { Burn: 3, Poison: 2 },
-        statusDamageByCard: { Burn: { "run-card-1": 3 }, Poison: { "run-card-2": 2 } },
+        statusDamage: { Burn: 5, Poison: 2 },
+        statusDamageByCard: { Burn: { "run-card-1": 5 }, Poison: { "run-card-2": 2 } },
         healingByCard: { "run-card-3": 4 },
         controlApplicationsByCard: { Haste: { "run-card-4": 1 } }
       }
