@@ -84,5 +84,41 @@
       }
     ],
     "description": "Size 2. When an adjacent ally activates, ready adjacent allies 1 second sooner. Can trigger once every 3 seconds."
+  },
+  {
+    "id": "iron-bastion-strike",
+    "name": "Iron Bastion Strike",
+    "tier": "GOLD",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["weapon", "armor", "physical", "terminal", "iron-warlord"],
+    "cooldownTicks": 300,
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 2,
+        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 100 }
+      }
+    ],
+    "description": "Size 2. Every 5 seconds, deal 2 damage plus damage equal to 100% of your Armor."
+  },
+  {
+    "id": "warlords-mandate",
+    "name": "Warlord's Mandate",
+    "tier": "JADE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical", "terminal", "iron-warlord"],
+    "cooldownTicks": 360,
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 0,
+        "scaling": { "source": "OWNER_MAX_HP_PERCENT", "percent": 20 },
+        "critChancePercent": 15,
+        "critMultiplier": 2
+      }
+    ],
+    "description": "Every 6 seconds, deal damage equal to 20% of your max HP. 15% chance to crit for 2x damage."
   }
 ]

@@ -37,6 +37,8 @@ export interface CombatResultSummary {
   readonly armorBlocked: number;
   readonly activationsByCard: Readonly<Record<string, number>>;
   readonly triggerCountByCard: Readonly<Record<string, number>>;
+  readonly critCountByCard?: Readonly<Record<string, number>>;
+  readonly criticalDamageByCard?: Readonly<Record<string, number>>;
   readonly topContributors: readonly CombatContribution[];
 }
 

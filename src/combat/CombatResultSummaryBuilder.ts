@@ -14,6 +14,8 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
   const armorGainedByCard: Record<string, number> = {};
   const activationsByCard: Record<string, number> = {};
   const triggerCountByCard: Record<string, number> = {};
+  const critCountByCard: Record<string, number> = {};
+  const criticalDamageByCard: Record<string, number> = {};
   let armorBlocked = 0;
 
   for (const event of input.replayTimeline.events) {
@@ -26,6 +28,10 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
       const command = event.payload?.command;
       if (event.sourceId) {
         addToRecord(damageByCard, event.sourceId, hpDamage);
+        if (event.payload?.critical === true) {
+          addToRecord(critCountByCard, event.sourceId, 1);
+          addToRecord(criticalDamageByCard, event.sourceId, hpDamage);
+        }
       }
       if (command === "BurnTick") {
         addToRecord(statusDamage, "Burn", hpDamage);
@@ -56,6 +62,8 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
     armorBlocked,
     activationsByCard,
     triggerCountByCard,
+    critCountByCard,
+    criticalDamageByCard,
     topContributors: buildTopContributors(damageByCard, armorGainedByCard, triggerCountByCard)
   };
 }

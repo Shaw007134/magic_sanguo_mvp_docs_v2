@@ -20,6 +20,12 @@ export interface DamageCalculationInput {
   readonly modifierSystem?: ModifierSystem;
   readonly ignoresArmor?: boolean;
   readonly command: string;
+  readonly critical?: boolean;
+  readonly critChancePercent?: number;
+  readonly critMultiplier?: number;
+  readonly baseAmount?: number;
+  readonly scalingAmount?: number;
+  readonly conditionalMultiplier?: number;
   readonly combatLog: CombatLog;
   readonly replayEvents: ReplayEvent[];
 }
@@ -59,22 +65,40 @@ export function applyDamage(input: DamageCalculationInput): DamageCalculationRes
     targetArmor: input.target.armor
   };
 
+  const payload: Record<string, unknown> = {
+    command: input.command,
+    amount: incomingDamage,
+    damageType: input.damageType,
+    ignoresArmor: input.ignoresArmor === true,
+    critical: input.critical === true,
+    armorBlocked,
+    hpDamage,
+    targetSide: input.target.side,
+    targetHp: input.target.hp,
+    targetArmor: input.target.armor
+  };
+  if (input.critChancePercent !== undefined) {
+    payload.critChancePercent = input.critChancePercent;
+  }
+  if (input.critMultiplier !== undefined) {
+    payload.critMultiplier = input.critMultiplier;
+  }
+  if (input.baseAmount !== undefined && input.baseAmount !== incomingDamage) {
+    payload.baseAmount = input.baseAmount;
+  }
+  if (input.scalingAmount !== undefined && input.scalingAmount > 0) {
+    payload.scalingAmount = input.scalingAmount;
+  }
+  if (input.conditionalMultiplier !== undefined && input.conditionalMultiplier !== 1) {
+    payload.conditionalMultiplier = input.conditionalMultiplier;
+  }
+
   input.replayEvents.push({
     tick: input.tick,
     type: "DamageDealt",
     sourceId: input.sourceId,
     targetId: input.target.formation.id,
-    payload: {
-      command: input.command,
-      amount: incomingDamage,
-      damageType: input.damageType,
-      ignoresArmor: input.ignoresArmor === true,
-      armorBlocked,
-      hpDamage,
-      targetSide: input.target.side,
-      targetHp: input.target.hp,
-      targetArmor: input.target.armor
-    }
+    payload
   });
   if (armorBlocked > 0) {
     input.replayEvents.push({

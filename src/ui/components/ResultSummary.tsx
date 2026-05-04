@@ -37,6 +37,8 @@ export function ResultSummary({ summary, cardInstancesById = new Map(), cardDefi
       <MetricList title="Top contributors" values={Object.fromEntries(summary.topContributors.map((entry) => [entry.sourceId, entry.score]))} resolveName={resolveName} />
       <MetricList title="Damage by card" values={summary.damageByCard} resolveName={resolveName} />
       <MetricList title="Status damage" values={summary.statusDamage} resolveName={formatStatusName} />
+      <MetricList title="Critical hits" values={summary.critCountByCard ?? {}} resolveName={resolveName} />
+      <MetricList title="Critical damage" values={summary.criticalDamageByCard ?? {}} resolveName={resolveName} />
       <MetricList title="Armor gained" values={summary.armorGainedByCard} resolveName={resolveName} />
       <MetricList title="Activations" values={summary.activationsByCard} resolveName={resolveName} />
       <MetricList title="Triggers" values={summary.triggerCountByCard} resolveName={resolveName} />

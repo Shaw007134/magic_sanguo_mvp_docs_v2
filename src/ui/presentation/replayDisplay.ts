@@ -18,7 +18,7 @@ export function formatReplayEvent(event: ReplayEvent, context: ReplayDisplayCont
     case "CardActivated":
       return `${time}: ${sourceName} activated.`;
     case "DamageDealt":
-      return `${time}: ${sourceName} dealt ${getNumber(payload, "hpDamage", "amount")} damage.`;
+      return `${time}: ${sourceName} dealt ${getNumber(payload, "hpDamage", "amount")} damage${payload["critical"] === true ? " with a critical hit" : ""}.`;
     case "ArmorGained":
       return `${time}: ${sourceName} gained ${getNumber(payload, "amount")} Armor.`;
     case "ArmorBlocked":

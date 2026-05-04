@@ -151,6 +151,7 @@ describe("ResolutionStack", () => {
           amount: 2,
           damageType: "DIRECT",
           ignoresArmor: false,
+          critical: false,
           armorBlocked: 0,
           hpDamage: 2,
           targetSide: "ENEMY",

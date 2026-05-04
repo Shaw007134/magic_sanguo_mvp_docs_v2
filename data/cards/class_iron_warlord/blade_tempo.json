@@ -18,8 +18,16 @@
     "size": 2,
     "tags": ["weapon", "physical", "iron-warlord"],
     "cooldownTicks": 240,
-    "effects": [{ "command": "DealDamage", "amount": 12 }],
-    "description": "Size 2. Every 4 seconds, deal 12 damage as a large finishing weapon."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 8,
+        "critChancePercent": 25,
+        "critMultiplier": 2,
+        "conditionalMultiplier": { "targetHpBelowPercent": 35, "multiplier": 2 }
+      }
+    ],
+    "description": "Size 2. Every 4 seconds, deal 8 damage. 25% chance to crit for 2x damage. If the enemy is below 35% HP, this hit deals double damage."
   },
   {
     "id": "left-flank-blade",

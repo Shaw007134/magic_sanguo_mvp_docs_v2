@@ -53,7 +53,7 @@ export function generateMonsterFormation(input: MonsterGenerationInput): Monster
   }
 
   if (!input.template.fixed) {
-    for (const choice of shuffleChoices(input.template.optionalCards, rng)) {
+    for (const choice of shuffleChoices(input.template.optionalCards, rng).slice(0, getMaxOptionalCards(input.template, input.day))) {
       placeCardIfPossible(choice, input.template, slots, cardInstances, instanceCounts, cardDefinitionsById);
     }
   }
@@ -75,6 +75,22 @@ export function generateMonsterFormation(input: MonsterGenerationInput): Monster
     },
     cardInstances
   };
+}
+
+function getMaxOptionalCards(template: MonsterTemplate, day: number): number {
+  if (template.maxOptionalCards !== undefined) {
+    return template.maxOptionalCards;
+  }
+  switch (template.difficulty) {
+    case "TUTORIAL":
+      return 0;
+    case "NORMAL":
+      return day <= 3 ? 1 : 2;
+    case "ELITE":
+      return 3;
+    case "BOSS":
+      return template.optionalCards.length;
+  }
 }
 
 function createFormationId(template: MonsterTemplate, seed: string, day: number): string {

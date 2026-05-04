@@ -777,6 +777,7 @@ function withNodeDerivedState(
             seed: state.seed,
             nodeIndex: state.currentNodeIndex,
             cardDefinitionsById,
+            level: state.level,
             starter: state.currentNodeIndex === 1
           })
         : node.type === "REWARD"
@@ -787,7 +788,9 @@ function withNodeDerivedState(
               usedCardDefinitionIds: state.pendingRewardSource?.usedCardDefinitionIds,
               cardDefinitionsById,
               ownedCards: state.ownedCards,
-              ownedSkills: state.ownedSkills
+              ownedSkills: state.ownedSkills,
+              level: state.level,
+              boss: state.currentNode.battleDifficulty === "BOSS"
             })
           : [];
   return {
@@ -821,7 +824,7 @@ function getCycleMonsterTemplateId(cycleIndex: number): string {
 }
 
 function ensureShopState(
-  state: Pick<RunState, "shopStates" | "currentNode" | "currentNodeIndex" | "seed">,
+  state: Pick<RunState, "shopStates" | "currentNode" | "currentNodeIndex" | "seed" | "level">,
   cardDefinitionsById: ReadonlyMap<string, CardDefinition>
 ): RunState["shopStates"] {
   if (state.shopStates.some((shopState) => shopState.nodeId === state.currentNode.id)) {
@@ -831,6 +834,7 @@ function ensureShopState(
     seed: state.seed,
     nodeIndex: state.currentNodeIndex,
     cardDefinitionsById,
+    level: state.level,
     starter: state.currentNodeIndex === 0
   });
   return [

@@ -1,4 +1,12 @@
 import type { CardDefinition, CardInstance, CardTier } from "../../model/card.js";
+import {
+  BUILD_VITAL_SUPPORT_POOL,
+  BOSS_REWARD_POOL,
+  filterKnownCards,
+  getCardQualityScore,
+  getRewardPoolForLevel,
+  TERMINAL_POOL
+} from "../../content/cards/contentPools.js";
 import { getMonsterTemplateById } from "../../content/monsters/monsterTemplates.js";
 import { describeUpgradePreview, hasMeaningfulUpgrade } from "../../content/cards/effectiveCardDefinition.js";
 import { shuffleDeterministic } from "../deterministic.js";
@@ -21,17 +29,41 @@ export function createRewardChoices(input: {
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly ownedCards?: readonly CardInstance[];
   readonly ownedSkills?: readonly SkillInstance[];
+  readonly level?: number;
+  readonly boss?: boolean;
 }): readonly RewardChoice[] {
+  const level = input.level ?? 1;
   const rewardPool = input.defeatedMonsterId
     ? (getMonsterTemplateById(input.defeatedMonsterId)?.rewardPool ?? [])
     : [];
   const poolCards = rewardPool.filter((cardId) => input.cardDefinitionsById.has(cardId));
   const usedCards = (input.usedCardDefinitionIds ?? []).filter((cardId) => input.cardDefinitionsById.has(cardId));
+  const curatedFallback = sortRewardCardIdsByLevel(shuffleDeterministic(
+    filterKnownCards(getRewardPoolForLevel(level), input.cardDefinitionsById),
+    `${input.seed}:reward-curated:${input.nodeIndex}:${level}`
+  ), level);
+  const buildVitalSupport = sortRewardCardIdsByLevel(shuffleDeterministic(
+    filterKnownCards(BUILD_VITAL_SUPPORT_POOL, input.cardDefinitionsById),
+    `${input.seed}:reward-support:${input.nodeIndex}:${level}`
+  ), level);
+  const terminalCards = level >= 5
+    ? sortRewardCardIdsByLevel(shuffleDeterministic(
+        filterKnownCards(input.boss ? BOSS_REWARD_POOL : TERMINAL_POOL, input.cardDefinitionsById),
+        `${input.seed}:reward-terminal:${input.nodeIndex}:${level}`
+      ), level)
+    : [];
   const fallbackCards = shuffleDeterministic(
     [...input.cardDefinitionsById.keys()],
     `${input.seed}:reward:${input.nodeIndex}:${input.defeatedMonsterId ?? "none"}`
   );
-  const orderedCards = [...new Set([...usedCards, ...poolCards, ...fallbackCards])];
+  const orderedCards = [...new Set([
+    ...usedCards,
+    ...poolCards,
+    ...curatedFallback,
+    ...buildVitalSupport,
+    ...terminalCards,
+    ...fallbackCards
+  ])];
   const choices: RewardChoice[] = [];
   for (const cardDefinitionId of orderedCards) {
     if (choices.length >= 2) {
@@ -90,8 +122,9 @@ export function createLevelUpRewardChoices(input: {
   readonly ownedSkills?: readonly SkillInstance[];
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
 }): readonly LevelUpRewardChoice[] {
+  const level = input.level;
   const shuffledCards = shuffleDeterministic(
-    [...input.cardDefinitionsById.keys()],
+    filterKnownCards(getRewardPoolForLevel(level), input.cardDefinitionsById),
     `${input.seed}:level-up:${input.level}`
   );
   const cardDefinitionId = shuffledCards[0] ?? "rusty-blade";
@@ -157,4 +190,23 @@ function findUpgradeableCard(
 function findUnownedSkill(ownedSkills: readonly SkillInstance[], seed = "skill-reward") {
   const ownedDefinitionIds = new Set(ownedSkills.map((skill) => skill.definitionId));
   return shuffleDeterministic(SKILL_DEFINITIONS, seed).find((skill) => !ownedDefinitionIds.has(skill.id));
+}
+
+function sortRewardCardIdsByLevel(cardIds: readonly string[], level: number): readonly string[] {
+  return [...cardIds].sort((left, right) => sortRewardCardIds(left, right, level));
+}
+
+function sortRewardCardIds(left: string, right: string, level: number): number {
+  if (level <= 2) {
+    return earlyTierPenalty(left) - earlyTierPenalty(right) || left.localeCompare(right);
+  }
+  if (level >= 8) {
+    return getCardQualityScore(right) - getCardQualityScore(left) || left.localeCompare(right);
+  }
+  return getCardQualityScore(right) - getCardQualityScore(left) || left.localeCompare(right);
+}
+
+function earlyTierPenalty(cardId: string): number {
+  const quality = getCardQualityScore(cardId);
+  return quality >= 5 ? 10 + quality : quality;
 }

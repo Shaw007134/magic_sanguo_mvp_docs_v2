@@ -1,7 +1,11 @@
 import type { EffectDefinition } from "../model/card.js";
 import type { CombatCommand } from "./commands/CombatCommand.js";
 import { ApplyBurnCommand } from "./commands/ApplyBurnCommand.js";
-import { DealDamageCommand } from "./commands/DealDamageCommand.js";
+import {
+  DealDamageCommand,
+  type DealDamageConditionalMultiplierDefinition,
+  type DealDamageScalingDefinition
+} from "./commands/DealDamageCommand.js";
 import { GainArmorCommand } from "./commands/GainArmorCommand.js";
 import { ModifyCooldownCommand } from "./commands/ModifyCooldownCommand.js";
 import type { MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
@@ -30,7 +34,12 @@ function createCombatCommandsForEffect(
       if (typeof effect["amount"] !== "number") {
         return [];
       }
-      return [new DealDamageCommand(effect["amount"])];
+      return [new DealDamageCommand(effect["amount"], {
+        critChancePercent: readNumber(effect["critChancePercent"]),
+        critMultiplier: readNumber(effect["critMultiplier"]),
+        scaling: parseScaling(effect["scaling"]),
+        conditionalMultiplier: parseConditionalMultiplier(effect["conditionalMultiplier"])
+      })];
     case "GainArmor":
       if (typeof effect["amount"] !== "number") {
         return [];
@@ -49,6 +58,44 @@ function createCombatCommandsForEffect(
     default:
       return [];
   }
+}
+
+function readNumber(value: unknown): number | undefined {
+  return typeof value === "number" ? value : undefined;
+}
+
+function parseScaling(value: unknown): DealDamageScalingDefinition | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  const source = value["source"];
+  const percent = value["percent"];
+  if (
+    (source === "OWNER_ARMOR_PERCENT" ||
+      source === "OWNER_MAX_HP_PERCENT" ||
+      source === "TARGET_MISSING_HP_PERCENT") &&
+    typeof percent === "number"
+  ) {
+    return { source, percent };
+  }
+  return undefined;
+}
+
+function parseConditionalMultiplier(value: unknown): DealDamageConditionalMultiplierDefinition | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  if (typeof value["targetHpBelowPercent"] === "number" && typeof value["multiplier"] === "number") {
+    return {
+      targetHpBelowPercent: value["targetHpBelowPercent"],
+      multiplier: value["multiplier"]
+    };
+  }
+  return undefined;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
 }
 
 function createModifyCooldownCommands(

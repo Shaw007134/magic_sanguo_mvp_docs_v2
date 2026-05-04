@@ -16,6 +16,25 @@ import {
   IRON_WARLORD_CARD_DEFINITIONS,
   LEGACY_MVP_CARD_DEFINITIONS
 } from "../../src/content/cards/activeCards.js";
+import {
+  ARCHETYPE_POOLS,
+  BUILD_VITAL_SUPPORT_POOL,
+  CARD_POOL_METADATA,
+  EARLY_REWARD_POOL,
+  EARLY_SHOP_POOL,
+  getCardPoolMetadata,
+  getCardQualityScore,
+  getRewardPoolForLevel,
+  getShopPoolForLevel,
+  IRON_WARLORD_TERMINALS,
+  LATE_REWARD_POOL,
+  LATE_SHOP_POOL,
+  MID_REWARD_POOL,
+  MID_SHOP_POOL,
+  STARTER_EVENT_POOL,
+  STARTER_SHOP_POOL,
+  TERMINAL_POOL
+} from "../../src/content/cards/contentPools.js";
 import { MonsterGenerator } from "../../src/content/monsters/MonsterGenerator.js";
 import { getMonsterTemplateById, MONSTER_TEMPLATES } from "../../src/content/monsters/monsterTemplates.js";
 import type { CardDefinition, CardInstance } from "../../src/model/card.js";
@@ -39,6 +58,9 @@ const ironWarlordJsonCards = [
 const activeCardsById = getActiveCardDefinitionsById();
 const PHASE_13A_CARD_IDS = new Set([...generalJsonCards, ...ironWarlordJsonCards].map((card) => card.id));
 const EARLY_REWARD_TIERS = new Set(["BRONZE", "SILVER"]);
+const EARLY_ALLOWED_TIERS = new Set(["BRONZE", "SILVER"]);
+const MID_ALLOWED_TIERS = new Set(["BRONZE", "SILVER", "GOLD", "JADE"]);
+const LATE_ALLOWED_TIERS = new Set(["BRONZE", "SILVER", "GOLD", "JADE", "CELESTIAL"]);
 
 const NEW_MONSTER_IDS = [
   "bandit-duelist",
@@ -56,7 +78,7 @@ const BOSS_IDS = ["gate-captain-elite", "siege-marshal", "cinder-strategist"] as
 describe("active MVP content registry", () => {
   it("loads the requested card pack sizes and preserves legacy MVP cards", () => {
     expect(generalJsonCards).toHaveLength(18);
-    expect(ironWarlordJsonCards).toHaveLength(18);
+    expect(ironWarlordJsonCards).toHaveLength(20);
     expect(GENERAL_CARD_DEFINITIONS).toEqual(generalJsonCards);
     expect(IRON_WARLORD_CARD_DEFINITIONS).toEqual(ironWarlordJsonCards);
     expect(LEGACY_MVP_CARD_DEFINITIONS).toEqual(monsterCardsJson);
@@ -67,14 +89,14 @@ describe("active MVP content registry", () => {
     for (const card of [...generalJsonCards, ...ironWarlordJsonCards]) {
       expect(activeCardsById.has(card.id), card.id).toBe(true);
     }
-    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 36);
+    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 38);
   });
 
   it("all active cards validate and use only MVP grammar", () => {
     for (const card of ACTIVE_CARD_DEFINITIONS) {
       expect(validateCardDefinition(card), card.id).toEqual({ valid: true, errors: [] });
       expect(card.description, card.id).not.toMatch(/On[A-Z]|hook|ticks?/);
-      expect(card.description, card.id).not.toMatch(/Barrier|Ward|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|chance|random/i);
+      expect(card.description, card.id).not.toMatch(/Barrier|Ward|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
       expect(card.tags.some((tag) => /barrier|ward|energy|absorb|freeze|haste|vulnerable|silence|mana|spirit|fate|heat|morale|rage/i.test(tag)), card.id).toBe(false);
       for (const effect of card.effects ?? []) {
         validateEffect(effect, card.id);
@@ -91,7 +113,7 @@ describe("active MVP content registry", () => {
     for (const skill of SKILL_DEFINITIONS) {
       expect(skill.id.trim().length, skill.id).toBeGreaterThan(0);
       expect(skill.name.trim().length, skill.id).toBeGreaterThan(0);
-      expect(skill.description, skill.id).not.toMatch(/Barrier|Ward|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|chance|random/i);
+      expect(skill.description, skill.id).not.toMatch(/Barrier|Ward|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
       expect(skill.modifierTemplates.length, skill.id).toBeGreaterThan(0);
       for (const template of skill.modifierTemplates) {
         expect(["BeforeDealDamage", "BeforeCooldownRecover", "OnStatusApplied"]).toContain(template.hook);
@@ -266,13 +288,123 @@ describe("active MVP content registry", () => {
     expect(rewardCards.every((card) => ["GOLD", "JADE", "CELESTIAL"].includes(card.tier))).toBe(false);
   });
 
+  it("curated content pools reference known cards and expose terminal/support structure", () => {
+    const cardPools = [
+      STARTER_SHOP_POOL,
+      STARTER_EVENT_POOL,
+      EARLY_SHOP_POOL,
+      MID_SHOP_POOL,
+      LATE_SHOP_POOL,
+      EARLY_REWARD_POOL,
+      MID_REWARD_POOL,
+      LATE_REWARD_POOL,
+      TERMINAL_POOL,
+      BUILD_VITAL_SUPPORT_POOL,
+      ...Object.values(ARCHETYPE_POOLS)
+    ];
+    for (const pool of cardPools) {
+      expect(pool.length).toBeGreaterThan(0);
+      for (const cardId of pool) {
+        expect(activeCardsById.has(cardId), `pool:${cardId}`).toBe(true);
+        expect(getCardPoolMetadata(cardId), `metadata:${cardId}`).toBeDefined();
+      }
+    }
+    for (const card of ACTIVE_CARD_DEFINITIONS) {
+      expect(CARD_POOL_METADATA[card.id as keyof typeof CARD_POOL_METADATA], `metadata:${card.id}`).toBeDefined();
+    }
+    for (const terminal of IRON_WARLORD_TERMINALS) {
+      expect(activeCardsById.has(terminal.cardId), terminal.cardId).toBe(true);
+      expect(TERMINAL_POOL).toContain(terminal.cardId);
+      expect(terminal.supportCardIds.length, terminal.cardId).toBeGreaterThanOrEqual(2);
+      for (const supportCardId of terminal.supportCardIds) {
+        expect(activeCardsById.has(supportCardId), `${terminal.cardId}:${supportCardId}`).toBe(true);
+      }
+    }
+    const buildVitalBronzeSilver = BUILD_VITAL_SUPPORT_POOL
+      .map((cardId) => activeCardsById.get(cardId))
+      .filter((card): card is CardDefinition => card !== undefined && ["BRONZE", "SILVER"].includes(card.tier));
+    expect(buildVitalBronzeSilver.length).toBeGreaterThanOrEqual(6);
+    expect(LATE_SHOP_POOL.some((cardId) => activeCardsById.get(cardId)?.tier === "BRONZE")).toBe(true);
+    expect(LATE_SHOP_POOL.some((cardId) => activeCardsById.get(cardId)?.tier === "SILVER")).toBe(true);
+  });
+
+  it("level-aware pools follow tier and quality progression", () => {
+    expect(getShopPoolForLevel(1)).toBe(EARLY_SHOP_POOL);
+    expect(getShopPoolForLevel(5)).toBe(MID_SHOP_POOL);
+    expect(getShopPoolForLevel(9)).toBe(LATE_SHOP_POOL);
+    expect(getRewardPoolForLevel(1)).toBe(EARLY_REWARD_POOL);
+    expect(getRewardPoolForLevel(5)).toBe(MID_REWARD_POOL);
+    expect(getRewardPoolForLevel(9)).toBe(LATE_REWARD_POOL);
+
+    expect(poolTiers(EARLY_SHOP_POOL).every((tier) => EARLY_ALLOWED_TIERS.has(tier))).toBe(true);
+    expect(poolTiers(EARLY_REWARD_POOL).every((tier) => EARLY_ALLOWED_TIERS.has(tier))).toBe(true);
+    expect(poolTiers(MID_SHOP_POOL).every((tier) => MID_ALLOWED_TIERS.has(tier))).toBe(true);
+    expect(poolTiers(MID_REWARD_POOL).every((tier) => MID_ALLOWED_TIERS.has(tier))).toBe(true);
+    expect(poolTiers(LATE_SHOP_POOL).every((tier) => LATE_ALLOWED_TIERS.has(tier))).toBe(true);
+    expect(poolTiers(LATE_REWARD_POOL).every((tier) => LATE_ALLOWED_TIERS.has(tier))).toBe(true);
+
+    expect(averageQuality(LATE_REWARD_POOL)).toBeGreaterThan(averageQuality(EARLY_REWARD_POOL));
+    expect(countRoleQualityOptions(LATE_REWARD_POOL)).toBeGreaterThan(countRoleQualityOptions(EARLY_REWARD_POOL));
+    expect(LATE_REWARD_POOL.some((cardId) => BUILD_VITAL_SUPPORT_POOL.includes(cardId as typeof BUILD_VITAL_SUPPORT_POOL[number]))).toBe(true);
+  });
+
+  it("starter shop usually offers attack, defense, and connector roles", () => {
+    const choices = createShopChoices({
+      seed: "starter-role-shape",
+      nodeIndex: 0,
+      starter: true,
+      cardDefinitionsById: activeCardsById
+    });
+    const roles = choices.map((choice) => getCardPoolMetadata(choice.cardDefinitionId)?.role);
+    expect(roles).toContain("starter");
+    expect(roles).toContain("defense");
+    expect(roles.some((role) => role === "connector" || role === "starter")).toBe(true);
+  });
+
+  it("late reward choices trend toward stronger engine, payoff, and terminal cards", () => {
+    const earlyRewards = Array.from({ length: 12 }, (_, index) =>
+      createRewardChoices({
+        seed: `quality-early-${index}`,
+        nodeIndex: index,
+        usedCardDefinitionIds: [],
+        cardDefinitionsById: activeCardsById,
+        level: 1
+      })
+    ).flatMap((choices) => choices.filter((choice) => choice.type === "REWARD_CARD").map((choice) => choice.cardDefinitionId ?? ""));
+    const lateRewards = Array.from({ length: 12 }, (_, index) =>
+      createRewardChoices({
+        seed: `quality-late-${index}`,
+        nodeIndex: index,
+        usedCardDefinitionIds: [],
+        cardDefinitionsById: activeCardsById,
+        level: 9
+      })
+    ).flatMap((choices) => choices.filter((choice) => choice.type === "REWARD_CARD").map((choice) => choice.cardDefinitionId ?? ""));
+
+    expect(averageQuality(lateRewards)).toBeGreaterThan(averageQuality(earlyRewards));
+    expect(countRoleQualityOptions(lateRewards)).toBeGreaterThan(countRoleQualityOptions(earlyRewards));
+  });
+
+  it("early monsters generate simpler formations than elite and boss monsters", () => {
+    const generator = new MonsterGenerator();
+    const early = generator.generateByTemplateId({ templateId: "bandit-duelist", seed: "complexity", day: 2 });
+    const elite = generator.generateByTemplateId({ templateId: "cinder-captain", seed: "complexity", day: 7 });
+    const boss = generator.generateByTemplateId({ templateId: "siege-marshal", seed: "complexity", day: 10 });
+
+    expect(early.cardInstances.length).toBeLessThanOrEqual(3);
+    expect(elite.cardInstances.length).toBeGreaterThanOrEqual(early.cardInstances.length);
+    expect(boss.cardInstances.length).toBeGreaterThanOrEqual(3);
+  });
+
   it.each([
     ["Blade Tempo", ["rusty-blade", "field-drum", "vanguard-saber", "left-flank-blade"]],
     ["Burn Engine", ["oil-flask", "ember-banner", "fire-arrow-cart", "cinder-seal"]],
     ["Armor Counter", ["iron-guard", "counter-stance", "shield-wall"]],
     ["Drum Command", ["vanguard-saber", "war-drum", "battle-standard", "patrol-spear"]],
     ["Siege Fire", ["war-drum", "fire-cart-battery", "siege-brazier"]],
-    ["Hybrid Bruiser", ["militia-spear", "burning-shield", "guard-captain", "frontline-banner"]]
+    ["Hybrid Bruiser", ["militia-spear", "burning-shield", "guard-captain", "frontline-banner"]],
+    ["Armor Terminal", ["iron-guard", "shield-wall", "battle-standard", "iron-bastion-strike"]],
+    ["Crit Execution", ["vanguard-saber", "left-flank-blade", "execution-halberd", "war-drum"]]
   ])("%s deterministic combat smoke test", (_name, cardIds) => {
     const player = createFormation("player", "PLAYER", cardIds);
     const enemy = createFormation("enemy", "MONSTER", ["training-staff", "wooden-shield"]);
@@ -292,6 +424,15 @@ describe("active MVP content registry", () => {
     expect(result.winner).not.toBe("DRAW");
   });
 
+  it("terminal builds outperform a simple starter-only build", () => {
+    const starter = simulatePlayerBuild(["rusty-blade", "militia-spear"], 720);
+    const armorTerminal = simulatePlayerBuild(["iron-guard", "shield-wall", "battle-standard", "iron-bastion-strike"], 720);
+    const critTerminal = simulatePlayerBuild(["vanguard-saber", "left-flank-blade", "execution-halberd", "war-drum"], 720);
+
+    expect(armorTerminal.enemyHpLost).toBeGreaterThan(starter.enemyHpLost);
+    expect(critTerminal.enemyHpLost).toBeGreaterThan(starter.enemyHpLost);
+  });
+
   it("card summaries are readable seconds-only and hide internal hook names", () => {
     for (const card of ACTIVE_CARD_DEFINITIONS) {
       const summary = getCardDisplayInfo(card).summary;
@@ -302,7 +443,34 @@ describe("active MVP content registry", () => {
 
 function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: string): void {
   expect(["DealDamage", "GainArmor", "ApplyBurn", "ModifyCooldown"], `${cardId}:command`).toContain(effect["command"]);
-  expect(JSON.stringify(effect), cardId).not.toMatch(/Barrier|Ward|EnergyShield|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|chance|random/i);
+  expect(JSON.stringify(effect), cardId).not.toMatch(/Barrier|Ward|EnergyShield|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
+  if (effect["command"] === "DealDamage") {
+    expect(effect["amount"], `${cardId}:amount`).toBeTypeOf("number");
+    if (effect["critChancePercent"] !== undefined) {
+      expect(effect["critChancePercent"], `${cardId}:critChancePercent`).toBeTypeOf("number");
+      expect(effect["critChancePercent"], `${cardId}:critChancePercent`).toBeGreaterThanOrEqual(0);
+      expect(effect["critChancePercent"], `${cardId}:critChancePercent`).toBeLessThanOrEqual(100);
+      expect(effect["critMultiplier"], `${cardId}:critMultiplier`).toBeTypeOf("number");
+    }
+    if (effect["critMultiplier"] !== undefined) {
+      expect(effect["critMultiplier"], `${cardId}:critMultiplier`).toBeTypeOf("number");
+      expect(effect["critMultiplier"], `${cardId}:critMultiplier`).toBeGreaterThanOrEqual(1);
+    }
+    if (effect["scaling"] !== undefined) {
+      expect(isRecord(effect["scaling"]), `${cardId}:scaling`).toBe(true);
+      const scaling = effect["scaling"] as Readonly<Record<string, unknown>>;
+      expect(["OWNER_ARMOR_PERCENT", "OWNER_MAX_HP_PERCENT", "TARGET_MISSING_HP_PERCENT"], `${cardId}:scaling.source`).toContain(scaling["source"]);
+      expect(scaling["percent"], `${cardId}:scaling.percent`).toBeTypeOf("number");
+      expect(scaling["percent"], `${cardId}:scaling.percent`).toBeGreaterThan(0);
+    }
+    if (effect["conditionalMultiplier"] !== undefined) {
+      expect(isRecord(effect["conditionalMultiplier"]), `${cardId}:conditionalMultiplier`).toBe(true);
+      const conditional = effect["conditionalMultiplier"] as Readonly<Record<string, unknown>>;
+      expect(conditional["targetHpBelowPercent"], `${cardId}:conditionalMultiplier.targetHpBelowPercent`).toBeTypeOf("number");
+      expect(conditional["multiplier"], `${cardId}:conditionalMultiplier.multiplier`).toBeTypeOf("number");
+      expect(conditional["multiplier"], `${cardId}:conditionalMultiplier.multiplier`).toBeGreaterThanOrEqual(1);
+    }
+  }
   if (effect["command"] === "ApplyBurn") {
     expect(effect["durationTicks"], `${cardId}:durationTicks`).toBeTypeOf("number");
   }
@@ -350,6 +518,38 @@ function validateTrigger(trigger: Readonly<Record<string, unknown>>, cardId: str
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function poolTiers(cardIds: readonly string[]): string[] {
+  return cardIds.map((cardId) => activeCardsById.get(cardId)?.tier ?? "UNKNOWN");
+}
+
+function averageQuality(cardIds: readonly string[]): number {
+  return cardIds.reduce((total, cardId) => total + getCardQualityScore(cardId), 0) / Math.max(1, cardIds.length);
+}
+
+function countRoleQualityOptions(cardIds: readonly string[]): number {
+  return cardIds.filter((cardId) => {
+    const role = getCardPoolMetadata(cardId)?.role;
+    return role === "engine" || role === "payoff" || role === "terminal";
+  }).length;
+}
+
+function simulatePlayerBuild(cardIds: readonly string[], maxCombatTicks: number): { readonly enemyHpLost: number } {
+  const enemyMaxHp = 80;
+  const player = createFormation("player", "PLAYER", cardIds);
+  const enemy = createFormation("enemy", "MONSTER", ["training-staff", "wooden-shield"]);
+  const playerInstances = createInstances("player-card", cardIds);
+  const enemyInstances = createInstances("enemy-card", ["training-staff", "wooden-shield"]);
+  const result = new CombatEngine().simulate({
+    playerFormation: player,
+    enemyFormation: { ...enemy, maxHp: enemyMaxHp },
+    cardInstancesById: new Map([...playerInstances, ...enemyInstances].map((card) => [card.instanceId, card])),
+    cardDefinitionsById: activeCardsById,
+    maxCombatTicks
+  });
+
+  return { enemyHpLost: enemyMaxHp - result.enemyFinalHp };
 }
 
 function createInstances(prefix: string, definitionIds: readonly string[]): readonly CardInstance[] {

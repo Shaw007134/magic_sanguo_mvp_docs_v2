@@ -975,3 +975,57 @@ Known issues:
 - Burn tick damage is still not attributed to applying cards.
 Next recommended task:
 - Phase 13B or playtest/tuning pass using the corrected Phase 13A content.
+
+---
+
+Date: 2026-05-04
+Phase: 13B terminal mechanics and playability tuning
+Task: Added deterministic critical hits, limited terminal scaling, curated tier-aware pools, monster optional-card tuning, and terminal/core content support.
+Files changed:
+- data/cards/class_iron_warlord/blade_tempo.json
+- data/cards/class_iron_warlord/command_armor.json
+- data/cards/class_iron_warlord/siege_fire.json
+- docs/BALANCE_NOTES.md
+- src/combat/CombatCommandFactory.ts
+- src/combat/CombatResultSummaryBuilder.ts
+- src/combat/DamageCalculator.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/content/cards/contentPools.ts
+- src/content/monsters/MonsterGenerator.ts
+- src/content/monsters/MonsterTemplate.ts
+- src/index.ts
+- src/model/result.ts
+- src/run/RunManager.ts
+- src/run/nodes/EventNode.ts
+- src/run/nodes/ShopNode.ts
+- src/run/rewards/RewardGenerator.ts
+- src/ui/components/ResultSummary.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/ui/presentation/replayDisplay.ts
+- tests/combat/criticalScaling.test.ts
+- tests/combat/resolutionStack.test.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/ui/cardDisplay.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- DealDamage without crit keeps direct damage/Armor behavior and emits non-critical replay data.
+- Deterministic crits appear in replay payloads and summary crit counts/damage.
+- OWNER_ARMOR_PERCENT, OWNER_MAX_HP_PERCENT, TARGET_MISSING_HP_PERCENT, and target-HP conditional multipliers are covered.
+- Terminal/core Iron Warlord cards and their support cards are validated against active content.
+- Curated starter, early, mid, late, terminal, build-vital, boss, skill, and archetype pools reference known cards.
+- Starter shop/event remain active-card safe, early rewards avoid only late-game tiers, and late rewards trend toward better role quality.
+- Monster optional-card scaling keeps early monsters simpler than elite/boss formations.
+- Armor Terminal and Crit Execution deterministic combat smokes were added, plus terminal builds outperform starter-only builds.
+- Card display covers crit, scaling, and conditional multiplier player-facing text.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Crit applies only to direct DealDamage effects and does not apply to Burn ticks.
+- Terminal scaling is intentionally limited to current Armor, max HP, and target missing HP; Armor is not consumed.
+- Fire support remains tag-based until DealDamage supports explicit damageType or Burn source attribution exists.
+- Boss rotation is still not implemented; Gate Captain Elite remains the wired final boss.
+Next recommended task:
+- Playtest Phase 13B curves across several seeds, then tune card/monster numbers before adding any new mechanics.

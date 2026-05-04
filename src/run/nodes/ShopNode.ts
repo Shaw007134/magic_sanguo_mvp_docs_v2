@@ -1,19 +1,27 @@
 import type { CardDefinition } from "../../model/card.js";
+import {
+  filterKnownCards,
+  getShopPoolForLevel,
+  STARTER_SHOP_POOL
+} from "../../content/cards/contentPools.js";
 import { shuffleDeterministic } from "../deterministic.js";
 import { RUN_SELL_PRICES } from "../economy.js";
 import type { ShopChoice } from "../RunState.js";
-
-const STARTER_SHOP_CARDS = ["rusty-blade", "wooden-shield", "oil-flask"] as const;
 
 export function createShopChoices(input: {
   readonly seed: string;
   readonly nodeIndex: number;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
+  readonly level?: number;
   readonly starter?: boolean;
 }): readonly ShopChoice[] {
+  const level = input.level ?? 1;
   const cardIds = input.starter
-    ? STARTER_SHOP_CARDS.filter((cardId) => input.cardDefinitionsById.has(cardId))
-    : shuffleDeterministic([...input.cardDefinitionsById.keys()], `${input.seed}:shop:${input.nodeIndex}`).slice(0, 3);
+    ? filterKnownCards(STARTER_SHOP_POOL, input.cardDefinitionsById)
+    : shuffleDeterministic(
+        filterKnownCards(getShopPoolForLevel(level), input.cardDefinitionsById),
+        `${input.seed}:shop:${input.nodeIndex}:level:${level}`
+      ).slice(0, 3);
 
   return cardIds.map((cardDefinitionId, index) => {
     const card = input.cardDefinitionsById.get(cardDefinitionId);

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getMonsterCardDefinitionsById } from "../../src/content/cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
 import { getCardDisplayInfo } from "../../src/ui/presentation/cardDisplay.js";
 
-const cardsById = getMonsterCardDefinitionsById();
+const cardsById = getActiveCardDefinitionsById();
 
 function display(cardId: string) {
   const card = cardsById.get(cardId);
@@ -59,5 +59,20 @@ describe("cardDisplay", () => {
     };
 
     expect(getCardDisplayInfo(card).summary).toBe("Cooldown: -1s");
+  });
+
+  it("summarizes crit and execution text without internal ids", () => {
+    const summary = display("execution-halberd").summary;
+
+    expect(summary).toContain("25% chance to crit for 2x");
+    expect(summary).toContain("if enemy is below 35% HP, 2x damage");
+    expect(summary).not.toMatch(/TARGET_|OWNER_|conditionalMultiplier|critChancePercent|tick/i);
+  });
+
+  it("summarizes terminal scaling text readably", () => {
+    expect(display("iron-bastion-strike").summary).toContain("100% of your Armor");
+    expect(display("warlords-mandate").summary).toContain("20% of your max HP");
+    expect(display("burning-trebuchet").summary).toContain("20% of enemy missing HP");
+    expect(display("burning-trebuchet").summary).toContain("20% chance to crit for 2x");
   });
 });

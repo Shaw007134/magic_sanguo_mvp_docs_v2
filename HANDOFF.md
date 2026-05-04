@@ -54,7 +54,7 @@ MVP monster templates exist for Training Dummy, Rust Bandit, Burn Apprentice, Sh
 Monster card content exists for Training Staff, Rusty Blade, Flame Spear, Wooden Shield, Spark Drum, Fire Echo Seal, and Gate Captain Saber.
 Monster card runtime content is loaded from data/cards/monster_cards.json; monster template runtime content is loaded from data/monsters/*.json.
 Tutorial and boss monsters are fixed; normal/elite monsters use deterministic seeded optional card layout.
-Optional monster cards currently shuffle and fill all fitting slots. Future balancing may add maxOptionalCards/minOptionalCards/day scaling.
+Optional monster cards are capped by difficulty/day so early normal monsters stay simpler while later normal and elite monsters can become more complete.
 Monster battles use the same FormationSnapshot combat path as player and future async PvP opponents; no separate monster combat system was added.
 Size 2 monster cards occupy a starting slot and mark the adjacent slot locked in FormationSnapshot output; CombatEngine behavior is unchanged.
 Phase 10 UI must render locked adjacent slots as occupied by the size-2 card footprint.
@@ -93,6 +93,14 @@ Quick Hands and Drumline Training use ADD_COOLDOWN_RECOVERY_RATE instead of a sm
 Phase 13A monster templates include Bandit Duelist, Oil Raider, Shield Sergeant, Drum Adept, Siege Trainee, Banner Guard, Cinder Captain, and Iron Patrol.
 Phase 13A boss templates include Gate Captain Elite, Siege Marshal, and Cinder Strategist. Only Gate Captain Elite is wired as the current final boss.
 docs/BALANCE_NOTES.md documents the content pack, Iron Warlord identity, card roles, skills, monsters, bosses, risky combos, readability risks, and intentionally deferred systems.
+Phase 13B adds deterministic critical hits for direct DealDamage only. Card JSON may use critChancePercent and critMultiplier; replay events include critical hit data and summary includes crit counts/damage.
+Phase 13B adds limited terminal scaling for direct DealDamage only: OWNER_ARMOR_PERCENT, OWNER_MAX_HP_PERCENT, TARGET_MISSING_HP_PERCENT, plus optional targetHpBelowPercent conditional multiplier.
+Iron Warlord terminal/core cards now include Iron Bastion Strike, Warlord's Mandate, Execution Halberd, and Burning Trebuchet. Their support cards are documented and tested through src/content/cards/contentPools.ts.
+Curated content pools live in src/content/cards/contentPools.ts and cover starter shop/event, early/mid/late shop and reward pools, terminal cards, build-vital support, boss/future rewards, skill rewards, and archetype pools.
+Shop, event, level-up, and battle reward generation now use level-aware curated pools while preserving deterministic choices through save/load.
+Battle rewards preserve priority order: monster-used cards, monster rewardPool cards, curated fallback, build-vital support, terminal cards when level-appropriate, then fallback card/skill/gold.
+MonsterGenerator now limits optional-card count by difficulty/day so early normal monsters are simpler and elite/boss formations can be more complete.
+Fire support remains tag-based, not damageType-based. Burn tick damage is still not attributed to applying cards, so Burn ticks are not boosted by Fire Study or crit mechanics.
 The browser UI has minimal localStorage controls: Save Run, Load Run, and Clear Save. No cloud save, account system, or migration UI exists.
 New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
 RunManager owns chest/owned card state, ownedSkills, formation placement, selling, deterministic shop/event/reward choices, shop offer state, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
@@ -107,7 +115,7 @@ All player-facing card acquisition paths use RunManager.gainCardOrUpgradeDuplica
 Duplicate auto-upgrade messages include before/after tier and key stat preview; max-tier duplicates can still be added if chest capacity allows.
 Reward reveal state records defeated monster name plus used monster card definition ids before reward choice selection.
 Battle reward choices now support deterministic dropped cards, skill, gold, and fallback cards; direct REWARD_UPGRADE choices are intentionally excluded from normal battle rewards.
-Battle reward cards still prioritize used monster cards, then monster rewardPool, then generic fallback.
+Battle reward cards still prioritize used monster cards, then monster rewardPool, then curated fallback, build-vital support, terminal cards when level-appropriate, then generic fallback.
 Level-up rewards still support LEVEL_UPGRADE choices when an owned card has a meaningful visible/combat stat change available.
 Minimal skills exist under src/run/skills and are owned through RunState. Skills currently instantiate existing ModifierSystem modifiers only.
 Owned skills stay separate from ownedCards, render near formation, and are included in player FormationSnapshot creation without going through chest inventory.
@@ -130,17 +138,17 @@ Known limitation: Burn tick damage is not attributed to applying cards, so fire-
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
 Known limitation: save format version is 1 with fail-fast validation; future RunState schema changes need explicit migration or a clear unsupported-version failure.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
-Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
+Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, Poison, Freeze, Heal, Haste, Slow, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Post-Phase 13A:
+Post-Phase 13B:
 
 ```text
-Playtest expanded MVP content, tune card/monster numbers, and add explicit save migration only when the RunState schema changes.
+Playtest terminal/core builds across several seeds, tune reward quality and monster numbers, and add explicit save migration only when the RunState schema changes.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -172,6 +180,21 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 22. Confirm no skills appear in chest.
 23. Confirm save/load still works after obtaining new cards, upgraded duplicates, skills, and pending rewards.
 24. Confirm enemy formations are readable and not random piles.
+25. Start 3 new runs with different seeds.
+26. Confirm starter shop feels useful and not random junk.
+27. Confirm first battle is beatable after reasonable starter choices.
+28. Confirm level 1-2 shops/rewards mostly show Bronze/Silver cards.
+29. Confirm level 5+ shops/rewards show more Silver/Gold/Jade options.
+30. Confirm level 8+ shops/rewards feel stronger but still sometimes offer build-vital support/duplicates.
+31. Build one Blade Tempo terminal run.
+32. Build one Burn/Siege terminal run.
+33. Build one Armor terminal run.
+34. Build one Crit Execution run.
+35. Confirm once a terminal + support build is assembled, weaker monsters are crushed clearly.
+36. Confirm monster rewards feel related to defeated monster.
+37. Confirm monsters later in the run feel more complete/harder, not just higher HP.
+38. Confirm save/load works after acquiring new cards, upgraded duplicates, skills, pending rewards, and terminal cards.
+39. Confirm no player-facing raw ticks/internal hook names appear.
 ```
 
 ## Rules For Next Agent
@@ -192,4 +215,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use the next requested prompt from the product owner; Phase 13A content expansion is complete.
+Use the next requested prompt from the product owner; Phase 13B terminal mechanics and playability tuning are complete.

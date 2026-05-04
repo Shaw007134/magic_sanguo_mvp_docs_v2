@@ -71,7 +71,7 @@ function formatTriggerHook(trigger: TriggerDefinition): string {
 function formatEffect(effect: EffectDefinition): string {
   switch (effect["command"]) {
     case "DealDamage":
-      return typeof effect["amount"] === "number" ? `Damage: ${effect["amount"]}` : "Damage";
+      return formatDealDamageEffect(effect);
     case "GainArmor":
       return typeof effect["amount"] === "number" ? `Armor: ${effect["amount"]}` : "Armor";
     case "ApplyBurn":
@@ -86,6 +86,58 @@ function formatEffect(effect: EffectDefinition): string {
     default:
       return "Effect";
   }
+}
+
+function formatDealDamageEffect(effect: EffectDefinition): string {
+  const parts: string[] = [];
+  const amount = typeof effect["amount"] === "number" ? effect["amount"] : undefined;
+  const scaling = isRecord(effect["scaling"]) ? formatScaling(effect["scaling"]) : undefined;
+  if (amount !== undefined && amount > 0 && scaling) {
+    parts.push(`Damage: ${amount} plus ${scaling}`);
+  } else if (scaling) {
+    parts.push(`Damage: ${scaling}`);
+  } else {
+    parts.push(amount !== undefined ? `Damage: ${amount}` : "Damage");
+  }
+
+  if (isRecord(effect["conditionalMultiplier"])) {
+    const threshold = effect["conditionalMultiplier"]["targetHpBelowPercent"];
+    const multiplier = effect["conditionalMultiplier"]["multiplier"];
+    if (typeof threshold === "number" && typeof multiplier === "number") {
+      parts.push(`if enemy is below ${formatPercent(threshold)} HP, ${formatMultiplier(multiplier)} damage`);
+    }
+  }
+
+  if (typeof effect["critChancePercent"] === "number" && typeof effect["critMultiplier"] === "number") {
+    parts.push(`${formatPercent(effect["critChancePercent"])} chance to crit for ${formatMultiplier(effect["critMultiplier"])}`);
+  }
+
+  return parts.join(" · ");
+}
+
+function formatScaling(scaling: Readonly<Record<string, unknown>>): string | undefined {
+  const percent = scaling["percent"];
+  if (typeof percent !== "number") {
+    return undefined;
+  }
+  switch (scaling["source"]) {
+    case "OWNER_ARMOR_PERCENT":
+      return `${formatPercent(percent)} of your Armor`;
+    case "OWNER_MAX_HP_PERCENT":
+      return `${formatPercent(percent)} of your max HP`;
+    case "TARGET_MISSING_HP_PERCENT":
+      return `${formatPercent(percent)} of enemy missing HP`;
+    default:
+      return undefined;
+  }
+}
+
+function formatPercent(value: number): string {
+  return Number.isInteger(value) ? `${value}%` : `${value.toFixed(1).replace(/\.0$/, "")}%`;
+}
+
+function formatMultiplier(value: number): string {
+  return Number.isInteger(value) ? `${value}x` : `${value.toFixed(2).replace(/0$/, "").replace(/\.$/, "")}x`;
 }
 
 function formatSignedTickDuration(value: number): string {

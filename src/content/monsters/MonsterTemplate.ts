@@ -16,6 +16,8 @@ export interface MonsterTemplate {
   readonly startingArmor: number;
   readonly requiredCards: readonly MonsterTemplateCardChoice[];
   readonly optionalCards: readonly MonsterTemplateCardChoice[];
+  readonly minOptionalCards?: number;
+  readonly maxOptionalCards?: number;
   readonly defenseStyle: MonsterDefenseStyle;
   readonly weakness: string;
   readonly rewardPool: readonly string[];

@@ -2,15 +2,18 @@
 
 ## Content Pack Summary
 
-Phase 13A adds a large MVP content pack without adding engine mechanics:
+Phase 13A adds a large MVP content pack without adding engine mechanics, and Phase 13B adds a small deterministic terminal mechanics layer for direct DealDamage effects only:
 
 - 18 general cards in `data/cards/general/`.
-- 18 Iron Warlord cards in `data/cards/class_iron_warlord/`.
+- 20 Iron Warlord cards in `data/cards/class_iron_warlord/`.
 - 8 modifier-only skills in `data/skills/mvp_skills.json`.
 - 8 new normal/elite monster templates.
 - 3 boss templates, with `gate-captain-elite` wired as the current final boss.
+- Deterministic critical hits for direct DealDamage effects.
+- Limited terminal scaling from owner Armor, owner max HP, and target missing HP.
+- Tier-aware curated shop, event, and reward pools.
 
-All content uses only DealDamage, GainArmor, ApplyBurn, ModifyCooldown, Armor, Burn, existing trigger hooks/conditions, and existing ModifierSystem operations.
+All content uses only DealDamage, GainArmor, ApplyBurn, ModifyCooldown, Armor, Burn, existing trigger hooks/conditions, and existing ModifierSystem operations. Phase 13B does not add new statuses, resources, control effects, or new status reactions.
 
 ## Iron Warlord Identity
 
@@ -144,9 +147,90 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 - Revisit damageType-based fire support after DealDamage supports explicit damageType or Burn source attribution exists.
 - Consider explicit size-2 adjacency UI hints before adding more large cards.
 
+## Phase 13B Terminal Mechanics
+
+Critical hits are deterministic and apply only to direct DealDamage effects. A card may define `critChancePercent` from 0 to 100 and `critMultiplier` of at least 1. The combat seed/state, tick, card instance, activation count, source definition, and trigger depth determine the crit roll, so identical combat input produces identical results. Crits do not apply to Burn ticks.
+
+Terminal scaling is limited to direct DealDamage:
+
+- OWNER_ARMOR_PERCENT: damage based on the owner's current Armor.
+- OWNER_MAX_HP_PERCENT: damage based on the owner's max HP.
+- TARGET_MISSING_HP_PERCENT: damage based on the enemy's missing HP.
+
+Conditional multipliers are limited to `targetHpBelowPercent` plus `multiplier`. Scaling damage is rounded to an integer, remains direct damage, and is still reduced by Armor. Phase 13B does not consume Armor for scaling attacks.
+
+Current fire support is tag-based, not damageType-based. Fire Study checks `sourceHasTag: "fire"` and boosts direct damage from fire-tagged cards. Burn tick damage is still not attributed to applying cards, so it is not boosted by Fire Study or other card-source damage modifiers yet.
+
+## Iron Warlord Terminal/Core Cards
+
+| Terminal | Mechanic | Support cards | Weakness |
+| --- | --- | --- | --- |
+| Iron Bastion Strike | Size-2 Armor terminal; deals flat damage plus 100% of current Armor | Iron Guard, Shield Wall, Veteran Plate, Battle Standard | Slow 5s cooldown and needs Armor before it fires |
+| Warlord's Mandate | Max HP body terminal; deals 20% of max HP and can crit | Frontline Banner, Guard Captain, Burning Shield, Spear and Shield Line | Slow 6s cooldown and needs HP/survivability growth |
+| Execution Halberd | Size-2 crit execution terminal; crits and doubles below 35% enemy HP | Vanguard Saber, Left Flank Blade, War Drum, Duelist's Dao | Needs chip damage first and uses 2 slots |
+| Burning Trebuchet | Size-2 Siege Fire terminal; missing-HP scaling, Burn, and crit | War Drum, Command Gong, Siege Command, Fire Arrow Cart, Oil Flask | Very slow without drum acceleration |
+
+Build-vital Bronze/Silver cards that should remain useful even late include Rusty Blade, Wooden Shield, Oil Flask, Iron Guard, Field Drum, Ember Banner, Shield Wall, Fire Arrow Cart, War Drum, and Battle Standard. These cards are included in curated support pools so late rewards can still offer enablers, duplicates, and connectors instead of only high-tier raw power.
+
+## Tier And Quality Progression
+
+Tier controls baseline reward excitement; mechanism controls build identity. Bronze and Silver cards are allowed to remain valuable when they are starters, connectors, trigger enablers, upgrade targets, or monster-relevant rewards.
+
+- Level 1-2: early pools are mostly Bronze/Silver, with no Jade/Celestial cards.
+- Level 3-4: mid pools begin introducing Silver/Gold with Bronze support still present.
+- Level 5-7: mid rewards more often contain engines, payoffs, and terminals; rare Jade cards can appear through pool composition.
+- Level 8-10: late pools contain Gold/Jade terminal options plus build-vital Bronze/Silver support and duplicates.
+- Boss/late contexts bias toward terminal, payoff, and strong support cards without guaranteeing a perfect build.
+
+Quality progression is role-aware. Higher-level rewards should have more engine, payoff, terminal, and build-completion options than level 1 rewards, while early rewards remain onboarding-safe.
+
+## Curated Pools
+
+Pool definitions live in `src/content/cards/contentPools.ts` near the active card registry. They are intentionally TypeScript arrays rather than a risky JSON schema expansion.
+
+- Starter shop: Rusty Blade, Wooden Shield, Oil Flask.
+- Starter event: simple active cards including Rusty Blade, Wooden Shield, Oil Flask, Iron Guard, and Militia Spear.
+- Early shop/reward: Bronze/Silver starter, defense, Burn, and connector cards.
+- Mid shop/reward: early cards plus stronger engines, payoffs, and size-2 build-around cards.
+- Late shop/reward: mid cards plus Iron Warlord terminals, strong drum/siege engines, and build-vital support.
+- Terminal pool: Execution Halberd, Captain's Finisher, Iron Bastion Strike, Warlord's Mandate, Flame Ram, Burning Trebuchet, Siege Crossbow.
+- Build-vital support pool: low/mid-tier enablers that keep builds coherent.
+- Boss reward pool: terminal and late support cards for future boss reward tuning.
+- Skill reward pool: the 8 MVP modifier-only skills.
+
+Archetype pools are defined for Blade Tempo, Burn Engine, Armor Counter, Drum Command, Siege Fire, Hybrid Bruiser, Armor Terminal, and Crit Execution. Monster reward generation prioritizes monster-used cards, then monster rewardPool cards, then curated/archetype-like fallbacks, support cards, terminals when level-appropriate, and finally skill/gold fallback.
+
+## Monster Scaling Model
+
+Monster difficulty now scales by build completeness as well as existing HP/Armor values. Early monsters use required identity cards and only a small number of optional cards. Mid monsters can add an engine plus payoff. Elites can add more support/defense and closer-to-complete formations. Bosses remain fixed, readable tests of one or two archetypes.
+
+Optional-card count is capped in `MonsterGenerator`: tutorial monsters add no optional cards, early normal monsters add fewer optional cards, later normal monsters add more, and elites can be closer to complete builds. Fixed bosses still use their authored formations.
+
+## Boss Tuning Notes
+
+- Gate Captain Elite remains the wired final boss and tests Blade Tempo plus Armor-backed Drum support.
+- Siege Marshal now has a stronger future-facing Siege Fire terminal template through Burning Trebuchet scaling.
+- Cinder Strategist remains a Burn Engine pressure boss for future rotation.
+- Bosses should be readable and beatable by a reasonable terminal/core build, not require perfect reward RNG.
+
+## Known Underpowered Cards
+
+- Training Staff remains intentionally plain as legacy onboarding content.
+- Patrol Spear and Militia Spear are simple early cards and may need upgrade tuning if they fall off too quickly.
+- Some passive payoffs are harder to feel without richer replay grouping.
+
+## Current Limitations
+
+- No affixes or random stat rolls.
+- No general rarity system beyond current tier fields and curated pool weighting.
+- No Burn source attribution; Burn tick damage is not attributed to applying cards.
+- No Poison, Freeze, Haste, Slow, Heal, or other future status/resource systems.
+- No boss rotation unless implemented later.
+- No branching map, async PvP, cloud save/account system, or final art/Pixi/Phaser.
+
 ## Intentionally Not Implemented Yet
 
 - No new commands, statuses, resources, trigger hooks, trigger conditions, modifier hooks, modifier conditions, or modifier operations.
-- No random chance.
+- No non-deterministic random chance.
 - No Barrier, Ward, Energy Shield, absorb layers, Freeze, Haste, Vulnerable, Silence, Mana, Command resource, Spirit, Fate, Heat, morale, or rage.
 - No hand, deck, discard, branching map, async PvP, boss-selection system, or final art implementation.
