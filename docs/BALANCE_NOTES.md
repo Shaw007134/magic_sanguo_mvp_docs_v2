@@ -11,6 +11,8 @@ Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 1
 - 3 boss templates, with `gate-captain-elite` wired as the current final boss.
 - Level-based player formation growth from 4 slots to 16 slots by level 10.
 - Fixed run card capacity of 16 owned cards.
+- Actual run battles and balance report simulations share `RUN_MAX_COMBAT_TICKS = 3600`.
+- Save format version 2 is required after the fixed chest capacity change; version 1 local saves are intentionally unsupported until a migration is added.
 - Deterministic critical hits for direct DealDamage effects.
 - Limited terminal scaling from owner Armor, owner max HP, and target missing HP.
 - Tier-aware curated shop, event, and reward pools.
@@ -326,7 +328,7 @@ Balance report command:
 pnpm balance:report
 ```
 
-The command builds TypeScript, runs actual CombatEngine simulations using FormationSnapshot fixtures, and writes JSON plus Markdown to `debug/balance-reports/latest.json` and `debug/balance-reports/latest.md`. The debug folder is gitignored.
+The command builds TypeScript, runs actual CombatEngine simulations using FormationSnapshot fixtures, and writes JSON plus Markdown to `debug/balance-reports/latest.json` and `debug/balance-reports/latest.md`. The debug folder is gitignored. Report simulations and actual RunManager battles both use the shared 3600 tick run combat cap, so report duration now matches real run battle duration.
 
 Required sample builds:
 

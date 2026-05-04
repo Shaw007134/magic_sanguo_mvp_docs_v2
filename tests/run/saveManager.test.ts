@@ -110,6 +110,19 @@ function completeFakeBattleWin(manager: RunManager) {
 }
 
 describe("SaveManager", () => {
+  it("serializeRunState creates version 2 save data and deserializeRunState accepts it", () => {
+    const manager = createNewRun("save-version-2");
+    const save = serializeRunState(manager.state);
+
+    expect(save.ok).toBe(true);
+    const parsed = JSON.parse(save.ok ? save.value : "{}") as { readonly version: number };
+    expect(parsed.version).toBe(2);
+    expect(parsed.version).toBe(RUN_SAVE_FORMAT_VERSION);
+    const loaded = deserializeRunState(save.ok ? save.value : "");
+    expect(loaded.ok).toBe(true);
+    expect(loaded.ok ? loaded.value : undefined).toEqual(manager.state);
+  });
+
   it("save/load round trip preserves exact RunState including shop sold-out state", () => {
     const manager = createNewRun("save-shop");
     chooseFirstShop(manager);
@@ -401,13 +414,17 @@ describe("SaveManager", () => {
     expect(loaded.state.ownedCards.map((card) => card.instanceId)).toEqual(["run-card-1", "run-card-2"]);
   });
 
-  it("invalid save version, corrupt JSON, and missing required fields fail clearly", () => {
+  it("invalid save version, legacy version 1, corrupt JSON, and missing required fields fail clearly", () => {
     const manager = createNewRun("save-invalid");
     const save = serializeRunState(manager.state);
     expect(save.ok).toBe(true);
     const parsed = JSON.parse(save.ok ? save.value : "{}") as Record<string, unknown>;
 
     expect(deserializeRunState("{nope").ok).toBe(false);
+    expect(deserializeRunState(JSON.stringify({ ...parsed, version: 1 }))).toEqual({
+      ok: false,
+      error: "Unsupported save format version: 1. Phase 15A requires save version 2 because chest capacity changed to fixed 16."
+    });
     expect(deserializeRunState(JSON.stringify({ ...parsed, version: RUN_SAVE_FORMAT_VERSION + 1 }))).toEqual({
       ok: false,
       error: `Unsupported save format version: ${RUN_SAVE_FORMAT_VERSION + 1}.`

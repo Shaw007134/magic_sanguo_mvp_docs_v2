@@ -1,4 +1,4 @@
-import { CombatEngine } from "../combat/CombatEngine.js";
+import { CombatEngine, LOGIC_TICKS_PER_SECOND, RUN_MAX_COMBAT_TICKS } from "../combat/CombatEngine.js";
 import { createSkillModifiers } from "../run/skills/skillDefinitions.js";
 import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import { MonsterGenerator } from "../content/monsters/MonsterGenerator.js";
@@ -8,9 +8,8 @@ import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formatio
 import type { CombatResult, CombatResultSummary } from "../model/result.js";
 import type { SkillInstance } from "../run/skills/Skill.js";
 
-const LOGIC_TICKS_PER_SECOND = 60;
 const REPORT_SEED = "phase-15a-balance-report";
-const REPORT_MAX_COMBAT_TICKS = 3600;
+export const BALANCE_REPORT_MAX_COMBAT_TICKS = RUN_MAX_COMBAT_TICKS;
 
 export type BalanceWarningFlag =
   | "TIMEOUT_OR_NEAR_TIMEOUT"
@@ -256,7 +255,7 @@ export function createBalanceReport(seed = REPORT_SEED): BalanceReport {
         cardInstancesById: new Map([...player.cardInstances, ...enemy.cardInstances].map((card) => [card.instanceId, card])),
         cardDefinitionsById,
         modifiers: createSkillModifiers({ ownedSkills: player.skills, ownerId: "player" }),
-        maxCombatTicks: REPORT_MAX_COMBAT_TICKS
+        maxCombatTicks: BALANCE_REPORT_MAX_COMBAT_TICKS
       });
       entries.push(createReportEntry({ build, enemyName: enemy.formation.displayName, enemyId: enemyRef.id, seed, result }));
     }

@@ -1,4 +1,4 @@
-import { CombatEngine } from "../combat/CombatEngine.js";
+import { CombatEngine, RUN_MAX_COMBAT_TICKS } from "../combat/CombatEngine.js";
 import type { Modifier } from "../combat/modifiers/Modifier.js";
 import {
   createEffectiveCardDefinitionMap,
@@ -421,7 +421,7 @@ export class RunManager {
       ]),
       cardDefinitionsById: effectiveDefinitionsById,
       modifiers: createSkillModifiers({ ownedSkills: this.state.ownedSkills, ownerId: "player" }),
-      maxCombatTicks: 720
+      maxCombatTicks: RUN_MAX_COMBAT_TICKS
     });
     this.state = {
       ...this.state,

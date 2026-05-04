@@ -1401,3 +1401,31 @@ Known issues:
 - No new statuses, commands, hooks, targeting modes, resources, defense layers, combat timing rules, or progression/save models were added.
 Next recommended task:
 - Phase 15B: use balance report output and manual playtests to tune card numbers, report thresholds, and readability before adding mechanics.
+
+---
+
+Date: 2026-05-04
+Phase: 15A Patch
+Task: Patched run combat cap and save version clarity after review.
+Files changed:
+- src/combat/CombatEngine.ts
+- src/run/RunManager.ts
+- src/debug/BalanceReport.ts
+- src/run/save/SaveManager.ts
+- tests/run/runManager.test.ts
+- tests/run/saveManager.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- RunManager.startBattle and balance report simulations share the same RUN_MAX_COMBAT_TICKS value.
+- A slow actual run battle can continue beyond the old 720 tick cap and reaches the shared 3600 tick cap.
+- serializeRunState writes save format version 2 and deserializeRunState accepts version 2 saves.
+- Version 1 saves are rejected with a clear Phase 15A unsupported-version message because chest capacity changed to fixed 16.
+How to run:
+- pnpm vitest run tests/run/runManager.test.ts tests/run/saveManager.test.ts tests/debug/balanceReport.test.ts
+- pnpm typecheck
+Known issues:
+- Save version 1 migration remains intentionally unimplemented; old local saves fail clearly until a migration is explicitly added.
+Next recommended task:
+- Phase 15B: use balance report output and manual playtests to tune card numbers, report thresholds, and readability before adding mechanics.

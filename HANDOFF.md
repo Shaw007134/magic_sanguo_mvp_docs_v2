@@ -93,7 +93,8 @@ removeCardFromFormation no longer checks chest capacity, because ownedCards alre
 Phase 10 prototype-only owned cards have been replaced in the main UI by real RunManager state.
 Phase 12 versioned save/load is implemented around RunState under src/run/save/SaveManager.ts.
 RunState remains the source of truth for persistence; save/load wraps and validates RunState rather than creating another inventory/map/progression model.
-Save format version 1 stores runId, seed, node/current phase state, gold, level/EXP/HP, owned cards including tierOverride, ownedSkills, formation layout, shopStates, currentChoices, pendingRewardChoices, pendingLevelUpChoices, current enemy snapshot/card instances, pending combat result, reward reveal source, and completed counters.
+Save format version 2 stores runId, seed, node/current phase state, gold, level/EXP/HP, owned cards including tierOverride, ownedSkills, formation layout, shopStates, currentChoices, pendingRewardChoices, pendingLevelUpChoices, current enemy snapshot/card instances, pending combat result, reward reveal source, and completed counters.
+Save format version 1 is intentionally unsupported after Phase 15A because chest capacity changed from formation-derived to fixed 16; future support should add an explicit migration instead of accepting old RunState silently.
 RunManager.restoreFromState restores a validated RunState without calling node choice generation, reward generation, MonsterGenerator, or CombatEngine.
 Restored RunManager recomputes the next generated card/skill instance counters from saved instance ids to avoid collisions after load.
 Battle nodes materialize and store their enemy FormationSnapshot/currentEnemyCardInstances when the node is entered, and startBattle() uses the serialized enemy if present.
@@ -113,6 +114,7 @@ Phase 14D adds a small status reaction pack in data/cards/general/reactions.json
 Phase 14E makes Burn decay after each tick and lightly retunes amount-1 Burn cards so Burn stays readable as short-term pressure.
 Phase 15A adds build-surface expansion content in data/cards/general/phase15_combo_tools.json and data/cards/class_iron_warlord/phase15_build_archetypes.json using only existing mechanics.
 Phase 15A adds deterministic balance/readability reports through `pnpm balance:report`, implemented by scripts/runBalanceReport.ts and src/debug/BalanceReport.ts. Reports write to gitignored debug/balance-reports/.
+Actual run battles and balance reports share RUN_MAX_COMBAT_TICKS = 3600, exported from CombatEngine.
 Expanded skill content is data-driven through data/skills/mvp_skills.json and still instantiates only existing ModifierSystem modifiers.
 Fire Study remains intentionally tag-based: it uses sourceHasTag "fire" to boost direct card damage from fire-tagged cards. DealDamage now supports damageType FIRE, but Fire Study has not been migrated to damageType-based support.
 Quick Hands and Drumline Training use ADD_COOLDOWN_RECOVERY_RATE instead of a small multiplier because cooldown recovery modifiers round to integer MVP values; a 1.25x multiplier on base recovery 1 is effectively a no-op.

@@ -19,7 +19,9 @@ import type {
 } from "../RunState.js";
 import { getSkillDefinitionsById } from "../skills/skillDefinitions.js";
 
-export const RUN_SAVE_FORMAT_VERSION = 1;
+export const RUN_SAVE_FORMAT_VERSION = 2;
+const PHASE_15A_UNSUPPORTED_V1_MESSAGE =
+  "Unsupported save format version: 1. Phase 15A requires save version 2 because chest capacity changed to fixed 16.";
 
 export interface RunSaveData {
   readonly version: typeof RUN_SAVE_FORMAT_VERSION;
@@ -101,6 +103,9 @@ export function parseRunSaveData(
 ): SaveLoadResult<RunState> {
   if (!isRecord(saveData)) {
     return { ok: false, error: "Save data must be an object." };
+  }
+  if (saveData["version"] === 1) {
+    return { ok: false, error: PHASE_15A_UNSUPPORTED_V1_MESSAGE };
   }
   if (saveData["version"] !== RUN_SAVE_FORMAT_VERSION) {
     return { ok: false, error: `Unsupported save format version: ${String(saveData["version"])}.` };

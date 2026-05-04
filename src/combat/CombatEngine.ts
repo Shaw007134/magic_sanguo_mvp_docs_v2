@@ -16,7 +16,8 @@ import { buildReplayTimeline } from "../replay/ReplayTimeline.js";
 import { getControlStatusName } from "./status/ControlStatus.js";
 
 export const LOGIC_TICKS_PER_SECOND = 60;
-export const DEFAULT_MAX_COMBAT_TICKS = 3600;
+export const RUN_MAX_COMBAT_TICKS = 3600;
+export const DEFAULT_MAX_COMBAT_TICKS = RUN_MAX_COMBAT_TICKS;
 
 export interface CombatEngineInput {
   readonly playerFormation: FormationSnapshot;

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { RUN_MAX_COMBAT_TICKS } from "../../src/combat/CombatEngine.js";
+import { BALANCE_REPORT_MAX_COMBAT_TICKS } from "../../src/debug/BalanceReport.js";
 import type { CombatResult } from "../../src/model/result.js";
 import { createNewRun, getFormationSlotCountForLevel, getRunNodes, RunManager } from "../../src/run/RunManager.js";
 
@@ -422,6 +424,39 @@ describe("RunManager", () => {
     expect(manager.state.currentEnemySnapshot?.kind).toBe("MONSTER");
     expect(manager.state.pendingCombatResult?.replayTimeline.events.length).toBeGreaterThan(0);
     expect(manager.state.pendingCombatResult?.summary.ticksElapsed).toBeGreaterThan(0);
+  });
+
+  it("run battles share the same max combat tick cap as balance reports", () => {
+    expect(BALANCE_REPORT_MAX_COMBAT_TICKS).toBe(RUN_MAX_COMBAT_TICKS);
+  });
+
+  it("actual run combat can continue beyond the old 720 tick cap for slow fights", () => {
+    const manager = createNewRun("slow-run-combat-cap");
+    reachFirstBattle(manager);
+    expect(manager.addCardToChest("poison-needle").ok).toBe(true);
+    const poisonCard = manager.state.ownedCards.find((card) => card.definitionId === "poison-needle")!;
+    expect(manager.moveCardFromChestToFormation(poisonCard.instanceId, 1).ok).toBe(true);
+    manager.state = {
+      ...manager.state,
+      currentEnemySnapshot: {
+        id: "monster:slow-target",
+        kind: "MONSTER",
+        displayName: "Slow Target",
+        level: 10,
+        maxHp: 100000,
+        startingArmor: 0,
+        slots: [],
+        skills: [],
+        relics: [],
+        aiProfile: { id: "slow-target" }
+      },
+      currentEnemyCardInstances: []
+    };
+
+    expect(manager.startBattle().ok).toBe(true);
+
+    expect(manager.state.pendingCombatResult?.ticksElapsed).toBe(RUN_MAX_COMBAT_TICKS);
+    expect(manager.state.pendingCombatResult?.ticksElapsed).toBeGreaterThan(720);
   });
 
   it("battle reward includes at least one option from monster rewardPool if possible", () => {
