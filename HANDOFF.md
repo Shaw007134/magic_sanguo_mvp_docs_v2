@@ -71,7 +71,17 @@ Visible cards use src/ui/presentation/cardDisplay.ts for type, tier, size, coold
 Size 2 cards render as one wide visual block in player and enemy formations, while the state/FormationSnapshot still keeps the adjacent locked slot.
 removeCardFromFormation no longer checks chest capacity, because ownedCards already contains placed cards and chestCards is derived from ownedCards minus placed cards.
 Phase 10 prototype-only owned cards have been replaced in the main UI by real RunManager state.
-Phase 11 RunState and RunManager are implemented under src/run and are intended to be serializable in Phase 12.
+Phase 12 versioned save/load is implemented around RunState under src/run/save/SaveManager.ts.
+RunState remains the source of truth for persistence; save/load wraps and validates RunState rather than creating another inventory/map/progression model.
+Save format version 1 stores runId, seed, node/current phase state, gold, level/EXP/HP, owned cards including tierOverride, ownedSkills, formation layout, shopStates, currentChoices, pendingRewardChoices, pendingLevelUpChoices, current enemy snapshot/card instances, pending combat result, reward reveal source, and completed counters.
+RunManager.restoreFromState restores a validated RunState without calling node choice generation, reward generation, MonsterGenerator, or CombatEngine.
+Restored RunManager recomputes the next generated card/skill instance counters from saved instance ids to avoid collisions after load.
+Battle nodes materialize and store their enemy FormationSnapshot/currentEnemyCardInstances when the node is entered, and startBattle() uses the serialized enemy if present.
+Loading a battle node therefore uses saved enemy state and does not reroll through MonsterGenerator.
+Loading shop/event/reward/level-up nodes uses serialized currentChoices and pending choices, not regenerated choices.
+If a completed battle result is waiting for Continue, pendingCombatResult/pendingBattleResult are serialized so replay/summary UI resumes without rerunning combat.
+SaveManager returns typed SaveLoadResult values for success/failure and fails corrupt JSON, unsupported versions, missing required fields, unknown node types, invalid card refs, invalid formation refs, invalid enemy snapshots, and bad combat-result shapes with clear errors.
+The browser UI has minimal localStorage controls: Save Run, Load Run, and Clear Save. No cloud save, account system, or migration UI exists.
 New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
 RunManager owns chest/owned card state, ownedSkills, formation placement, selling, deterministic shop/event/reward choices, shop offer state, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
 Run node order begins with starter shop, starter event, easy battle, reward, shop, normal battle, reward, shop, elite battle, reward, then repeats shop/event -> battle -> reward cycles until level 10.
@@ -103,23 +113,24 @@ ResultSummary resolves card/source ids to readable card names, hides zero-value 
 Empty player/enemy slots render separate Slot N and Empty labels.
 Debug replay export helper exists at scripts/exportSampleCombatReplay.ts. Run `pnpm export:sample-replay` to build TS and write JSON under debug/combat-replays/.
 The root debug/ folder is gitignored; browser UI does not write to the local filesystem.
-Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree, save/load, or new trigger hook/status/resource system exists yet.
-Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns, but future save/load must persist the override and any pending upgrade choice/message context exactly.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, and expanded RunManager tests pass.
-Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, save/load, branching map, async PvP, and complex content expansion are not implemented yet.
+Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
+Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
+Known limitation: save format version is 1 with fail-fast validation; future RunState schema changes need explicit migration or a clear unsupported-version failure.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, expanded RunManager, and SaveManager tests pass.
+Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and complex content expansion are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Phase 12:
+Post-Phase 12:
 
 ```text
-Implement Save And Load.
+Continue MVP iteration, balancing, and future save migration planning as RunState evolves.
 ```
 
-Reminder: save/load is Phase 12 and should persist/restore the new RunState rather than introducing a separate inventory or map model.
+Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
 
 ## Manual Test Instructions
 
@@ -134,7 +145,9 @@ Reminder: save/load is Phase 12 and should persist/restore the new RunState rath
 8. Confirm level-up choices appear at 10 EXP, max HP increases by 10% rounded up, and current HP heals to max.
 9. Continue until level 10, then confirm the next battle is the final boss and boss completion shows Victory or Defeat.
 10. Toggle Dev CombatLog and confirm raw combat log is hidden until enabled; replay event times should show seconds, not T/tick labels.
-11. Optional debug export: run pnpm export:sample-replay and inspect debug/combat-replays/*.json.
+11. Click Save Run, make a visible change such as New Run, then click Load Run and confirm the saved node, shop/reward choices, formation, skills, HP, gold, and pending replay/reward state return.
+12. Click Clear Save, then Load Run and confirm the UI reports that no saved run exists.
+13. Optional debug export: run pnpm export:sample-replay and inspect debug/combat-replays/*.json.
 ```
 
 ## Rules For Next Agent
@@ -155,4 +168,4 @@ Reminder: save/load is Phase 12 and should persist/restore the new RunState rath
 
 ## Recommended First Prompt
 
-Use Phase 12 prompt from `docs/MVP_BUILD_SEQUENCE.md`.
+Use the next requested prompt from the product owner; Phase 12 save/load is complete.

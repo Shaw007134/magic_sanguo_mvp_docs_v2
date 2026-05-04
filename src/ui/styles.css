@@ -98,6 +98,13 @@ h3 {
   font-weight: 800;
 }
 
+.run-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .encounter-layout,
 .post-combat {
   display: grid;

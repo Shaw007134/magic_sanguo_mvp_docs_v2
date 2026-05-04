@@ -4,6 +4,7 @@ import type { CardDefinition, CardInstance } from "../model/card.js";
 import type { CombatResult } from "../model/result.js";
 import { createBattleEnemy } from "../run/nodes/BattleNode.js";
 import { RunManager } from "../run/RunManager.js";
+import { loadRunManagerFromSaveString, serializeRunState } from "../run/save/SaveManager.js";
 import type { RunActionResult, RunChoice, RunState } from "../run/RunState.js";
 import { ChestPanel } from "./components/ChestPanel.js";
 import { ChoiceCard } from "./components/ChoiceCard.js";
@@ -18,6 +19,8 @@ type Selection =
   | { readonly kind: "CHEST"; readonly cardInstanceId: string }
   | { readonly kind: "FORMATION"; readonly cardInstanceId: string }
   | undefined;
+
+const LOCAL_SAVE_KEY = "magic-sanguo:phase-12-run";
 
 export function App() {
   const cardDefinitionsById = useMemo(() => getMonsterCardDefinitionsById(), []);
@@ -57,6 +60,38 @@ export function App() {
     setRunState({ ...next.state });
     setSelection(undefined);
     setMessage("New run started.");
+  }
+
+  function handleSaveRun(): void {
+    const saveResult = serializeRunState(manager.state);
+    if (!saveResult.ok) {
+      setMessage(saveResult.error);
+      return;
+    }
+    localStorage.setItem(LOCAL_SAVE_KEY, saveResult.value);
+    setMessage("Run saved.");
+  }
+
+  function handleLoadRun(): void {
+    const rawSave = localStorage.getItem(LOCAL_SAVE_KEY);
+    if (!rawSave) {
+      setMessage("No saved run found.");
+      return;
+    }
+    const loadResult = loadRunManagerFromSaveString(rawSave, cardDefinitionsById);
+    if (!loadResult.ok) {
+      setMessage(loadResult.error);
+      return;
+    }
+    setManager(loadResult.value);
+    setRunState({ ...loadResult.value.state });
+    setSelection(undefined);
+    setMessage("Run loaded.");
+  }
+
+  function handleClearSave(): void {
+    localStorage.removeItem(LOCAL_SAVE_KEY);
+    setMessage("Saved run cleared.");
   }
 
   function handleChestCardClick(cardInstanceId: string): void {
@@ -129,9 +164,20 @@ export function App() {
           <p>{runState.currentNode.label}</p>
         </div>
         <RunStatusBar state={runState} />
-        <button className="secondary-action" type="button" onClick={handleNewRun}>
-          New Run
-        </button>
+        <div className="run-controls">
+          <button className="secondary-action" type="button" onClick={handleNewRun}>
+            New Run
+          </button>
+          <button className="secondary-action" type="button" onClick={handleSaveRun}>
+            Save Run
+          </button>
+          <button className="secondary-action" type="button" onClick={handleLoadRun}>
+            Load Run
+          </button>
+          <button className="secondary-action" type="button" onClick={handleClearSave}>
+            Clear Save
+          </button>
+        </div>
       </header>
 
       <section className="encounter-layout">

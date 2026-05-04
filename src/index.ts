@@ -38,6 +38,7 @@ export * from "./run/nodes/BattleNode.js";
 export * from "./run/nodes/EventNode.js";
 export * from "./run/nodes/ShopNode.js";
 export * from "./run/rewards/RewardGenerator.js";
+export * from "./run/save/SaveManager.js";
 export * from "./run/skills/Skill.js";
 export * from "./run/skills/skillDefinitions.js";
 export * from "./validation/cardValidation.js";

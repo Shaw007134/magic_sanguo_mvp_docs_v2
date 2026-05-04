@@ -609,8 +609,6 @@ Known issues:
 Next recommended task:
 - Phase 12: Save And Load.
 
----
-
 Date: 2026-05-04
 Phase: 11B run-control and choice readability patch
 Task: Paused level-up progression until explicit reward selection, added duplicate card auto-upgrades across acquisition paths, and cleaned player-facing choice/passive/result summary text before Phase 12.
@@ -830,3 +828,34 @@ Known issues:
 - Skills remain minimal standalone owned rewards, not a skill tree.
 Next recommended task:
 - Phase 12: Save And Load.
+
+---
+
+Date: 2026-05-04
+Phase: 12
+Task: Implemented versioned Save and Load around RunState, including validation, exact state restoration, and minimal localStorage UI controls.
+Files changed:
+- src/run/save/SaveManager.ts
+- src/run/RunManager.ts
+- src/index.ts
+- src/ui/App.tsx
+- src/ui/styles.css
+- tests/run/saveManager.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Save/load round trip preserves exact RunState, shop choices, sold-out state, event choices, reward choices, level-up choices, formation layout, owned cards, tierOverride, owned skills, gold, level, EXP, and HP.
+- Battle node saves preserve serialized enemy FormationSnapshot/currentEnemyCardInstances and completed pending combat result without rerunning combat.
+- Loading a battle node uses the serialized enemy snapshot when startBattle() is called.
+- Restored RunManager continues generated card instance ids without collisions.
+- Invalid save version, corrupt JSON, missing required fields, unknown node type, invalid card refs, invalid formation refs, and invalid enemy snapshots fail clearly.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Saves are local-only MVP saves; no cloud save, account system, or migration UI exists.
+- Save format version is 1. Future schema changes should add explicit migration or fail clearly.
+- Browser UI uses localStorage only and provides placeholder Save Run, Load Run, and Clear Save buttons.
+Next recommended task:
+- Continue post-MVP iteration or add explicit save migration only when the RunState schema changes.

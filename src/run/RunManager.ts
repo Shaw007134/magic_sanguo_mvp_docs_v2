@@ -128,6 +128,16 @@ export class RunManager {
     return new RunManager(state, cardDefinitionsById);
   }
 
+  static restoreFromState(
+    state: RunState,
+    cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+  ): RunManager {
+    const manager = new RunManager(state, cardDefinitionsById);
+    manager.#nextCardInstanceNumber = getNextNumberFromInstances(state.ownedCards, "run-card-");
+    manager.#nextSkillInstanceNumber = getNextNumberFromInstances(state.ownedSkills, "run-skill-");
+    return manager;
+  }
+
   getCurrentNode(): RunNode {
     return this.state.currentNode;
   }
@@ -385,11 +395,17 @@ export class RunManager {
       return this.fail(formationValidation.error);
     }
     const playerFormation = createPlayerFormationSnapshot(this.state);
-    const enemy = createBattleEnemy({
-      node: this.state.currentNode,
-      seed: this.state.seed,
-      cardDefinitionsById: this.cardDefinitionsById
-    });
+    const enemy =
+      this.state.currentEnemySnapshot && this.state.currentEnemyCardInstances
+        ? {
+            formation: this.state.currentEnemySnapshot,
+            cardInstances: this.state.currentEnemyCardInstances
+          }
+        : createBattleEnemy({
+            node: this.state.currentNode,
+            seed: this.state.seed,
+            cardDefinitionsById: this.cardDefinitionsById
+          });
     const effectivePlayerCards = createEffectiveCardInstances(this.state.ownedCards);
     const effectiveDefinitionsById = createEffectiveCardDefinitionMap({
       cardInstances: this.state.ownedCards,
@@ -746,6 +762,10 @@ function withNodeDerivedState(
   const node = state.currentNode;
   const shopStates = node.type === "SHOP" ? ensureShopState(state, cardDefinitionsById) : state.shopStates;
   const shopState = shopStates.find((candidate) => candidate.nodeId === node.id);
+  const battleEnemy =
+    node.type === "BATTLE" && !state.currentEnemySnapshot
+      ? createBattleEnemy({ node, seed: state.seed, cardDefinitionsById })
+      : undefined;
   const currentChoices =
     node.type === "SHOP"
       ? (shopState?.choices.map((choice) => ({
@@ -772,6 +792,8 @@ function withNodeDerivedState(
   return {
     ...state,
     shopStates,
+    currentEnemySnapshot: battleEnemy?.formation ?? state.currentEnemySnapshot,
+    currentEnemyCardInstances: battleEnemy?.cardInstances ?? state.currentEnemyCardInstances,
     currentChoices,
     pendingRewardChoices: node.type === "REWARD" ? (currentChoices as readonly RewardChoice[]) : []
   };
@@ -857,6 +879,20 @@ function validatePlayerFormation(
     return { ok: false, error: validation.errors[0]?.message ?? "Formation is invalid." };
   }
   return { ok: true };
+}
+
+function getNextNumberFromInstances(
+  instances: readonly { readonly instanceId: string }[],
+  prefix: string
+): number {
+  const maxNumber = instances.reduce((max, instance) => {
+    if (!instance.instanceId.startsWith(prefix)) {
+      return max;
+    }
+    const parsed = Number(instance.instanceId.slice(prefix.length));
+    return Number.isInteger(parsed) && parsed > max ? parsed : max;
+  }, 0);
+  return maxNumber + 1;
 }
 
 function createPlayerFormationSnapshot(state: RunState): FormationSnapshot {
