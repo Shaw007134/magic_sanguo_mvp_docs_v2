@@ -2,9 +2,9 @@
 
 ## Content Pack Summary
 
-Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 13B adds deterministic terminal mechanics for direct DealDamage effects, and Phase 14B adds a small controlled Poison/Heal pack:
+Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 13B adds deterministic terminal mechanics for direct DealDamage effects, Phase 14B adds a small controlled Poison/Heal pack, and Phase 14C adds a small Haste/Slow/Freeze control pack:
 
-- 24 general cards in `data/cards/general/`.
+- 31 general cards in `data/cards/general/`.
 - 20 Iron Warlord cards in `data/cards/class_iron_warlord/`.
 - 8 modifier-only skills in `data/skills/mvp_skills.json`.
 - 8 new normal/elite monster templates.
@@ -13,8 +13,9 @@ Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 1
 - Limited terminal scaling from owner Armor, owner max HP, and target missing HP.
 - Tier-aware curated shop, event, and reward pools.
 - Persistent Poison and capped HP healing.
+- Temporary Haste/Slow/Freeze card-control effects.
 
-All content uses only DealDamage, GainArmor, ApplyBurn, ApplyPoison, HealHP, ModifyCooldown, Armor, Burn, Poison, existing trigger hooks/conditions, and existing ModifierSystem operations. Phase 14B does not add new resources, control effects, lifesteal, overheal, or new status reactions.
+All content uses only DealDamage, GainArmor, ApplyBurn, ApplyPoison, HealHP, ModifyCooldown, ApplyHaste, ApplySlow, ApplyFreeze, Armor, Burn, Poison, existing trigger hooks/conditions, and existing ModifierSystem operations. Phase 14C does not add new resources, lifesteal, overheal, absorb layers, cleanse/silence, card movement/destruction, or new status reactions.
 
 ## Iron Warlord Identity
 
@@ -26,6 +27,7 @@ Iron Warlord should feel like discipline, formation timing, armor-backed aggress
 - Burn Engine: frequent Burn application plus triggers when Burn is applied.
 - Poison Inevitable: low immediate pressure that keeps ticking through long fights and Armor-heavy enemies.
 - Medic Support: capped HP recovery that buys time without creating overheal or absorb layers.
+- Control Tempo: temporary Haste, Slow, and Freeze timing pressure without permanent lockouts.
 - Armor Counter: repeatable Armor with small damage payoffs, avoiding pure stall.
 - Drum Command: cooldown modification through adjacent formation puzzles.
 - Siege Fire: slower size-2 siege cards with large damage or Burn payoffs.
@@ -37,6 +39,7 @@ Iron Warlord should feel like discipline, formation timing, armor-backed aggress
 - General blade and armor: neutral tempo, defensive anchors, and survivability payoffs.
 - General fire support: neutral Burn and siege tools that plug into multiple builds.
 - General poison and heal: persistent Poison applicators plus conservative HP recovery tools.
+- General control: temporary Haste connectors, Slow disruption, and short Freeze effects.
 - Iron Warlord blade tempo: disciplined Weapon adjacency and finishers.
 - Iron Warlord command armor: drums, banners, and Armor-backed aggression.
 - Iron Warlord siege fire: size-2 fire engines and slow siege terminals.
@@ -87,6 +90,13 @@ Iron Warlord should feel like discipline, formation timing, armor-backed aggress
 | Field Medic | defense | Medic Support | early | simple | stall risk |
 | Herbal Poultice | defense | Medic Support, Armor Counter | mid | simple | stall risk |
 | Toxic Lance | starter | Poison Inevitable, Hybrid Bruiser | early | simple | safe |
+| War Chant | connector | Control Tempo, Drum Command | early | simple | Haste tempo risk |
+| Mud Trap | connector | Control Tempo | early | simple | Slow stall risk |
+| Command Banner | connector | Control Tempo, Drum Command | mid | simple | broad Haste runaway risk |
+| Frost Chain | payoff | Control Tempo | mid | simple | Freeze chain lock risk |
+| Cold Spear | starter | Control Tempo, Hybrid Bruiser | mid | simple | control plus damage risk |
+| Rally Drummer | engine | Control Tempo, Drum Command | mid | simple | Haste plus drum runaway risk |
+| Heavy Net | connector | Control Tempo | mid | simple | Slow stall risk |
 
 ## Skill Role Table
 
@@ -131,6 +141,10 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 - Burn ignores Armor, so Burn values stay conservative.
 - Poison ignores Armor and does not naturally expire, so Poison values and application cadence stay very conservative.
 - Heal is capped at max HP and has slow cooldowns so it buys time without resetting every fight.
+- Haste is temporary acceleration only: it increases cooldown recovery while active, never instantly reduces current cooldown, and total Haste clamps to +100%.
+- Slow is temporary soft disruption only: it reduces cooldown recovery while active, never increases current cooldown directly, and total Slow clamps to 75%.
+- Freeze is short, card-targeted hard control only: it prevents cooldown recovery and activation while active, preserves current cooldown progress, and extends to the later expiration when reapplied.
+- Haste, Slow, and Freeze never change Burn or Poison tick intervals, DOT durations, or status clocks.
 - Armor cards use larger numbers than damage cards because Armor does not end fights.
 - Cooldown reduction is adjacency-limited and has long enough cooldowns to avoid self-sustaining loops.
 - Size-2 cards should be powerful enough to justify formation space but slow enough to need support.
@@ -141,6 +155,9 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 
 - Cinder Seal plus Ember Banner plus multiple Burn applicators could create too much passive pressure.
 - Multiple Poison applicators plus healing could push fights toward timeout if Poison values are raised too quickly.
+- Poison plus Heal plus Slow can create stall pressure if Slow uptime or Heal values are raised too quickly.
+- Freeze chains can become hard locks if Freeze duration approaches the source card cooldown.
+- Haste plus Rally Drummer/War Drum/Command Gong can become cooldown runaway if broad Haste values are pushed above modest tuning.
 - Herbal Poultice plus high Armor density could increase stall risk.
 - Quick Hands plus War Drum plus Command Gong could over-accelerate large cards.
 - Shield Craft plus Shield Wall plus Veteran Plate could push fights toward timeout.
@@ -160,6 +177,10 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 - Tune Burn after several attributed Burn runs, because summaries can now separate direct damage from Burn damage by applying card.
 - Tune Poison only after long-fight playtests; its damage should feel inevitable, not explosive.
 - Watch Heal cards in Armor builds to avoid immortal stall loops.
+- Keep Freeze short, low-damage, and attached to longer cooldowns.
+- Keep broad Haste modest; position-limited Haste can be a little stronger than OWNER_ALL_CARDS Haste.
+- Keep Slow clamped and avoid permanent uptime on early cards.
+- Do not haste DOT ticks. Burn and Poison should remain one-second clocks regardless of control effects.
 - Revisit damageType-based fire support later now that DealDamage supports explicit damageType and Burn source attribution exists.
 - Consider explicit size-2 adjacency UI hints before adding more large cards.
 
@@ -188,6 +209,22 @@ ApplyBurn stores source attribution on the merged Burn runtime state: source com
 Poison is persistent inevitability, not green Burn. ApplyPoison amount 1 means the target takes 1 Poison damage every 1 second until combat ends. Poison stacks additively, ticks every 60 logic ticks, uses POISON damage type, ignores Armor by MVP DOT rule, and has no natural decay or expiration in Phase 14B.
 
 HealHP restores HP to the source combatant by default, caps at max HP, and cannot overheal. It never creates Armor, Barrier, Ward, Energy Shield, or absorb layers. Healing appears in replay and CombatResultSummary as healing by card.
+
+## Phase 14C Haste, Slow, And Freeze
+
+Haste is temporary acceleration. It increases card cooldown recovery while active using `baseRecovery * (1 + hastePercent - slowPercent)` after existing cooldown recovery modifiers. It does not instantly reduce current cooldown. Multiple Haste effects stack additively and clamp to +100%.
+
+Slow is temporary soft disruption. It reduces card cooldown recovery while active, does not directly add cooldown, and clamps total Slow to 75%, leaving a minimum 25% recovery rate.
+
+Freeze is short, card-targeted hard control. Frozen cards do not recover cooldown and cannot activate while frozen, including ready cards frozen earlier in the same tick by side priority. Freeze does not remove cooldown progress or reset cooldown. Reapplying Freeze extends to the later expiration rather than creating duplicate Freeze states.
+
+DOT safety rule: Haste, Slow, and Freeze affect card cooldown recovery and activation only. They do not speed up, delay, pause, or extend Burn/Poison ticks or durations. Burn and Poison remain one-second clocks.
+
+Phase 14C target support is intentionally small:
+
+- Haste: SELF, ADJACENT_ALLY, OWNER_ALL_CARDS.
+- Slow: SELF, OPPOSITE_ENEMY_CARD, ENEMY_LEFTMOST_ACTIVE.
+- Freeze: OPPOSITE_ENEMY_CARD, ENEMY_LEFTMOST_ACTIVE.
 
 ## Iron Warlord Terminal/Core Cards
 
@@ -218,15 +255,15 @@ Pool definitions live in `src/content/cards/contentPools.ts` near the active car
 
 - Starter shop: Rusty Blade, Wooden Shield, Oil Flask.
 - Starter event: simple active cards including Rusty Blade, Wooden Shield, Oil Flask, Iron Guard, and Militia Spear.
-- Early shop/reward: Bronze/Silver starter, defense, Burn, Poison, Heal, and connector cards.
-- Mid shop/reward: early cards plus stronger engines, payoffs, Poison/Heal support, and size-2 build-around cards.
+- Early shop/reward: Bronze/Silver starter, defense, Burn, Poison, Heal, simple Haste/Slow, and connector cards.
+- Mid shop/reward: early cards plus stronger engines, payoffs, Poison/Heal support, control cards, and size-2 build-around cards.
 - Late shop/reward: mid cards plus Iron Warlord terminals, strong drum/siege engines, and build-vital support.
 - Terminal pool: Execution Halberd, Captain's Finisher, Iron Bastion Strike, Warlord's Mandate, Flame Ram, Burning Trebuchet, Siege Crossbow.
 - Build-vital support pool: low/mid-tier enablers that keep builds coherent.
 - Boss reward pool: terminal and late support cards for future boss reward tuning.
 - Skill reward pool: the 8 MVP modifier-only skills.
 
-Archetype pools are defined for Blade Tempo, Burn Engine, Poison Inevitable, Medic Support, Armor Counter, Drum Command, Siege Fire, Hybrid Bruiser, Armor Terminal, and Crit Execution. Monster reward generation prioritizes monster-used cards, then monster rewardPool cards, then curated/archetype-like fallbacks, support cards, terminals when level-appropriate, and finally skill/gold fallback.
+Archetype pools are defined for Blade Tempo, Burn Engine, Poison Inevitable, Medic Support, Control Tempo, Armor Counter, Drum Command, Siege Fire, Hybrid Bruiser, Armor Terminal, and Crit Execution. Monster reward generation prioritizes monster-used cards, then monster rewardPool cards, then curated/archetype-like fallbacks, support cards, terminals when level-appropriate, and finally skill/gold fallback.
 
 ## Monster Scaling Model
 
@@ -252,13 +289,13 @@ Optional-card count is capped in `MonsterGenerator`: tutorial monsters add no op
 - No affixes or random stat rolls.
 - No general rarity system beyond current tier fields and curated pool weighting.
 - Burn/Poison source attribution is replay/summary-only; it does not add Burn decay, status reactions, or DOT damage modifiers.
-- No Freeze, Haste, Slow, or other future status/resource systems.
+- Haste/Slow/Freeze are cooldown/activation control only; there are no status reaction payoffs, cleanse/silence, card movement, card destruction, or final control UI treatments.
 - No boss rotation unless implemented later.
 - No branching map, async PvP, cloud save/account system, or final art/Pixi/Phaser.
 
 ## Intentionally Not Implemented Yet
 
-- No new resources, trigger hooks, trigger conditions, modifier hooks, modifier conditions, or modifier operations beyond the explicit Phase 14B ApplyPoison/HealHP command and Poison status additions.
+- No new resources, trigger hooks, trigger conditions, modifier hooks, modifier conditions, or modifier operations beyond the explicit Phase 14B ApplyPoison/HealHP and Phase 14C ApplyHaste/ApplySlow/ApplyFreeze command additions.
 - No non-deterministic random chance.
-- No Barrier, Ward, Energy Shield, absorb layers, Freeze, Haste, Vulnerable, Silence, Mana, Command resource, Spirit, Fate, Heat, morale, or rage.
+- No Barrier, Ward, Energy Shield, absorb layers, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, Mana, Command resource, Spirit, Fate, Heat, morale, or rage.
 - No hand, deck, discard, branching map, async PvP, boss-selection system, or final art implementation.

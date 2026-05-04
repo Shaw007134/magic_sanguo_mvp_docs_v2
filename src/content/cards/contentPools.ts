@@ -19,7 +19,8 @@ export type ArchetypeName =
   | "Armor Terminal"
   | "Crit Execution"
   | "Poison Inevitable"
-  | "Medic Support";
+  | "Medic Support"
+  | "Control Tempo";
 
 export interface CardPoolMetadata {
   readonly role: CardRole;
@@ -90,7 +91,14 @@ export const CARD_POOL_METADATA = {
   "toxic-lance": { role: "starter", archetypes: ["Poison Inevitable", "Hybrid Bruiser"], stage: "early", quality: 3 },
   "venom-jar": { role: "engine", archetypes: ["Poison Inevitable"], stage: "mid", quality: 3, buildVital: true },
   "herbal-poultice": { role: "defense", archetypes: ["Medic Support", "Armor Counter"], stage: "mid", quality: 3 },
-  "rotting-wine": { role: "payoff", archetypes: ["Poison Inevitable"], stage: "late", quality: 4 }
+  "rotting-wine": { role: "payoff", archetypes: ["Poison Inevitable"], stage: "late", quality: 4 },
+  "war-chant": { role: "connector", archetypes: ["Control Tempo", "Drum Command"], stage: "early", quality: 2, buildVital: true },
+  "mud-trap": { role: "connector", archetypes: ["Control Tempo"], stage: "early", quality: 2, buildVital: true },
+  "command-banner": { role: "connector", archetypes: ["Control Tempo", "Drum Command"], stage: "mid", quality: 3 },
+  "frost-chain": { role: "payoff", archetypes: ["Control Tempo"], stage: "mid", quality: 3 },
+  "cold-spear": { role: "starter", archetypes: ["Control Tempo", "Hybrid Bruiser"], stage: "mid", quality: 3 },
+  "rally-drummer": { role: "engine", archetypes: ["Control Tempo", "Drum Command"], stage: "mid", quality: 3 },
+  "heavy-net": { role: "connector", archetypes: ["Control Tempo"], stage: "mid", quality: 3 }
 } as const satisfies Record<string, CardPoolMetadata>;
 
 export const STARTER_SHOP_POOL = ["rusty-blade", "wooden-shield", "oil-flask"] as const;
@@ -109,7 +117,9 @@ export const EARLY_SHOP_POOL = [
   "kindling-spear",
   "poison-needle",
   "field-medic",
-  "toxic-lance"
+  "toxic-lance",
+  "war-chant",
+  "mud-trap"
 ] as const;
 export const MID_SHOP_POOL = [
   ...EARLY_SHOP_POOL,
@@ -129,7 +139,12 @@ export const MID_SHOP_POOL = [
   "siege-brazier",
   "siege-crossbow",
   "venom-jar",
-  "herbal-poultice"
+  "herbal-poultice",
+  "command-banner",
+  "frost-chain",
+  "cold-spear",
+  "rally-drummer",
+  "heavy-net"
 ] as const;
 export const LATE_SHOP_POOL = [
   ...MID_SHOP_POOL,
@@ -176,7 +191,9 @@ export const BUILD_VITAL_SUPPORT_POOL = [
   "battle-standard",
   "poison-needle",
   "field-medic",
-  "venom-jar"
+  "venom-jar",
+  "war-chant",
+  "mud-trap"
 ] as const;
 
 export const BOSS_REWARD_POOL = [
@@ -210,7 +227,8 @@ export const ARCHETYPE_POOLS = {
   "Armor Terminal": ["iron-guard", "shield-wall", "veteran-plate", "battle-standard", "frontline-bulwark", "iron-bastion-strike"],
   "Crit Execution": ["execution-halberd", "captains-finisher", "duelists-dao", "vanguard-saber", "discipline-drill"],
   "Poison Inevitable": ["poison-needle", "toxic-lance", "venom-jar", "rotting-wine", "field-medic"],
-  "Medic Support": ["field-medic", "herbal-poultice", "wooden-shield", "frontline-banner", "iron-guard"]
+  "Medic Support": ["field-medic", "herbal-poultice", "wooden-shield", "frontline-banner", "iron-guard"],
+  "Control Tempo": ["war-chant", "mud-trap", "command-banner", "frost-chain", "cold-spear", "rally-drummer", "heavy-net"]
 } as const satisfies Record<ArchetypeName, readonly string[]>;
 
 export const IRON_WARLORD_TERMINALS = [

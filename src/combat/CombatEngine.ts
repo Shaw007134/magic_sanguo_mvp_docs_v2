@@ -4,7 +4,7 @@ import type { CombatResult, CombatWinner, ReplayEvent } from "../model/result.js
 import { buildCombatResultSummary } from "./CombatResultSummaryBuilder.js";
 import { CombatLog } from "./CombatLog.js";
 import { createCombatCommands } from "./CombatCommandFactory.js";
-import { isReady, recoverCooldown, resetCooldown } from "./CooldownSystem.js";
+import { isFrozen, isReady, recoverCooldown, resetCooldown } from "./CooldownSystem.js";
 import type { Modifier } from "./modifiers/Modifier.js";
 import { ModifierSystem } from "./modifiers/ModifierSystem.js";
 import { ResolutionStack, type ResolutionStackLimits } from "./ResolutionStack.js";
@@ -13,6 +13,7 @@ import { getOpposingSide } from "./TargetingSystem.js";
 import { TriggerSystem } from "./triggers/TriggerSystem.js";
 import type { CombatSide, MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
 import { buildReplayTimeline } from "../replay/ReplayTimeline.js";
+import { getControlStatusName } from "./status/ControlStatus.js";
 
 export const LOGIC_TICKS_PER_SECOND = 60;
 export const DEFAULT_MAX_COMBAT_TICKS = 3600;
@@ -68,17 +69,17 @@ export class CombatEngine {
       hook: "OnCombatStart",
       tick: 0
     });
-	    const combatStartStackResult = resolveStack({
-	      tick: 0,
-	      sourceCombatant: combatants.PLAYER,
-	      targetCombatant: combatants.ENEMY,
-	      combatLog,
-	      replayEvents,
-	      resolutionStack,
-	      triggerSystem,
-	      modifierSystem,
-	      combatants: [combatants.PLAYER, combatants.ENEMY]
-	    });
+    const combatStartStackResult = resolveStack({
+      tick: 0,
+      sourceCombatant: combatants.PLAYER,
+      targetCombatant: combatants.ENEMY,
+      combatLog,
+      replayEvents,
+      resolutionStack,
+      triggerSystem,
+      modifierSystem,
+      combatants: [combatants.PLAYER, combatants.ENEMY]
+    });
     if (!combatStartStackResult.ok) {
       return finalizeCombatResult("DRAW", 0, combatants, combatLog, replayEvents, triggerSystem, resolutionStack);
     }
@@ -88,6 +89,10 @@ export class CombatEngine {
       readyCards.sort((a, b) => compareReadyCards(a, b, sidePriority));
 
       for (const readyCard of readyCards) {
+        if (isFrozen(readyCard.card, tick)) {
+          continue;
+        }
+
         const source = combatants[readyCard.side];
         const targetSide = getOpposingSide(readyCard.side);
         const target = combatants[targetSide];
@@ -168,22 +173,22 @@ export class CombatEngine {
         tick,
         combatants: [combatants.PLAYER, combatants.ENEMY],
         combatLog,
-	        replayEvents,
-	        triggerSystem,
-	        modifierSystem
-	      });
+        replayEvents,
+        triggerSystem,
+        modifierSystem
+      });
 
       const statusStackResult = resolveStack({
         tick,
         sourceCombatant: combatants.PLAYER,
         targetCombatant: combatants.ENEMY,
         combatLog,
-	        replayEvents,
-	        resolutionStack,
-	        triggerSystem,
-	        modifierSystem,
-	        combatants: [combatants.PLAYER, combatants.ENEMY]
-	      });
+        replayEvents,
+        resolutionStack,
+        triggerSystem,
+        modifierSystem,
+        combatants: [combatants.PLAYER, combatants.ENEMY]
+      });
       if (!statusStackResult.ok) {
         return finalizeCombatResult("DRAW", tick, combatants, combatLog, replayEvents, triggerSystem, resolutionStack);
       }
@@ -192,6 +197,8 @@ export class CombatEngine {
       if (statusDefeatWinner) {
         return finalizeCombatResult(statusDefeatWinner, tick, combatants, combatLog, replayEvents, triggerSystem, resolutionStack);
       }
+
+      expireCardControlStatuses(tick, [combatants.PLAYER, combatants.ENEMY], replayEvents);
     }
 
     return finalizeCombatResult(
@@ -351,17 +358,49 @@ function recoverCooldownsAndCollectReadyCards(
         modifierSystem
       });
       if (isReady(recoveredCard)) {
-        readyCards.push({
-          readyTick: tick,
-          side,
-          card: recoveredCard
-        });
+        if (!isFrozen(recoveredCard, tick)) {
+          readyCards.push({
+            readyTick: tick,
+            side,
+            card: recoveredCard
+          });
+        }
       }
       return recoveredCard;
     });
   }
 
   return readyCards;
+}
+
+function expireCardControlStatuses(
+  tick: number,
+  combatants: readonly RuntimeCombatant[],
+  replayEvents: ReplayEvent[]
+): void {
+  for (const combatant of combatants) {
+    for (const card of combatant.cards) {
+      const statuses = card.controlStatuses ?? [];
+      const remainingStatuses = [];
+      for (const status of statuses) {
+        if (tick >= status.expiresAtTick) {
+          replayEvents.push({
+            tick,
+            type: "StatusExpired",
+            targetId: card.instanceId,
+            payload: {
+              kind: status.kind,
+              status: getControlStatusName(status.kind),
+              targetCardInstanceId: card.instanceId
+            }
+          });
+        } else {
+          remainingStatuses.push(status);
+        }
+      }
+      card.controlStatuses = remainingStatuses;
+    }
+  }
 }
 
 function compareReadyCards(

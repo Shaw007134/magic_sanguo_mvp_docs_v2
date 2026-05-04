@@ -5,6 +5,7 @@ import classCommandArmorJson from "../../data/cards/class_iron_warlord/command_a
 import classSiegeFireJson from "../../data/cards/class_iron_warlord/siege_fire.json" with { type: "json" };
 import generalBasicKitJson from "../../data/cards/general/basic_kit.json" with { type: "json" };
 import generalBladeArmorJson from "../../data/cards/general/blade_armor.json" with { type: "json" };
+import generalControlJson from "../../data/cards/general/control.json" with { type: "json" };
 import generalFireSupportJson from "../../data/cards/general/fire_support.json" with { type: "json" };
 import generalPoisonHealJson from "../../data/cards/general/poison_heal.json" with { type: "json" };
 import monsterCardsJson from "../../data/cards/monster_cards.json" with { type: "json" };
@@ -56,7 +57,8 @@ const generalJsonCards = [
   ...generalBasicKitJson,
   ...generalBladeArmorJson,
   ...generalFireSupportJson,
-  ...generalPoisonHealJson
+  ...generalPoisonHealJson,
+  ...generalControlJson
 ] as readonly CardDefinition[];
 const ironWarlordJsonCards = [
   ...classBladeTempoJson,
@@ -85,7 +87,7 @@ const BOSS_IDS = ["gate-captain-elite", "siege-marshal", "cinder-strategist"] as
 
 describe("active MVP content registry", () => {
   it("loads the requested card pack sizes and preserves legacy MVP cards", () => {
-    expect(generalJsonCards).toHaveLength(24);
+    expect(generalJsonCards).toHaveLength(31);
     expect(ironWarlordJsonCards).toHaveLength(20);
     expect(GENERAL_CARD_DEFINITIONS).toEqual(generalJsonCards);
     expect(IRON_WARLORD_CARD_DEFINITIONS).toEqual(ironWarlordJsonCards);
@@ -97,15 +99,15 @@ describe("active MVP content registry", () => {
     for (const card of [...generalJsonCards, ...ironWarlordJsonCards]) {
       expect(activeCardsById.has(card.id), card.id).toBe(true);
     }
-    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 44);
+    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 51);
   });
 
   it("all active cards validate and use only MVP grammar", () => {
     for (const card of ACTIVE_CARD_DEFINITIONS) {
       expect(validateCardDefinition(card), card.id).toEqual({ valid: true, errors: [] });
       expect(card.description, card.id).not.toMatch(/On[A-Z]|hook|ticks?/);
-      expect(card.description, card.id).not.toMatch(/Barrier|Ward|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
-      expect(card.tags.some((tag) => /barrier|ward|energy|absorb|freeze|haste|vulnerable|silence|mana|spirit|fate|heat|morale|rage/i.test(tag)), card.id).toBe(false);
+      expect(card.description, card.id).not.toMatch(/Barrier|Ward|Energy Shield|absorb|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
+      expect(card.tags.some((tag) => /barrier|ward|energy|absorb|vulnerable|silence|mana|spirit|fate|heat|morale|rage/i.test(tag)), card.id).toBe(false);
       for (const effect of card.effects ?? []) {
         validateEffect(effect, card.id);
       }
@@ -514,8 +516,11 @@ describe("active MVP content registry", () => {
 });
 
 function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: string): void {
-  expect(["DealDamage", "GainArmor", "ApplyBurn", "ApplyPoison", "HealHP", "ModifyCooldown"], `${cardId}:command`).toContain(effect["command"]);
-  expect(JSON.stringify(effect), cardId).not.toMatch(/Barrier|Ward|EnergyShield|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
+  expect(
+    ["DealDamage", "GainArmor", "ApplyBurn", "ApplyPoison", "HealHP", "ModifyCooldown", "ApplyHaste", "ApplySlow", "ApplyFreeze"],
+    `${cardId}:command`
+  ).toContain(effect["command"]);
+  expect(JSON.stringify(effect), cardId).not.toMatch(/Barrier|Ward|EnergyShield|Energy Shield|absorb|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
   if (effect["command"] === "DealDamage") {
     expect(effect["amount"], `${cardId}:amount`).toBeTypeOf("number");
     if (effect["damageType"] !== undefined) {
@@ -563,6 +568,20 @@ function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: strin
   }
   if (effect["command"] === "ModifyCooldown") {
     expect(["SELF", "ADJACENT_ALLY", undefined], `${cardId}:target`).toContain(effect["target"]);
+  }
+  if (effect["command"] === "ApplyHaste") {
+    expect(["SELF", "ADJACENT_ALLY", "OWNER_ALL_CARDS"], `${cardId}:target`).toContain(effect["target"]);
+    expect(effect["percent"], `${cardId}:percent`).toBeTypeOf("number");
+    expect(effect["durationTicks"], `${cardId}:durationTicks`).toBeTypeOf("number");
+  }
+  if (effect["command"] === "ApplySlow") {
+    expect(["SELF", "OPPOSITE_ENEMY_CARD", "ENEMY_LEFTMOST_ACTIVE"], `${cardId}:target`).toContain(effect["target"]);
+    expect(effect["percent"], `${cardId}:percent`).toBeTypeOf("number");
+    expect(effect["durationTicks"], `${cardId}:durationTicks`).toBeTypeOf("number");
+  }
+  if (effect["command"] === "ApplyFreeze") {
+    expect(["OPPOSITE_ENEMY_CARD", "ENEMY_LEFTMOST_ACTIVE"], `${cardId}:target`).toContain(effect["target"]);
+    expect(effect["durationTicks"], `${cardId}:durationTicks`).toBeTypeOf("number");
   }
 }
 

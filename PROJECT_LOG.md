@@ -1187,3 +1187,60 @@ Known issues:
 - No Haste, Slow, Freeze, Burn decay, status reactions, or new resources were added.
 Next recommended task:
 - Phase 14C: Haste, Slow, and Freeze control pack.
+
+---
+
+Date: 2026-05-04
+Phase: 14C
+Task: Implemented Haste, Slow, and Freeze control pack.
+Files changed:
+- data/cards/general/control.json
+- src/combat/CombatCommandFactory.ts
+- src/combat/CombatEngine.ts
+- src/combat/CombatResultSummaryBuilder.ts
+- src/combat/CooldownSystem.ts
+- src/combat/commands/ApplyControlStatusCommand.ts
+- src/combat/commands/ApplyFreezeCommand.ts
+- src/combat/commands/ApplyHasteCommand.ts
+- src/combat/commands/ApplySlowCommand.ts
+- src/combat/status/ControlStatus.ts
+- src/combat/types.ts
+- src/content/cards/activeCards.ts
+- src/content/cards/contentPools.ts
+- src/index.ts
+- src/model/result.ts
+- src/ui/components/ResultSummary.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/validation/cardValidation.ts
+- tests/combat/controlStatus.test.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/replay/replayTimeline.test.ts
+- tests/run/saveManager.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/ui/resultSummary.test.tsx
+- tests/validation/cardValidation.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Haste increases cooldown recovery while active and preserves 50% Haste partial-cooldown timing.
+- Haste stacks additively, clamps to +100%, and cannot create same-tick runaway activations.
+- Slow reduces cooldown recovery while active, expires back to normal recovery, and clamps at minimum 25% recovery.
+- Freeze pauses cooldown recovery, preserves progress, blocks frozen ready cards from activating, expires deterministically, and extends to the later expiration when reapplied.
+- Haste, Slow, and Freeze do not affect Burn or Poison tick intervals, durations, or Armor-ignoring DOT behavior.
+- Haste/Slow/Freeze combine deterministically with existing cooldown recovery modifiers.
+- Control replay events and CombatResultSummary control application attribution are deterministic.
+- Poison + Heal + Slow remains bounded by maxCombatTicks, and conservative Freeze chains still allow enemy cards to act.
+- ApplyHaste/ApplySlow/ApplyFreeze malformed fields and invalid command targets are validation/command-factory covered.
+- Save/load preserves control replay/summary data without persisting combat-only controlStatuses into RunState.
+- Phase 14C content registry, curated pools, card display, replay display, and ResultSummary UI readability are covered.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Haste/Slow/Freeze are card cooldown/activation controls only; no status reaction payoffs, cleanse, silence, card movement, or card destruction were added.
+- Freeze-ready activation is gated at activation time when a higher-priority card applies Freeze earlier in the same tick; frozen cards activate on the next eligible tick after Freeze expires.
+- Control application summary counts applications by source card but does not yet report uptime or prevented activations.
+Next recommended task:
+- Phase 14D: status reaction/combo support, keeping Phase 14A-C attribution and DOT safety rules intact.

@@ -44,6 +44,9 @@ export function ResultSummary({ summary, cardInstancesById = new Map(), cardDefi
       <MetricList title="Critical damage" values={summary.criticalDamageByCard ?? {}} resolveName={resolveName} />
       <MetricList title="Armor gained" values={summary.armorGainedByCard} resolveName={resolveName} />
       <MetricList title="Healing" values={summary.healingByCard} resolveName={resolveName} />
+      {Object.entries(summary.controlApplicationsByCard ?? {}).map(([status, values]) => (
+        <MetricList key={status} title={`${formatStatusName(status)} applications`} values={values} resolveName={resolveName} />
+      ))}
       <MetricList title="Activations" values={summary.activationsByCard} resolveName={resolveName} />
       <MetricList title="Triggers" values={summary.triggerCountByCard} resolveName={resolveName} />
     </section>
@@ -90,7 +93,7 @@ function resolveSourceName(
 }
 
 function formatStatusName(sourceId: string): string {
-  if (sourceId === "Burn" || sourceId === "Poison") {
+  if (sourceId === "Burn" || sourceId === "Poison" || sourceId === "Haste" || sourceId === "Slow" || sourceId === "Freeze") {
     return sourceId;
   }
   return sourceId;

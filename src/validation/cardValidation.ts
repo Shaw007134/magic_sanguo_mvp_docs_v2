@@ -54,4 +54,31 @@ function validateEffect(
   if (effect["command"] === "ApplyPoison" && effect["durationTicks"] !== undefined && typeof effect["durationTicks"] !== "number") {
     errors.push({ path: `${path}.durationTicks`, message: "ApplyPoison durationTicks must be a number when present." });
   }
+  if (effect["command"] === "ApplyHaste") {
+    validateControlEffect(effect, path, errors, ["SELF", "ADJACENT_ALLY", "OWNER_ALL_CARDS"], true);
+  }
+  if (effect["command"] === "ApplySlow") {
+    validateControlEffect(effect, path, errors, ["SELF", "OPPOSITE_ENEMY_CARD", "ENEMY_LEFTMOST_ACTIVE"], true);
+  }
+  if (effect["command"] === "ApplyFreeze") {
+    validateControlEffect(effect, path, errors, ["OPPOSITE_ENEMY_CARD", "ENEMY_LEFTMOST_ACTIVE"], false);
+  }
+}
+
+function validateControlEffect(
+  effect: Readonly<Record<string, unknown>>,
+  path: string,
+  errors: ValidationIssue[],
+  allowedTargets: readonly string[],
+  requiresPercent: boolean
+): void {
+  if (!allowedTargets.includes(String(effect["target"]))) {
+    errors.push({ path: `${path}.target`, message: `${String(effect["command"])} target is invalid.` });
+  }
+  if (requiresPercent && typeof effect["percent"] !== "number") {
+    errors.push({ path: `${path}.percent`, message: `${String(effect["command"])} percent must be a number.` });
+  }
+  if (effect["durationTicks"] === undefined || typeof effect["durationTicks"] !== "number") {
+    errors.push({ path: `${path}.durationTicks`, message: `${String(effect["command"])} durationTicks must be a number.` });
+  }
 }

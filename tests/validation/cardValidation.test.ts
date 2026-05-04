@@ -89,6 +89,25 @@ describe("validateCardDefinition", () => {
     expect(result.valid).toBe(true);
   });
 
+  it("validates ApplyHaste, ApplySlow, and ApplyFreeze fields", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        effects: [
+          { command: "ApplyHaste", target: "SELF", percent: 50, durationTicks: 60 },
+          { command: "ApplyHaste", target: "ADJACENT_ALLY", percent: 25, durationTicks: 180 },
+          { command: "ApplyHaste", target: "OWNER_ALL_CARDS", percent: 20, durationTicks: 180 },
+          { command: "ApplySlow", target: "SELF", percent: 25, durationTicks: 60 },
+          { command: "ApplySlow", target: "OPPOSITE_ENEMY_CARD", percent: 30, durationTicks: 180 },
+          { command: "ApplySlow", target: "ENEMY_LEFTMOST_ACTIVE", percent: 25, durationTicks: 240 },
+          { command: "ApplyFreeze", target: "OPPOSITE_ENEMY_CARD", durationTicks: 60 },
+          { command: "ApplyFreeze", target: "ENEMY_LEFTMOST_ACTIVE", durationTicks: 60 }
+        ]
+      })
+    );
+
+    expect(result.valid).toBe(true);
+  });
+
   it("rejects malformed ApplyPoison and HealHP effects", () => {
     const result = validateCardDefinition(
       createValidActiveCard({
@@ -112,6 +131,47 @@ describe("validateCardDefinition", () => {
     expect(result.errors).toContainEqual({
       path: "effects[2].amount",
       message: "HealHP amount must be a number."
+    });
+  });
+
+  it("rejects malformed ApplyHaste, ApplySlow, and ApplyFreeze effects", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        effects: [
+          { command: "ApplyHaste", target: "OPPOSITE_ENEMY_CARD", percent: 50, durationTicks: 60 },
+          { command: "ApplyHaste", target: "SELF", durationTicks: 60 },
+          { command: "ApplySlow", target: "ADJACENT_ALLY", percent: 25, durationTicks: 60 },
+          { command: "ApplySlow", target: "SELF", percent: 25 },
+          { command: "ApplyFreeze", target: "SELF", durationTicks: 60 },
+          { command: "ApplyFreeze", target: "OPPOSITE_ENEMY_CARD", durationTicks: "soon" }
+        ]
+      })
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual({
+      path: "effects[0].target",
+      message: "ApplyHaste target is invalid."
+    });
+    expect(result.errors).toContainEqual({
+      path: "effects[1].percent",
+      message: "ApplyHaste percent must be a number."
+    });
+    expect(result.errors).toContainEqual({
+      path: "effects[2].target",
+      message: "ApplySlow target is invalid."
+    });
+    expect(result.errors).toContainEqual({
+      path: "effects[3].durationTicks",
+      message: "ApplySlow durationTicks must be a number."
+    });
+    expect(result.errors).toContainEqual({
+      path: "effects[4].target",
+      message: "ApplyFreeze target is invalid."
+    });
+    expect(result.errors).toContainEqual({
+      path: "effects[5].durationTicks",
+      message: "ApplyFreeze durationTicks must be a number."
     });
   });
 });

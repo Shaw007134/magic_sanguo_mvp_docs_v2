@@ -37,6 +37,7 @@ export interface CombatResultSummary {
   readonly statusDamageByCard: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly armorGainedByCard: Readonly<Record<string, number>>;
   readonly healingByCard: Readonly<Record<string, number>>;
+  readonly controlApplicationsByCard?: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly armorBlocked: number;
   readonly activationsByCard: Readonly<Record<string, number>>;
   readonly triggerCountByCard: Readonly<Record<string, number>>;

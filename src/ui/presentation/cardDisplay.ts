@@ -92,12 +92,45 @@ function formatEffect(effect: EffectDefinition): string {
       return typeof effect["amount"] === "number" ? `Poison: ${effect["amount"]} damage/sec` : "Poison";
     case "HealHP":
       return typeof effect["amount"] === "number" ? `Heal: ${effect["amount"]} HP` : "Heal";
+    case "ApplyHaste":
+      return formatControlEffect("Haste", effect);
+    case "ApplySlow":
+      return formatControlEffect("Slow", effect);
+    case "ApplyFreeze":
+      return formatControlEffect("Freeze", effect);
     case "ModifyCooldown":
       return typeof effect["amountTicks"] === "number"
         ? `Cooldown: ${formatSignedTickDuration(effect["amountTicks"])}`
         : "Cooldown";
     default:
       return "Effect";
+  }
+}
+
+function formatControlEffect(kind: "Haste" | "Slow" | "Freeze", effect: EffectDefinition): string {
+  const target = formatControlTarget(effect["target"]);
+  const duration = typeof effect["durationTicks"] === "number" ? ` for ${formatTickDuration(effect["durationTicks"])}` : "";
+  if (kind === "Freeze") {
+    return `Freeze ${target}${duration}`;
+  }
+  const percent = typeof effect["percent"] === "number" ? `${effect["percent"]}%` : "";
+  return `${kind} ${target}${percent ? ` by ${percent}` : ""}${duration}`;
+}
+
+function formatControlTarget(value: unknown): string {
+  switch (value) {
+    case "SELF":
+      return "this card";
+    case "ADJACENT_ALLY":
+      return "adjacent allies";
+    case "OWNER_ALL_CARDS":
+      return "all your cards";
+    case "OPPOSITE_ENEMY_CARD":
+      return "the opposite enemy card";
+    case "ENEMY_LEFTMOST_ACTIVE":
+      return "the leftmost enemy card";
+    default:
+      return "cards";
   }
 }
 

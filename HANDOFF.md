@@ -23,7 +23,7 @@ Basic deterministic CombatEngine added and routed through ResolutionStack.
 Active cards start at cooldownMaxTicks unless an explicit initial runtime state is provided.
 Same-tick card ordering is deterministic: ready tick, side priority, slotIndex, cardInstanceId.
 Card effects use `effect.command`, not `effect.type`.
-Supported command effects are DealDamage, GainArmor, ApplyBurn, ApplyPoison, HealHP, and ModifyCooldown.
+Supported command effects are DealDamage, GainArmor, ApplyBurn, ApplyPoison, HealHP, ModifyCooldown, ApplyHaste, ApplySlow, and ApplyFreeze.
 Card effect JSON order is preserved by pushing commands onto the LIFO stack in reverse order.
 CombatEngine creates a fresh ResolutionStack for each simulate() call.
 ModifyCooldown card JSON supports `target: "SELF"` and `target: "ADJACENT_ALLY"`; ModifyCooldownCommand remains concrete and receives targetCardInstanceId.
@@ -34,6 +34,13 @@ Burn first ticks at appliedAtTick + 60, stacks as one merged additive Burn statu
 MVP rule: Burn goes through DamageCalculator but ignores Armor so DOT keeps a clear tactical role.
 Poison runtime status uses appliedAtTick and nextTickAt with no expiresAtTick by default, ticks every 60 logic ticks, stacks additively, ignores Armor by MVP DOT rule, and persists until combat ends unless an optional durationTicks is explicitly supplied.
 HealHP restores HP to the source combatant, caps at maxHp, emits HpHealed replay events, and never creates overheal, Armor, Barrier, Ward, Energy Shield, or absorb layers.
+Haste, Slow, and Freeze are card-targeted runtime control statuses stored on active card runtime state, not on RunState and not in the combatant DOT status list.
+Haste increases card cooldown recovery while active, stacks additively, and clamps total Haste to +100%.
+Slow reduces card cooldown recovery while active, stacks additively, and clamps total Slow to 75%, so minimum recovery remains 25% of base.
+Freeze is card-targeted only, pauses cooldown recovery, prevents frozen ready cards from activating, preserves current cooldown progress, and extends to the later expiresAtTick when reapplied.
+Cooldown recovery order is existing ModifierSystem recovery modifiers first, then Haste/Slow rate adjustment, then Freeze as the final recovery/activation gate.
+Haste, Slow, and Freeze affect card cooldown recovery and activation only; they do not change Burn or Poison tick intervals, DOT durations, or status clocks.
+Phase 14C target support is intentionally small: Haste supports SELF, ADJACENT_ALLY, and OWNER_ALL_CARDS; Slow supports SELF, OPPOSITE_ENEMY_CARD, and ENEMY_LEFTMOST_ACTIVE; Freeze supports only OPPOSITE_ENEMY_CARD and ENEMY_LEFTMOST_ACTIVE.
 Passive TriggerSystem is implemented for OnCombatStart, OnCardActivated, OnDamageDealt, OnDamageTaken, OnStatusApplied, OnBurnTick, OnCooldownModified, and OnCombatEnd.
 Passive triggers support internalCooldownTicks, maxTriggersPerTick (default 1), deterministic order, and trigger-created CombatCommand objects pushed to ResolutionStack.
 Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, cardIsAdjacent, ownerHpBelowPercent, and targetHpBelowPercent.
@@ -51,7 +58,8 @@ DealDamage supports explicit damageType values DIRECT, PHYSICAL, FIRE, and POISO
 BurnTick and PoisonTick track source contribution buckets for replay/summary attribution, but source-owned damage modifiers still do not apply to DOT tick damage in Phase 14B.
 ReplayTimeline is the clean player-facing replay data. Raw CombatLog remains dev/debug data and can include stack-limit/debug detail not shown in ReplayTimeline.
 ReplayTimeline currently uses CombatStarted, CardActivated, DamageDealt, ArmorGained, HpHealed, ArmorBlocked, StatusApplied, StatusTicked, CooldownModified, TriggerFired, CombatEnded, and StatusExpired events.
-CombatResultSummary is built from ReplayTimeline and aggregates damage by card, Burn/Poison/status damage, status damage by applying card, healing by card, armor gained by card, armor blocked, activations by card, trigger count by card, top contributors, winner, and ticks elapsed.
+StatusApplied and StatusExpired now also carry readable Haste/Slow/Freeze card-control payloads with source card attribution when available.
+CombatResultSummary is built from ReplayTimeline and aggregates damage by card, Burn/Poison/status damage, status damage by applying card, healing by card, Haste/Slow/Freeze applications by card, armor gained by card, armor blocked, activations by card, trigger count by card, top contributors, winner, and ticks elapsed.
 MonsterTemplate and MonsterGenerator are implemented. MonsterGenerator outputs FormationSnapshot plus deterministic CardInstance data for the existing CombatEngine interface.
 MVP monster templates exist for Training Dummy, Rust Bandit, Burn Apprentice, Shield Guard, Drum Tactician, Fire Echo Adept, and First Boss: Gate Captain.
 Monster card content exists for Training Staff, Rusty Blade, Flame Spear, Wooden Shield, Spark Drum, Fire Echo Seal, and Gate Captain Saber.
@@ -92,6 +100,7 @@ Phase 13A active content registry lives at src/content/cards/activeCards.ts and 
 RunManager, ShopNode, EventNode, RewardGenerator through RunManager, MonsterGenerator, SaveManager defaults, UI App cardDefinitionsById, debug replay export, and content tests now use the active registry.
 Expanded card content exists under data/cards/general/ and data/cards/class_iron_warlord/. Legacy ids in data/cards/monster_cards.json remain available for saves/tests.
 Phase 14B adds a small Poison/Heal pack in data/cards/general/poison_heal.json: Poison Needle, Venom Jar, Rotting Wine, Field Medic, Herbal Poultice, and Toxic Lance.
+Phase 14C adds a small Haste/Slow/Freeze control pack in data/cards/general/control.json: War Chant, Mud Trap, Command Banner, Frost Chain, Cold Spear, Rally Drummer, and Heavy Net.
 Expanded skill content is data-driven through data/skills/mvp_skills.json and still instantiates only existing ModifierSystem modifiers.
 Fire Study remains intentionally tag-based: it uses sourceHasTag "fire" to boost direct card damage from fire-tagged cards. DealDamage now supports damageType FIRE, but Fire Study has not been migrated to damageType-based support.
 Quick Hands and Drumline Training use ADD_COOLDOWN_RECOVERY_RATE instead of a small multiplier because cooldown recovery modifiers round to integer MVP values; a 1.25x multiplier on base recovery 1 is effectively a no-op.
@@ -146,14 +155,14 @@ Known limitation: MVP skills are minimal modifier-based rewards only; no skill t
 Known limitation: Burn/Poison tick source attribution is summary/replay-only; fire-tagged skills affect direct damage from fire-tagged card effects but not DOT ticks.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
 Known limitation: save format version is 1 with fail-fast validation; future RunState schema changes need explicit migration or a clear unsupported-version failure.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, Poison/Heal, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
-Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, Freeze, Haste, Slow, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, Poison/Heal, Haste/Slow/Freeze, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
+Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
 docs/MVP_BUILD_SEQUENCE.md now defines Phase 14 as a status/damage foundation sequence rather than PvP snapshot export.
 Phase 14A implemented explicit DealDamage damageType support and Burn source attribution buckets for replay/summary without adding new statuses or reactions.
 Phase 14B implemented persistent Poison, HealHP, Poison/Heal replay and summary support, and a small controlled Poison/Heal content pack.
 Phase 14A is damage type and source attribution foundation.
 Phase 14B is Poison and Heal.
-Phase 14C is Haste, Slow, and Freeze.
+Phase 14C implemented Haste, Slow, and Freeze.
 Phase 14D is status reaction/combo support.
 Phase 14E is Burn decay identity polish.
 PvP-ready snapshot export is deferred to a future phase after combat readability and mechanics are stronger; async PvP remains future-only and is not part of Phase 14.
@@ -163,10 +172,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 14C:
+Phase 14D:
 
 ```text
-Implement Haste, Slow, and Freeze only.
+Implement status reaction/combo support only after reviewing Phase 14A-C status attribution and DOT safety rules.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -233,4 +242,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use the Phase 14C prompt from docs/MVP_BUILD_SEQUENCE.md: Haste, Slow, and Freeze control pack.
+Use the Phase 14D prompt from docs/MVP_BUILD_SEQUENCE.md: status reaction/combo support.

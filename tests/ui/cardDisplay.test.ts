@@ -59,6 +59,16 @@ describe("cardDisplay", () => {
     expect(display("poison-needle").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
   });
 
+  it("summarizes Haste, Slow, and Freeze cards without raw tick labels", () => {
+    expect(display("war-chant").summary).toBe("Haste adjacent allies by 25% for 3s");
+    expect(display("command-banner").summary).toBe("Haste all your cards by 20% for 3s");
+    expect(display("mud-trap").summary).toBe("Slow the opposite enemy card by 30% for 3s");
+    expect(display("frost-chain").summary).toBe("Freeze the opposite enemy card for 1s");
+    expect(display("cold-spear").summary).toBe("Physical damage: 2 · Freeze the opposite enemy card for 1s");
+    expect(display("heavy-net").summary).toBe("Slow the leftmost enemy card by 25% for 4s");
+    expect(display("war-chant").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
+  });
+
   it("formats whole-second cooldown modifications without raw tick suffixes", () => {
     const card = {
       ...cardsById.get("spark-drum")!,

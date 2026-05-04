@@ -1,0 +1,82 @@
+[
+  {
+    "id": "war-chant",
+    "name": "War Chant",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["haste", "support", "command"],
+    "cooldownTicks": 300,
+    "effects": [{ "command": "ApplyHaste", "target": "ADJACENT_ALLY", "percent": 25, "durationTicks": 180 }],
+    "description": "Every 5 seconds, Haste adjacent allies by 25% for 3 seconds."
+  },
+  {
+    "id": "mud-trap",
+    "name": "Mud Trap",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["slow", "control"],
+    "cooldownTicks": 300,
+    "effects": [{ "command": "ApplySlow", "target": "OPPOSITE_ENEMY_CARD", "percent": 30, "durationTicks": 180 }],
+    "description": "Every 5 seconds, Slow the opposite enemy card by 30% for 3 seconds."
+  },
+  {
+    "id": "command-banner",
+    "name": "Command Banner",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["haste", "banner", "support"],
+    "cooldownTicks": 360,
+    "effects": [{ "command": "ApplyHaste", "target": "OWNER_ALL_CARDS", "percent": 20, "durationTicks": 180 }],
+    "description": "Every 6 seconds, Haste all your cards by 20% for 3 seconds."
+  },
+  {
+    "id": "frost-chain",
+    "name": "Frost Chain",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["freeze", "control"],
+    "cooldownTicks": 360,
+    "effects": [{ "command": "ApplyFreeze", "target": "OPPOSITE_ENEMY_CARD", "durationTicks": 60 }],
+    "description": "Every 6 seconds, Freeze the opposite enemy card for 1 second."
+  },
+  {
+    "id": "cold-spear",
+    "name": "Cold Spear",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical", "freeze", "control"],
+    "cooldownTicks": 300,
+    "effects": [
+      { "command": "DealDamage", "amount": 2, "damageType": "PHYSICAL" },
+      { "command": "ApplyFreeze", "target": "OPPOSITE_ENEMY_CARD", "durationTicks": 60 }
+    ],
+    "description": "Every 5 seconds, deal 2 Physical damage and Freeze the opposite enemy card for 1 second."
+  },
+  {
+    "id": "rally-drummer",
+    "name": "Rally Drummer",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["haste", "drum", "support"],
+    "cooldownTicks": 240,
+    "effects": [{ "command": "ApplyHaste", "target": "ADJACENT_ALLY", "percent": 25, "durationTicks": 120 }],
+    "description": "Every 4 seconds, Haste adjacent allies by 25% for 2 seconds."
+  },
+  {
+    "id": "heavy-net",
+    "name": "Heavy Net",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["slow", "control"],
+    "cooldownTicks": 300,
+    "effects": [{ "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 25, "durationTicks": 240 }],
+    "description": "Every 5 seconds, Slow the leftmost enemy card by 25% for 4 seconds."
+  }
+]

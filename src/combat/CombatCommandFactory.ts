@@ -1,7 +1,10 @@
 import type { EffectDefinition } from "../model/card.js";
+import { ApplyFreezeCommand } from "./commands/ApplyFreezeCommand.js";
+import { ApplyHasteCommand } from "./commands/ApplyHasteCommand.js";
 import type { CombatCommand } from "./commands/CombatCommand.js";
 import { ApplyBurnCommand } from "./commands/ApplyBurnCommand.js";
 import { ApplyPoisonCommand } from "./commands/ApplyPoisonCommand.js";
+import { ApplySlowCommand } from "./commands/ApplySlowCommand.js";
 import type { DamageType } from "./DamageCalculator.js";
 import {
   DealDamageCommand,
@@ -12,6 +15,7 @@ import { GainArmorCommand } from "./commands/GainArmorCommand.js";
 import { HealHPCommand } from "./commands/HealHPCommand.js";
 import { ModifyCooldownCommand } from "./commands/ModifyCooldownCommand.js";
 import type { MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
+import type { ControlStatusTarget } from "./commands/ApplyControlStatusCommand.js";
 
 export function createCombatCommands(
   effects: readonly EffectDefinition[],
@@ -70,6 +74,21 @@ function createCombatCommandsForEffect(
         return [];
       }
       return createModifyCooldownCommands(effect, sourceCard, sourceCombatant);
+    case "ApplyHaste":
+      if (typeof effect["percent"] !== "number" || typeof effect["durationTicks"] !== "number") {
+        return [];
+      }
+      return createHasteCommands(effect);
+    case "ApplySlow":
+      if (typeof effect["percent"] !== "number" || typeof effect["durationTicks"] !== "number") {
+        return [];
+      }
+      return createSlowCommands(effect);
+    case "ApplyFreeze":
+      if (typeof effect["durationTicks"] !== "number") {
+        return [];
+      }
+      return createFreezeCommands(effect);
     default:
       return [];
   }
@@ -139,4 +158,38 @@ function createModifyCooldownCommands(
   }
 
   return [];
+}
+
+function createHasteCommands(effect: EffectDefinition): CombatCommand[] {
+  const target = parseControlTarget(effect["target"]);
+  if (target !== "SELF" && target !== "ADJACENT_ALLY" && target !== "OWNER_ALL_CARDS") {
+    return [];
+  }
+  return [new ApplyHasteCommand(target, effect["percent"] as number, effect["durationTicks"] as number)];
+}
+
+function createSlowCommands(effect: EffectDefinition): CombatCommand[] {
+  const target = parseControlTarget(effect["target"]);
+  if (target !== "SELF" && target !== "OPPOSITE_ENEMY_CARD" && target !== "ENEMY_LEFTMOST_ACTIVE") {
+    return [];
+  }
+  return [new ApplySlowCommand(target, effect["percent"] as number, effect["durationTicks"] as number)];
+}
+
+function createFreezeCommands(effect: EffectDefinition): CombatCommand[] {
+  const target = parseControlTarget(effect["target"]);
+  if (target !== "OPPOSITE_ENEMY_CARD" && target !== "ENEMY_LEFTMOST_ACTIVE") {
+    return [];
+  }
+  return [new ApplyFreezeCommand(target, effect["durationTicks"] as number)];
+}
+
+function parseControlTarget(value: unknown): ControlStatusTarget | undefined {
+  return value === "SELF" ||
+    value === "ADJACENT_ALLY" ||
+    value === "OWNER_ALL_CARDS" ||
+    value === "OPPOSITE_ENEMY_CARD" ||
+    value === "ENEMY_LEFTMOST_ACTIVE"
+    ? value
+    : undefined;
 }

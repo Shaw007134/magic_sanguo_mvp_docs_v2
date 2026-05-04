@@ -14,6 +14,7 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
   const statusDamageByCard: Record<string, Record<string, number>> = {};
   const armorGainedByCard: Record<string, number> = {};
   const healingByCard: Record<string, number> = {};
+  const controlApplicationsByCard: Record<string, Record<string, number>> = {};
   const activationsByCard: Record<string, number> = {};
   const triggerCountByCard: Record<string, number> = {};
   const critCountByCard: Record<string, number> = {};
@@ -46,6 +47,17 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
       addToRecord(healingByCard, event.sourceId, readNumber(event.payload?.amount));
     }
 
+    if (event.type === "StatusApplied" && event.sourceId) {
+      const command = event.payload?.command;
+      if (command === "ApplyHaste" || command === "ApplySlow" || command === "ApplyFreeze") {
+        const status = readString(event.payload?.status);
+        if (status) {
+          controlApplicationsByCard[status] ??= {};
+          addToRecord(controlApplicationsByCard[status], event.sourceId, 1);
+        }
+      }
+    }
+
     if (event.type === "ArmorGained" && event.sourceId) {
       addToRecord(armorGainedByCard, event.sourceId, readNumber(event.payload?.amount));
     }
@@ -69,6 +81,7 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
     statusDamageByCard,
     armorGainedByCard,
     healingByCard,
+    controlApplicationsByCard,
     armorBlocked,
     activationsByCard,
     triggerCountByCard,
@@ -137,6 +150,10 @@ function addStatusDamageByCard(
 
 function readNumber(value: unknown): number {
   return typeof value === "number" ? value : 0;
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
 }
 
 function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {

@@ -99,4 +99,34 @@ describe("ReplayTimeline", () => {
     expect(text).not.toContain("HealHP");
     expect(text).not.toContain("targetHp");
   });
+
+  it("formats control status replay events without raw engine fields", () => {
+    const cardsById = getMonsterCardDefinitionsById();
+    const text = formatReplayEvent(
+      {
+        tick: 180,
+        type: "StatusApplied",
+        sourceId: "card-1",
+        targetId: "card-2",
+        payload: {
+          command: "ApplyHaste",
+          status: "Haste",
+          percent: 25,
+          durationTicks: 180,
+          expiresAtTick: 360,
+          targetCardInstanceId: "card-2"
+        }
+      },
+      {
+        cardInstancesById: new Map([["card-1", { instanceId: "card-1", definitionId: "training-staff" }]]),
+        cardDefinitionsById: cardsById
+      }
+    );
+
+    expect(text).toBe("3.00s: Haste applied.");
+    expect(text).not.toContain("ApplyHaste");
+    expect(text).not.toContain("durationTicks");
+    expect(text).not.toContain("expiresAtTick");
+    expect(text).not.toContain("targetCardInstanceId");
+  });
 });

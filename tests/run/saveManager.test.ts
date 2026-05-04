@@ -168,6 +168,20 @@ describe("SaveManager", () => {
               command: "HealHP",
               amount: 4
             }
+          },
+          {
+            tick: 63,
+            type: "StatusApplied",
+            sourceId: "run-card-4",
+            targetId: "run-card-5",
+            payload: {
+              command: "ApplyHaste",
+              status: "Haste",
+              percent: 25,
+              durationTicks: 180,
+              expiresAtTick: 243,
+              targetCardInstanceId: "run-card-5"
+            }
           }
         ]
       },
@@ -175,7 +189,8 @@ describe("SaveManager", () => {
         ...fakeCombatResult("PLAYER").summary,
         statusDamage: { Burn: 3, Poison: 2 },
         statusDamageByCard: { Burn: { "run-card-1": 3 }, Poison: { "run-card-2": 2 } },
-        healingByCard: { "run-card-3": 4 }
+        healingByCard: { "run-card-3": 4 },
+        controlApplicationsByCard: { Haste: { "run-card-4": 1 } }
       }
     };
     manager.state = {
@@ -186,6 +201,7 @@ describe("SaveManager", () => {
     const save = serializeRunState(manager.state);
     expect(save.ok).toBe(true);
     expect(save.ok ? save.value : "").not.toContain('"statuses"');
+    expect(save.ok ? save.value : "").not.toContain('"controlStatuses"');
     const loaded = deserializeRunState(save.ok ? save.value : "");
 
     expect(loaded.ok).toBe(true);
