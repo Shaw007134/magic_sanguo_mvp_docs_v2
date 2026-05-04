@@ -92,12 +92,13 @@ function formatDealDamageEffect(effect: EffectDefinition): string {
   const parts: string[] = [];
   const amount = typeof effect["amount"] === "number" ? effect["amount"] : undefined;
   const scaling = isRecord(effect["scaling"]) ? formatScaling(effect["scaling"]) : undefined;
+  const damageLabel = formatDamageLabel(effect["damageType"]);
   if (amount !== undefined && amount > 0 && scaling) {
-    parts.push(`Damage: ${amount} plus ${scaling}`);
+    parts.push(`${damageLabel}: ${amount} plus ${scaling}`);
   } else if (scaling) {
-    parts.push(`Damage: ${scaling}`);
+    parts.push(`${damageLabel}: ${scaling}`);
   } else {
-    parts.push(amount !== undefined ? `Damage: ${amount}` : "Damage");
+    parts.push(amount !== undefined ? `${damageLabel}: ${amount}` : damageLabel);
   }
 
   if (isRecord(effect["conditionalMultiplier"])) {
@@ -113,6 +114,16 @@ function formatDealDamageEffect(effect: EffectDefinition): string {
   }
 
   return parts.join(" · ");
+}
+
+function formatDamageLabel(value: unknown): string {
+  if (value === "PHYSICAL") {
+    return "Physical damage";
+  }
+  if (value === "FIRE") {
+    return "Fire damage";
+  }
+  return "Damage";
 }
 
 function formatScaling(scaling: Readonly<Record<string, unknown>>): string | undefined {

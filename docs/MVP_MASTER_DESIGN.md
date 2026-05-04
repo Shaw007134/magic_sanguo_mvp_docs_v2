@@ -84,6 +84,21 @@ Characters are more like **classes/jobs** than historically accurate people.
 
 The player should start weak and grow into a build.
 
+## MVP Character Growth
+
+The MVP run should support character growth.
+
+### Level
+
+The player starts at level 1.
+
+The MVP target level is level 10.
+
+```text
+Start level: 1
+Max MVP level: 10
+EXP to next level: 10
+
 ### Important Start Rule
 
 The player may start with **0 cards**, but should start with initial resources.
@@ -155,6 +170,52 @@ Before combat, the player can:
 - Inspect enemy formation.
 - Inspect card tooltips.
 - Click Start Battle.
+
+## 4.1 Chest / Owned Card Storage MVP
+
+The player owns cards outside combat in a limited chest.
+
+The chest is the player's card storage area. It contains owned cards that are not currently placed in the formation zone.
+
+### Chest Capacity
+
+For MVP:
+
+```text
+Chest capacity = formation slot count × 2
+
+The chest capacity should scale if formation slot count increases later.
+
+Chest And Formation Relationship
+
+Before combat, the player can:
+
+Inspect cards in chest.
+Move cards from chest into formation.
+Move cards from formation back into chest.
+Move cards inside formation.
+Sell cards from chest.
+
+Cards placed in formation are active for the next combat.
+
+Cards in chest are owned but do not participate in combat.
+
+Selling Cards
+
+For MVP, cards can be sold only from the chest.
+
+A card currently placed in formation cannot be sold directly.
+The player must first remove it from formation back to chest.
+
+MVP Sell Price By Tier
+
+Recommended MVP sell prices:
+
+BRONZE: 1 gold
+SILVER: 2 gold
+GOLD: 4 gold
+JADE: 8 gold
+CELESTIAL: 12 gold
 
 ### Important Rule: Normal Dragging Does Not Trigger Effects
 

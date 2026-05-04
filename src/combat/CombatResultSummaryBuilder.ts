@@ -11,6 +11,7 @@ export interface CombatResultSummaryInput {
 export function buildCombatResultSummary(input: CombatResultSummaryInput): CombatResultSummary {
   const damageByCard: Record<string, number> = {};
   const statusDamage: Record<string, number> = {};
+  const statusDamageByCard: Record<string, Record<string, number>> = {};
   const armorGainedByCard: Record<string, number> = {};
   const activationsByCard: Record<string, number> = {};
   const triggerCountByCard: Record<string, number> = {};
@@ -35,6 +36,7 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
       }
       if (command === "BurnTick") {
         addToRecord(statusDamage, "Burn", hpDamage);
+        addStatusDamageByCard(statusDamageByCard, "Burn", event.payload?.statusSourceContributions);
       }
     }
 
@@ -58,6 +60,7 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
     enemyFinalHp: input.enemyFinalHp,
     damageByCard,
     statusDamage,
+    statusDamageByCard,
     armorGainedByCard,
     armorBlocked,
     activationsByCard,
@@ -100,6 +103,31 @@ function addToRecord(record: Record<string, number>, key: string, amount: number
   record[key] = (record[key] ?? 0) + amount;
 }
 
+function addStatusDamageByCard(
+  record: Record<string, Record<string, number>>,
+  status: string,
+  value: unknown
+): void {
+  if (!Array.isArray(value)) {
+    return;
+  }
+  for (const contribution of value) {
+    if (!isRecord(contribution) || typeof contribution["sourceCardInstanceId"] !== "string") {
+      continue;
+    }
+    const amount = readNumber(contribution["amount"]);
+    if (amount <= 0) {
+      continue;
+    }
+    record[status] ??= {};
+    addToRecord(record[status], contribution["sourceCardInstanceId"], amount);
+  }
+}
+
 function readNumber(value: unknown): number {
   return typeof value === "number" ? value : 0;
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
 }

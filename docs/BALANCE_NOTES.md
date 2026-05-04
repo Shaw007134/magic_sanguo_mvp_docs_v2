@@ -122,8 +122,8 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 - Armor cards use larger numbers than damage cards because Armor does not end fights.
 - Cooldown reduction is adjacency-limited and has long enough cooldowns to avoid self-sustaining loops.
 - Size-2 cards should be powerful enough to justify formation space but slow enough to need support.
-- Current fire support is tag-based. Fire Study checks `sourceHasTag: "fire"` and boosts direct damage from fire-tagged cards, because DealDamage does not yet support explicit damageType in card JSON.
-- Burn tick damage is still not attributed to the applying card, so fire-tagged skill support does not increase Burn tick damage yet.
+- Current fire support is tag-based. Fire Study checks `sourceHasTag: "fire"` and boosts direct damage from fire-tagged cards. DealDamage now supports explicit DIRECT, PHYSICAL, and FIRE damage types, but current Fire Study tuning has not migrated to damageType-based support.
+- Burn tick damage is attributed to the applying card in replay/summary when source data exists, but fire-tagged skill support still does not increase Burn tick damage.
 
 ## Known Risky Combos
 
@@ -143,8 +143,8 @@ Simple onboarding cards include Militia Spear, Oil Flask, Iron Guard, Patrol Spe
 
 - Add monster rotation once the run supports it cleanly.
 - Consider better enemy preview grouping by archetype after UI scope expands.
-- Tune Burn after source attribution is implemented, because fire skills currently affect direct damage from fire-tagged cards rather than Burn ticks.
-- Revisit damageType-based fire support after DealDamage supports explicit damageType or Burn source attribution exists.
+- Tune Burn after several attributed Burn runs, because summaries can now separate direct damage from Burn damage by applying card.
+- Revisit damageType-based fire support later now that DealDamage supports explicit damageType and Burn source attribution exists.
 - Consider explicit size-2 adjacency UI hints before adding more large cards.
 
 ## Phase 13B Terminal Mechanics
@@ -159,7 +159,13 @@ Terminal scaling is limited to direct DealDamage:
 
 Conditional multipliers are limited to `targetHpBelowPercent` plus `multiplier`. Scaling damage is rounded to an integer, remains direct damage, and is still reduced by Armor. Phase 13B does not consume Armor for scaling attacks.
 
-Current fire support is tag-based, not damageType-based. Fire Study checks `sourceHasTag: "fire"` and boosts direct damage from fire-tagged cards. Burn tick damage is still not attributed to applying cards, so it is not boosted by Fire Study or other card-source damage modifiers yet.
+Current fire support is tag-based, not damageType-based. Fire Study checks `sourceHasTag: "fire"` and boosts direct damage from fire-tagged cards. Burn tick damage is attributed for replay/summary readability, but it is not boosted by Fire Study or other card-source damage modifiers yet.
+
+## Phase 14A Damage Type And Attribution
+
+DealDamage effects may explicitly declare `damageType: "DIRECT"`, `"PHYSICAL"`, or `"FIRE"`. Omitted damageType preserves the previous DIRECT behavior. DIRECT, PHYSICAL, and FIRE card-hit damage are reduced by Armor unless a command explicitly sets `ignoresArmor`; Burn ticks keep the MVP rule and ignore Armor.
+
+ApplyBurn stores source attribution on the merged Burn runtime state: source combatant id, source card instance id when available, and source card definition id when available. Combat behavior still uses one merged total Burn amount/duration, while replay and CombatResultSummary use per-source buckets to show Burn damage by applying card.
 
 ## Iron Warlord Terminal/Core Cards
 
@@ -223,7 +229,7 @@ Optional-card count is capped in `MonsterGenerator`: tutorial monsters add no op
 
 - No affixes or random stat rolls.
 - No general rarity system beyond current tier fields and curated pool weighting.
-- No Burn source attribution; Burn tick damage is not attributed to applying cards.
+- Burn source attribution is replay/summary-only in Phase 14A; it does not add Burn decay, status reactions, or Burn damage modifiers.
 - No Poison, Freeze, Haste, Slow, Heal, or other future status/resource systems.
 - No boss rotation unless implemented later.
 - No branching map, async PvP, cloud save/account system, or final art/Pixi/Phaser.

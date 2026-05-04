@@ -28,5 +28,24 @@ export function validateCardDefinition(card: CardDefinition): ValidationResult {
     errors.push({ path: "triggers", message: "Passive cards must have at least one trigger." });
   }
 
+  for (const [index, effect] of (card.effects ?? []).entries()) {
+    validateEffect(effect, `effects[${index}]`, errors);
+  }
+
   return createValidationResult(errors);
+}
+
+function validateEffect(
+  effect: Readonly<Record<string, unknown>>,
+  path: string,
+  errors: ValidationIssue[]
+): void {
+  if (effect["command"] === "DealDamage") {
+    if (effect["damageType"] !== undefined && !["DIRECT", "PHYSICAL", "FIRE"].includes(String(effect["damageType"]))) {
+      errors.push({ path: `${path}.damageType`, message: "DealDamage damageType must be DIRECT, PHYSICAL, or FIRE." });
+    }
+    if (effect["ignoresArmor"] !== undefined && typeof effect["ignoresArmor"] !== "boolean") {
+      errors.push({ path: `${path}.ignoresArmor`, message: "DealDamage ignoresArmor must be a boolean when present." });
+    }
+  }
 }

@@ -38,14 +38,15 @@ Supported trigger conditions are status Burn, appliedByOwner, sourceHasTag, card
 Trigger-created commands always use the trigger owner as sourceCombatant and the opposing combatant as default targetCombatant.
 Recursive trigger-created commands carry triggerDepth through ResolutionStack; maxTriggerDepth stops recursive chains with StackLimitReached internal/debug output and CombatLog detail.
 OnCombatEnd is log/replay only in MVP and must not push or resolve combat commands or mutate HP, armor, statuses, cooldowns, or winner.
-OnBurnTick currently supports status and HP conditions only; appliedByOwner/source ownership conditions do not fire until Burn source tracking is added.
+OnBurnTick currently supports status and HP conditions only; appliedByOwner/source ownership conditions remain intentionally unwired until explicit status reaction work.
 Minimal ModifierSystem / MBF is implemented for damage, cooldown recovery rate, and status duration modifiers.
 Modifiers are owner-scoped by default: modifier.ownerId must match sourceCombatant.formation.id, and modifiers do not apply when sourceCombatant is absent.
 Modifier priority: lower priority number executes first; same priority sorts by modifier id.
 Supported modifier conditions are sourceHasTag, targetHasStatus, ownerHasStatus, damageType, cardInSlot, and always.
 Supported modifier operations are ADD_DAMAGE, MULTIPLY_DAMAGE, ADD_COOLDOWN_RECOVERY_RATE, MULTIPLY_COOLDOWN_RECOVERY_RATE, ADD_STATUS_DURATION, and MULTIPLY_STATUS_DURATION.
 Damage, cooldown recovery, and status duration modifier outputs are clamped to 0+ and rounded to integer MVP combat values for deterministic replay/readability.
-BurnTick still does not track sourceCombatant/sourceCard; source-owned damage modifiers therefore do not apply to BurnTick damage until Burn source tracking is added later.
+DealDamage supports explicit damageType values DIRECT, PHYSICAL, and FIRE; omitted damageType preserves existing DIRECT behavior.
+BurnTick tracks source contribution buckets for replay/summary attribution, but source-owned damage modifiers still do not apply to BurnTick damage in Phase 14A.
 ReplayTimeline is the clean player-facing replay data. Raw CombatLog remains dev/debug data and can include stack-limit/debug detail not shown in ReplayTimeline.
 ReplayTimeline currently uses CombatStarted, CardActivated, DamageDealt, ArmorGained, ArmorBlocked, StatusApplied, StatusTicked, CooldownModified, TriggerFired, CombatEnded, and StatusExpired events.
 CombatResultSummary is built from ReplayTimeline and aggregates damage by card, Burn/status damage, armor gained by card, armor blocked, activations by card, trigger count by card, top contributors, winner, and ticks elapsed.
@@ -58,7 +59,7 @@ Optional monster cards are capped by difficulty/day so early normal monsters sta
 Monster battles use the same FormationSnapshot combat path as player and future async PvP opponents; no separate monster combat system was added.
 Size 2 monster cards occupy a starting slot and mark the adjacent slot locked in FormationSnapshot output; CombatEngine behavior is unchanged.
 Phase 10 UI must render locked adjacent slots as occupied by the size-2 card footprint.
-BurnTick damage remains summarized as statusDamage.Burn and is not attributed back to the applying card because Burn source tracking is still intentionally deferred.
+BurnTick damage remains summarized as statusDamage.Burn and is also attributed by applying card through summary.statusDamageByCard.Burn when source data exists.
 Minimal React + Vite UI prototype is implemented under src/ui.
 UI state helpers live under src/ui/state and own only local gold, chest, formation, and selling state.
 Chest capacity is formation slot count x 2. With 4 formation slots, the MVP chest capacity is 8.
@@ -88,7 +89,7 @@ Phase 13A active content registry lives at src/content/cards/activeCards.ts and 
 RunManager, ShopNode, EventNode, RewardGenerator through RunManager, MonsterGenerator, SaveManager defaults, UI App cardDefinitionsById, debug replay export, and content tests now use the active registry.
 Expanded card content exists under data/cards/general/ and data/cards/class_iron_warlord/. Legacy ids in data/cards/monster_cards.json remain available for saves/tests.
 Expanded skill content is data-driven through data/skills/mvp_skills.json and still instantiates only existing ModifierSystem modifiers.
-Fire Study is intentionally tag-based in Phase 13A patch: it uses sourceHasTag "fire" to boost direct damage from fire-tagged cards. It does not use damageType FIRE because DealDamageCommand currently emits DIRECT damage for card effects and Burn tick source attribution is deferred.
+Fire Study remains intentionally tag-based: it uses sourceHasTag "fire" to boost direct card damage from fire-tagged cards. DealDamage now supports damageType FIRE, but Fire Study has not been migrated to damageType-based support.
 Quick Hands and Drumline Training use ADD_COOLDOWN_RECOVERY_RATE instead of a small multiplier because cooldown recovery modifiers round to integer MVP values; a 1.25x multiplier on base recovery 1 is effectively a no-op.
 Phase 13A monster templates include Bandit Duelist, Oil Raider, Shield Sergeant, Drum Adept, Siege Trainee, Banner Guard, Cinder Captain, and Iron Patrol.
 Phase 13A boss templates include Gate Captain Elite, Siege Marshal, and Cinder Strategist. Only Gate Captain Elite is wired as the current final boss.
@@ -104,7 +105,7 @@ Level 7+ battle rewards deterministically anchor at least one terminal or high-q
 Battle rewards preserve priority order: monster-used cards, monster rewardPool cards, curated fallback, build-vital support, terminal cards when level-appropriate, then fallback card/skill/gold.
 Saved shop/reward choices are restored exactly and do not reroll through newer quality-anchor logic after load.
 MonsterGenerator now limits optional-card count by difficulty/day so early normal monsters are simpler and elite/boss formations can be more complete.
-Fire support remains tag-based, not damageType-based. Burn tick damage is still not attributed to applying cards, so Burn ticks are not boosted by Fire Study or crit mechanics.
+Fire support remains tag-based, not damageType-based. Burn tick damage is attributed to applying cards for replay/summary readability, but Burn ticks are not boosted by Fire Study or crit mechanics.
 The browser UI has minimal localStorage controls: Save Run, Load Run, and Clear Save. No cloud save, account system, or migration UI exists.
 New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
 RunManager owns chest/owned card state, ownedSkills, formation placement, selling, deterministic shop/event/reward choices, shop offer state, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
@@ -138,21 +139,29 @@ Empty player/enemy slots render separate Slot N and Empty labels.
 Debug replay export helper exists at scripts/exportSampleCombatReplay.ts. Run `pnpm export:sample-replay` to build TS and write JSON under debug/combat-replays/.
 The root debug/ folder is gitignored; browser UI does not write to the local filesystem.
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
-Known limitation: Burn tick damage is not attributed to applying cards, so fire-tagged skills affect direct damage from fire-tagged card effects but not Burn ticks.
+Known limitation: Burn tick source attribution is summary/replay-only; fire-tagged skills affect direct damage from fire-tagged card effects but not Burn ticks.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
 Known limitation: save format version is 1 with fail-fast validation; future RunState schema changes need explicit migration or a clear unsupported-version failure.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
 Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, Poison, Freeze, Heal, Haste, Slow, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
+docs/MVP_BUILD_SEQUENCE.md now defines Phase 14 as a status/damage foundation sequence rather than PvP snapshot export.
+Phase 14A implemented explicit DealDamage damageType support and Burn source attribution buckets for replay/summary without adding new statuses or reactions.
+Phase 14A is damage type and source attribution foundation.
+Phase 14B is Poison and Heal.
+Phase 14C is Haste, Slow, and Freeze.
+Phase 14D is status reaction/combo support.
+Phase 14E is Burn decay identity polish.
+PvP-ready snapshot export is deferred to a future phase after combat readability and mechanics are stronger; async PvP remains future-only and is not part of Phase 14.
 ```
 
 
 
 ## Next Task
 
-Post-Phase 13B:
+Phase 14B:
 
 ```text
-Playtest terminal/core builds across several seeds, tune reward quality and monster numbers, and add explicit save migration only when the RunState schema changes.
+Implement Poison and Heal only after reviewing Phase 14A attribution behavior.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -219,4 +228,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use the next requested prompt from the product owner; Phase 13B terminal mechanics and playability tuning are complete.
+Use the Phase 14B prompt from docs/MVP_BUILD_SEQUENCE.md: Poison and Heal pack.

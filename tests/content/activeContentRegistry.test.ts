@@ -512,6 +512,12 @@ function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: strin
   expect(JSON.stringify(effect), cardId).not.toMatch(/Barrier|Ward|EnergyShield|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
   if (effect["command"] === "DealDamage") {
     expect(effect["amount"], `${cardId}:amount`).toBeTypeOf("number");
+    if (effect["damageType"] !== undefined) {
+      expect(["DIRECT", "PHYSICAL", "FIRE"], `${cardId}:damageType`).toContain(effect["damageType"]);
+    }
+    if (effect["ignoresArmor"] !== undefined) {
+      expect(effect["ignoresArmor"], `${cardId}:ignoresArmor`).toBeTypeOf("boolean");
+    }
     if (effect["critChancePercent"] !== undefined) {
       expect(effect["critChancePercent"], `${cardId}:critChancePercent`).toBeTypeOf("number");
       expect(effect["critChancePercent"], `${cardId}:critChancePercent`).toBeGreaterThanOrEqual(0);

@@ -33,6 +33,7 @@ export interface CombatResultSummary {
   readonly enemyFinalHp: number;
   readonly damageByCard: Readonly<Record<string, number>>;
   readonly statusDamage: Readonly<Record<string, number>>;
+  readonly statusDamageByCard: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly armorGainedByCard: Readonly<Record<string, number>>;
   readonly armorBlocked: number;
   readonly activationsByCard: Readonly<Record<string, number>>;

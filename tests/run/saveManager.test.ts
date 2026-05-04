@@ -72,6 +72,7 @@ function fakeCombatResult(winner: CombatResult["winner"] = "PLAYER"): CombatResu
       enemyFinalHp: winner === "PLAYER" ? 0 : 1,
       damageByCard: {},
       statusDamage: {},
+      statusDamageByCard: {},
       armorGainedByCard: {},
       armorBlocked: 0,
       activationsByCard: {},
@@ -116,6 +117,51 @@ describe("SaveManager", () => {
     expect(loaded.state.ownedCards.map((card) => [card.instanceId, card.definitionId, card.tierOverride])).toEqual(
       manager.state.ownedCards.map((card) => [card.instanceId, card.definitionId, card.tierOverride])
     );
+  });
+
+  it("save/load preserves attributed combat result payloads without persisting runtime status arrays", () => {
+    const manager = createNewRun("save-attributed-burn");
+    const attributedResult: CombatResult = {
+      ...fakeCombatResult("PLAYER"),
+      replayTimeline: {
+        events: [
+          {
+            tick: 61,
+            type: "DamageDealt",
+            payload: {
+              command: "BurnTick",
+              damageType: "FIRE",
+              hpDamage: 3,
+              statusSourceContributions: [
+                {
+                  sourceCombatantId: "player",
+                  sourceCardInstanceId: "run-card-1",
+                  sourceCardDefinitionId: "oil-flask",
+                  amount: 3
+                }
+              ]
+            }
+          }
+        ]
+      },
+      summary: {
+        ...fakeCombatResult("PLAYER").summary,
+        statusDamage: { Burn: 3 },
+        statusDamageByCard: { Burn: { "run-card-1": 3 } }
+      }
+    };
+    manager.state = {
+      ...manager.state,
+      pendingCombatResult: attributedResult
+    };
+
+    const save = serializeRunState(manager.state);
+    expect(save.ok).toBe(true);
+    expect(save.ok ? save.value : "").not.toContain('"statuses"');
+    const loaded = deserializeRunState(save.ok ? save.value : "");
+
+    expect(loaded.ok).toBe(true);
+    expect(loaded.ok ? loaded.value.pendingCombatResult : undefined).toEqual(attributedResult);
   });
 
   it("event choices remain identical after load and are not rerolled", () => {

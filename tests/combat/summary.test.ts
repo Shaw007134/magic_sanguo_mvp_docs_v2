@@ -95,6 +95,7 @@ describe("CombatResultSummary", () => {
 
     expect(result.summary.damageByCard).toEqual({ "blade-card": 3 });
     expect(result.summary.statusDamage).toEqual({ Burn: 2 });
+    expect(result.summary.statusDamageByCard).toEqual({ Burn: { "flame-card": 2 } });
     expect(result.summary.armorGainedByCard).toEqual({ "blade-card": 3 });
     expect(result.summary.armorBlocked).toBe(2);
     expect(result.summary.activationsByCard).toEqual({ "blade-card": 1, "flame-card": 1 });

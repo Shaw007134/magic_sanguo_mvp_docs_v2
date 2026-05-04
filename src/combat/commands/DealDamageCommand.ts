@@ -1,5 +1,5 @@
 import type { CombatCommand, CombatExecutionContext } from "./CombatCommand.js";
-import { applyDamage } from "../DamageCalculator.js";
+import { applyDamage, type DamageType } from "../DamageCalculator.js";
 
 export type DealDamageScalingSource =
   | "OWNER_ARMOR_PERCENT"
@@ -17,6 +17,8 @@ export interface DealDamageConditionalMultiplierDefinition {
 }
 
 export interface DealDamageCommandOptions {
+  readonly damageType?: DamageType;
+  readonly ignoresArmor?: boolean;
   readonly critChancePercent?: number;
   readonly critMultiplier?: number;
   readonly scaling?: DealDamageScalingDefinition;
@@ -45,12 +47,13 @@ export class DealDamageCommand implements CombatCommand {
       sourceName: context.sourceCombatant.formation.displayName,
       target: context.targetCombatant,
       amount: finalAmount,
-      damageType: "DIRECT",
+      damageType: this.options.damageType ?? "DIRECT",
       sourceCard: context.sourceCard,
       sourceCardDefinition: context.sourceCardDefinition,
       sourceCombatant: context.sourceCombatant,
       combatants: context.combatants,
       modifierSystem: context.modifierSystem,
+      ignoresArmor: this.options.ignoresArmor,
       command: this.name,
       critical,
       critChancePercent: this.options.critChancePercent,

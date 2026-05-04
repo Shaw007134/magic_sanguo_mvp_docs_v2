@@ -1061,3 +1061,68 @@ Known issues:
 - Late anchors improve exposure but do not guarantee a perfect build or remove build-vital Bronze/Silver cards.
 Next recommended task:
 - Proceed to Phase 14 after manual playtest confirms late reward/shop surfaces feel stronger without becoming scripted.
+
+---
+
+Date: 2026-05-04
+Phase: Phase 14 planning docs patch
+Task: Replaced the old Phase 14 PvP snapshot export plan with the new status/damage foundation sequence.
+Files changed:
+- docs/MVP_BUILD_SEQUENCE.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- None; documentation-only patch.
+How to run:
+- Not run; no code changed.
+Known issues:
+- Async PvP and PvP snapshot export are intentionally deferred to a future phase after combat readability and mechanics are stronger.
+- Phase 14 is now split into 14A damage type/source attribution, 14B Poison/Heal, 14C Haste/Slow/Freeze, 14D status reactions, and 14E Burn decay identity polish.
+Next recommended task:
+- Implement Phase 14A only: Damage type and source attribution foundation.
+
+---
+
+Date: 2026-05-04
+Phase: 14A
+Task: Implemented damage type and Burn source attribution foundation.
+Files changed:
+- src/combat/CombatCommandFactory.ts
+- src/combat/CombatResultSummaryBuilder.ts
+- src/combat/DamageCalculator.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/DealDamageCommand.ts
+- src/combat/status/Burn.ts
+- src/combat/status/StatusEffect.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/model/result.ts
+- src/ui/components/ResultSummary.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/validation/cardValidation.ts
+- tests/combat/armorBurn.test.ts
+- tests/combat/summary.test.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/run/runManager.test.ts
+- tests/run/saveManager.test.ts
+- tests/ui/resultSummary.test.tsx
+- tests/validation/cardValidation.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Existing DealDamage without damageType remains DIRECT and compatible with Armor/crit/scaling behavior.
+- Explicit PHYSICAL and FIRE DealDamage damage types appear in replay payloads and remain Armor-reduced.
+- ApplyBurn stores source combatant/card attribution and merged Burn source contribution buckets.
+- Burn tick damage is attributed to the applying card in CombatResultSummary while total statusDamage.Burn remains present.
+- Burn still ignores Armor.
+- Save/load preserves attributed combat result payloads without persisting runtime status arrays into RunState.
+- Same combat input produces identical attributed replay and summary.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Fire Study remains tag-based and has not migrated to damageType FIRE conditions.
+- Burn attribution is replay/summary-only; Burn ticks still do not receive source-owned damage modifiers and no status reactions were added.
+Next recommended task:
+- Phase 14B: Poison and Heal pack, using the Phase 14A attribution foundation.

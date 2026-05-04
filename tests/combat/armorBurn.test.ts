@@ -129,6 +129,24 @@ describe("Armor and Burn", () => {
     });
   });
 
+  it("explicit PHYSICAL and FIRE DealDamage types appear in replay and still use Armor", () => {
+    const card = createCard(
+      "typed-strikes",
+      [
+        { command: "DealDamage", amount: 4, damageType: "PHYSICAL" },
+        { command: "DealDamage", amount: 4, damageType: "FIRE" }
+      ],
+      999
+    );
+
+    const result = simulateOnePlayerCard(card, createFormation("enemy", 20, [], 5), 1);
+    const damageEvents = result.replayTimeline.events.filter((event) => event.type === "DamageDealt");
+
+    expect(damageEvents.map((event) => event.payload?.damageType)).toEqual(["PHYSICAL", "FIRE"]);
+    expect(damageEvents.map((event) => event.payload?.hpDamage)).toEqual([0, 3]);
+    expect(result.enemyFinalHp).toBe(17);
+  });
+
   it("Burn duration 60 applied at tick 1 ticks once at tick 61 and then expires", () => {
     const card = createCard("short-flame", [{ command: "ApplyBurn", amount: 2, durationTicks: 60 }], 999);
 
@@ -165,9 +183,20 @@ describe("Armor and Burn", () => {
         status: "Burn",
         amount: 2,
         durationTicks: 60,
+        sourceCombatantId: "player",
+        sourceCardInstanceId: "player-card",
+        sourceCardDefinitionId: "duration-flame",
         totalAmount: 2,
         nextTickAt: 61,
-        expiresAtTick: 61
+        expiresAtTick: 61,
+        sourceContributions: [
+          {
+            sourceCombatantId: "player",
+            sourceCardInstanceId: "player-card",
+            sourceCardDefinitionId: "duration-flame",
+            amount: 2
+          }
+        ]
       }
     });
     expect(result.replayTimeline.events.some((event) => event.type === "StatusExpired")).toBe(false);
@@ -187,8 +216,35 @@ describe("Armor and Burn", () => {
     const burnDamageEvents = result.replayTimeline.events.filter(
       (event) => event.type === "DamageDealt" && event.payload?.command === "BurnTick"
     );
+    const statusAppliedEvents = result.replayTimeline.events.filter((event) => event.type === "StatusApplied");
 
+    expect(statusAppliedEvents.map((event) => event.payload?.sourceContributions)).toEqual([
+      [
+        {
+          sourceCombatantId: "player",
+          sourceCardInstanceId: "player-card",
+          sourceCardDefinitionId: "double-flame",
+          amount: 2
+        }
+      ],
+      [
+        {
+          sourceCombatantId: "player",
+          sourceCardInstanceId: "player-card",
+          sourceCardDefinitionId: "double-flame",
+          amount: 5
+        }
+      ]
+    ]);
     expect(burnDamageEvents.map((event) => event.payload?.hpDamage)).toEqual([5]);
+    expect(burnDamageEvents[0]?.payload?.statusSourceContributions).toEqual([
+      {
+        sourceCombatantId: "player",
+        sourceCardInstanceId: "player-card",
+        sourceCardDefinitionId: "double-flame",
+        amount: 5
+      }
+    ]);
     expect(result.enemyFinalHp).toBe(15);
   });
 
@@ -200,5 +256,16 @@ describe("Armor and Burn", () => {
     const secondResult = simulateOnePlayerCard(card, enemy, 120);
 
     expect(secondResult).toEqual(firstResult);
+  });
+
+  it("same combat input produces the same replay and summary with attributed Burn", () => {
+    const card = createCard("repeatable-attributed-flame", [{ command: "ApplyBurn", amount: 2, durationTicks: 120 }], 999);
+    const enemy = createFormation("enemy", 20, []);
+
+    const firstResult = simulateOnePlayerCard(card, enemy, 120);
+    const secondResult = simulateOnePlayerCard(card, enemy, 120);
+
+    expect(secondResult.replayTimeline).toEqual(firstResult.replayTimeline);
+    expect(secondResult.summary).toEqual(firstResult.summary);
   });
 });

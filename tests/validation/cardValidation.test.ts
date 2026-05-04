@@ -44,4 +44,33 @@ describe("validateCardDefinition", () => {
     expect(result.valid).toBe(false);
     expect(result.errors[0]?.path).toBe("tier");
   });
+
+  it("accepts supported DealDamage damageType values", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        effects: [
+          { command: "DealDamage", amount: 1 },
+          { command: "DealDamage", amount: 1, damageType: "DIRECT" },
+          { command: "DealDamage", amount: 1, damageType: "PHYSICAL" },
+          { command: "DealDamage", amount: 1, damageType: "FIRE" }
+        ]
+      })
+    );
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects unknown DealDamage damageType values", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        effects: [{ command: "DealDamage", amount: 1, damageType: "ICE" }]
+      })
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual({
+      path: "effects[0].damageType",
+      message: "DealDamage damageType must be DIRECT, PHYSICAL, or FIRE."
+    });
+  });
 });

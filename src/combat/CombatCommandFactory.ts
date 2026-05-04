@@ -1,6 +1,7 @@
 import type { EffectDefinition } from "../model/card.js";
 import type { CombatCommand } from "./commands/CombatCommand.js";
 import { ApplyBurnCommand } from "./commands/ApplyBurnCommand.js";
+import type { DamageType } from "./DamageCalculator.js";
 import {
   DealDamageCommand,
   type DealDamageConditionalMultiplierDefinition,
@@ -35,6 +36,8 @@ function createCombatCommandsForEffect(
         return [];
       }
       return [new DealDamageCommand(effect["amount"], {
+        damageType: parseDamageType(effect["damageType"]),
+        ignoresArmor: effect["ignoresArmor"] === true ? true : undefined,
         critChancePercent: readNumber(effect["critChancePercent"]),
         critMultiplier: readNumber(effect["critMultiplier"]),
         scaling: parseScaling(effect["scaling"]),
@@ -62,6 +65,10 @@ function createCombatCommandsForEffect(
 
 function readNumber(value: unknown): number | undefined {
   return typeof value === "number" ? value : undefined;
+}
+
+function parseDamageType(value: unknown): DamageType | undefined {
+  return value === "DIRECT" || value === "PHYSICAL" || value === "FIRE" ? value : undefined;
 }
 
 function parseScaling(value: unknown): DealDamageScalingDefinition | undefined {

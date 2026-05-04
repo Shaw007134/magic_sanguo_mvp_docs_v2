@@ -2,9 +2,10 @@ import type { ReplayEvent } from "../model/result.js";
 import type { CardDefinition, CardRuntimeState } from "../model/card.js";
 import type { CombatLog } from "./CombatLog.js";
 import type { ModifierSystem } from "./modifiers/ModifierSystem.js";
+import type { StatusDamageSourceContribution } from "./status/StatusEffect.js";
 import type { RuntimeCombatant } from "./types.js";
 
-export type DamageType = "DIRECT" | "FIRE";
+export type DamageType = "DIRECT" | "PHYSICAL" | "FIRE";
 
 export interface DamageCalculationInput {
   readonly tick: number;
@@ -26,6 +27,7 @@ export interface DamageCalculationInput {
   readonly baseAmount?: number;
   readonly scalingAmount?: number;
   readonly conditionalMultiplier?: number;
+  readonly statusSourceContributions?: readonly StatusDamageSourceContribution[];
   readonly combatLog: CombatLog;
   readonly replayEvents: ReplayEvent[];
 }
@@ -91,6 +93,9 @@ export function applyDamage(input: DamageCalculationInput): DamageCalculationRes
   }
   if (input.conditionalMultiplier !== undefined && input.conditionalMultiplier !== 1) {
     payload.conditionalMultiplier = input.conditionalMultiplier;
+  }
+  if (input.statusSourceContributions && input.statusSourceContributions.length > 0) {
+    payload.statusSourceContributions = input.statusSourceContributions;
   }
 
   input.replayEvents.push({
