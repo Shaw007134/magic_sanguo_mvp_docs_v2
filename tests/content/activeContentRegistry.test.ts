@@ -8,6 +8,7 @@ import generalBladeArmorJson from "../../data/cards/general/blade_armor.json" wi
 import generalControlJson from "../../data/cards/general/control.json" with { type: "json" };
 import generalFireSupportJson from "../../data/cards/general/fire_support.json" with { type: "json" };
 import generalPoisonHealJson from "../../data/cards/general/poison_heal.json" with { type: "json" };
+import generalReactionsJson from "../../data/cards/general/reactions.json" with { type: "json" };
 import monsterCardsJson from "../../data/cards/monster_cards.json" with { type: "json" };
 import mvpSkillsJson from "../../data/skills/mvp_skills.json" with { type: "json" };
 import { CombatEngine } from "../../src/combat/CombatEngine.js";
@@ -58,7 +59,8 @@ const generalJsonCards = [
   ...generalBladeArmorJson,
   ...generalFireSupportJson,
   ...generalPoisonHealJson,
-  ...generalControlJson
+  ...generalControlJson,
+  ...generalReactionsJson
 ] as readonly CardDefinition[];
 const ironWarlordJsonCards = [
   ...classBladeTempoJson,
@@ -87,7 +89,7 @@ const BOSS_IDS = ["gate-captain-elite", "siege-marshal", "cinder-strategist"] as
 
 describe("active MVP content registry", () => {
   it("loads the requested card pack sizes and preserves legacy MVP cards", () => {
-    expect(generalJsonCards).toHaveLength(31);
+    expect(generalJsonCards).toHaveLength(37);
     expect(ironWarlordJsonCards).toHaveLength(20);
     expect(GENERAL_CARD_DEFINITIONS).toEqual(generalJsonCards);
     expect(IRON_WARLORD_CARD_DEFINITIONS).toEqual(ironWarlordJsonCards);
@@ -99,7 +101,7 @@ describe("active MVP content registry", () => {
     for (const card of [...generalJsonCards, ...ironWarlordJsonCards]) {
       expect(activeCardsById.has(card.id), card.id).toBe(true);
     }
-    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 51);
+    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 57);
   });
 
   it("all active cards validate and use only MVP grammar", () => {
@@ -586,7 +588,21 @@ function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: strin
 }
 
 function validateTrigger(trigger: Readonly<Record<string, unknown>>, cardId: string): void {
-  expect(["OnCombatStart", "OnCardActivated", "OnDamageDealt", "OnDamageTaken", "OnStatusApplied", "OnBurnTick", "OnCooldownModified", "OnCombatEnd"], `${cardId}:hook`).toContain(trigger["hook"]);
+  expect(
+    [
+      "OnCombatStart",
+      "OnCardActivated",
+      "OnDamageDealt",
+      "OnDamageTaken",
+      "OnStatusApplied",
+      "OnStatusTicked",
+      "OnBurnTick",
+      "OnHealReceived",
+      "OnCooldownModified",
+      "OnCombatEnd"
+    ],
+    `${cardId}:hook`
+  ).toContain(trigger["hook"]);
   expect(trigger["internalCooldownTicks"], `${cardId}:internalCooldownTicks`).toBeTypeOf("number");
   expect(trigger["internalCooldownTicks"], `${cardId}:internalCooldownTicks`).toBeGreaterThan(0);
   expect(trigger["maxTriggersPerTick"], `${cardId}:maxTriggersPerTick`).toBeTypeOf("number");
@@ -597,17 +613,36 @@ function validateTrigger(trigger: Readonly<Record<string, unknown>>, cardId: str
     const conditionKeys = Object.keys(conditions);
     expect(conditionKeys.length, `${cardId}:conditions`).toBeGreaterThan(0);
     for (const key of conditionKeys) {
-      expect(["status", "appliedByOwner", "sourceHasTag", "cardIsAdjacent", "ownerHpBelowPercent", "targetHpBelowPercent"], `${cardId}:condition:${key}`).toContain(key);
+      expect(
+        [
+          "status",
+          "appliedByOwner",
+          "sourceHasTag",
+          "cardIsAdjacent",
+          "targetHasStatus",
+          "ownerHasStatus",
+          "healedAmountAtLeast",
+          "ownerHpBelowPercent",
+          "targetHpBelowPercent"
+        ],
+        `${cardId}:condition:${key}`
+      ).toContain(key);
     }
     if (conditions["status"] !== undefined) {
       expect(["Burn", "Poison"], `${cardId}:conditions.status`).toContain(conditions["status"]);
+    }
+    if (conditions["targetHasStatus"] !== undefined) {
+      expect(["Burn", "Poison"], `${cardId}:conditions.targetHasStatus`).toContain(conditions["targetHasStatus"]);
+    }
+    if (conditions["ownerHasStatus"] !== undefined) {
+      expect(["Burn", "Poison"], `${cardId}:conditions.ownerHasStatus`).toContain(conditions["ownerHasStatus"]);
     }
     for (const booleanKey of ["appliedByOwner", "cardIsAdjacent"]) {
       if (conditions[booleanKey] !== undefined) {
         expect(conditions[booleanKey], `${cardId}:conditions.${booleanKey}`).toBeTypeOf("boolean");
       }
     }
-    for (const numberKey of ["ownerHpBelowPercent", "targetHpBelowPercent"]) {
+    for (const numberKey of ["ownerHpBelowPercent", "targetHpBelowPercent", "healedAmountAtLeast"]) {
       if (conditions[numberKey] !== undefined) {
         expect(conditions[numberKey], `${cardId}:conditions.${numberKey}`).toBeTypeOf("number");
       }

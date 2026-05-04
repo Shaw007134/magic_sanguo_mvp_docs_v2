@@ -6,6 +6,7 @@ import generalBladeArmorJson from "../../../data/cards/general/blade_armor.json"
 import generalControlJson from "../../../data/cards/general/control.json" with { type: "json" };
 import generalFireSupportJson from "../../../data/cards/general/fire_support.json" with { type: "json" };
 import generalPoisonHealJson from "../../../data/cards/general/poison_heal.json" with { type: "json" };
+import generalReactionsJson from "../../../data/cards/general/reactions.json" with { type: "json" };
 import monsterCardsJson from "../../../data/cards/monster_cards.json" with { type: "json" };
 import type { CardDefinition } from "../../model/card.js";
 
@@ -14,7 +15,8 @@ export const GENERAL_CARD_DEFINITIONS = [
   ...generalBladeArmorJson,
   ...generalFireSupportJson,
   ...generalPoisonHealJson,
-  ...generalControlJson
+  ...generalControlJson,
+  ...generalReactionsJson
 ] as readonly CardDefinition[];
 
 export const IRON_WARLORD_CARD_DEFINITIONS = [

@@ -31,6 +31,9 @@ export function validateCardDefinition(card: CardDefinition): ValidationResult {
   for (const [index, effect] of (card.effects ?? []).entries()) {
     validateEffect(effect, `effects[${index}]`, errors);
   }
+  for (const [index, trigger] of (card.triggers ?? []).entries()) {
+    validateTrigger(trigger, `triggers[${index}]`, errors);
+  }
 
   return createValidationResult(errors);
 }
@@ -81,4 +84,79 @@ function validateControlEffect(
   if (effect["durationTicks"] === undefined || typeof effect["durationTicks"] !== "number") {
     errors.push({ path: `${path}.durationTicks`, message: `${String(effect["command"])} durationTicks must be a number.` });
   }
+}
+
+function validateTrigger(
+  trigger: Readonly<Record<string, unknown>>,
+  path: string,
+  errors: ValidationIssue[]
+): void {
+  if (
+    ![
+      "OnCombatStart",
+      "OnCardActivated",
+      "OnDamageDealt",
+      "OnDamageTaken",
+      "OnStatusApplied",
+      "OnStatusTicked",
+      "OnBurnTick",
+      "OnHealReceived",
+      "OnCooldownModified",
+      "OnCombatEnd"
+    ].includes(String(trigger["hook"]))
+  ) {
+    errors.push({ path: `${path}.hook`, message: "Trigger hook is invalid." });
+  }
+  if (
+    (trigger["hook"] === "OnStatusTicked" || trigger["hook"] === "OnHealReceived") &&
+    (typeof trigger["internalCooldownTicks"] !== "number" || trigger["internalCooldownTicks"] <= 0)
+  ) {
+    errors.push({ path: `${path}.internalCooldownTicks`, message: `${String(trigger["hook"])} internalCooldownTicks must be a positive number.` });
+  }
+  if (trigger["maxTriggersPerTick"] !== undefined && (typeof trigger["maxTriggersPerTick"] !== "number" || trigger["maxTriggersPerTick"] <= 0)) {
+    errors.push({ path: `${path}.maxTriggersPerTick`, message: "maxTriggersPerTick must be a positive number when present." });
+  }
+  if (trigger["conditions"] !== undefined) {
+    validateTriggerConditions(trigger["conditions"], `${path}.conditions`, errors);
+  }
+  if (Array.isArray(trigger["effects"])) {
+    for (const [index, effect] of trigger["effects"].entries()) {
+      if (isRecord(effect)) {
+        validateEffect(effect, `${path}.effects[${index}]`, errors);
+      }
+    }
+  }
+}
+
+function validateTriggerConditions(value: unknown, path: string, errors: ValidationIssue[]): void {
+  if (!isRecord(value)) {
+    errors.push({ path, message: "Trigger conditions must be an object." });
+    return;
+  }
+  if (value["status"] !== undefined && value["status"] !== "Burn" && value["status"] !== "Poison") {
+    errors.push({ path: `${path}.status`, message: "Trigger status must be Burn or Poison." });
+  }
+  if (value["targetHasStatus"] !== undefined && value["targetHasStatus"] !== "Burn" && value["targetHasStatus"] !== "Poison") {
+    errors.push({ path: `${path}.targetHasStatus`, message: "targetHasStatus must be Burn or Poison." });
+  }
+  if (value["ownerHasStatus"] !== undefined && value["ownerHasStatus"] !== "Burn" && value["ownerHasStatus"] !== "Poison") {
+    errors.push({ path: `${path}.ownerHasStatus`, message: "ownerHasStatus must be Burn or Poison." });
+  }
+  for (const booleanKey of ["appliedByOwner", "cardIsAdjacent"]) {
+    if (value[booleanKey] !== undefined && typeof value[booleanKey] !== "boolean") {
+      errors.push({ path: `${path}.${booleanKey}`, message: `${booleanKey} must be a boolean.` });
+    }
+  }
+  for (const numberKey of ["ownerHpBelowPercent", "targetHpBelowPercent", "healedAmountAtLeast"]) {
+    if (value[numberKey] !== undefined && typeof value[numberKey] !== "number") {
+      errors.push({ path: `${path}.${numberKey}`, message: `${numberKey} must be a number.` });
+    }
+  }
+  if (value["sourceHasTag"] !== undefined && typeof value["sourceHasTag"] !== "string") {
+    errors.push({ path: `${path}.sourceHasTag`, message: "sourceHasTag must be a string." });
+  }
+}
+
+function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === "object" && value !== null;
 }

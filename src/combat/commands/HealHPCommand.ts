@@ -30,5 +30,18 @@ export class HealHPCommand implements CombatCommand {
     context.combatLog.add(
       `${context.tick}: ${target.formation.displayName} healed ${healedAmount} HP (${target.hp}/${target.formation.maxHp}).`
     );
+    if (healedAmount > 0) {
+      context.triggerSystem?.fire({
+        hook: "OnHealReceived",
+        tick: context.tick,
+        sourceCard: context.sourceCard,
+        sourceCardDefinition: context.sourceCardDefinition,
+        sourceCombatant: context.sourceCombatant,
+        targetCombatant: context.targetCombatant,
+        healedCombatant: target,
+        healedAmount,
+        triggerDepth: context.triggerDepth
+      });
+    }
   }
 }

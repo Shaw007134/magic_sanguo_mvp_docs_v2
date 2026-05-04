@@ -18,6 +18,28 @@ function createValidActiveCard(overrides: Partial<CardDefinition> = {}): CardDef
   };
 }
 
+function createValidPassiveCard(overrides: Partial<CardDefinition> = {}): CardDefinition {
+  return {
+    id: "venom-leech",
+    name: "Venom Leech",
+    tier: "BRONZE",
+    type: "PASSIVE",
+    size: 1,
+    tags: ["poison"],
+    triggers: [
+      {
+        hook: "OnStatusTicked",
+        conditions: { status: "Poison", appliedByOwner: true },
+        internalCooldownTicks: 60,
+        maxTriggersPerTick: 1,
+        effects: [{ command: "HealHP", amount: 1 }]
+      }
+    ],
+    description: "Reaction test card.",
+    ...overrides
+  };
+}
+
 describe("validateCardDefinition", () => {
   it("allows a valid CardDefinition", () => {
     const result = validateCardDefinition(createValidActiveCard());
@@ -172,6 +194,75 @@ describe("validateCardDefinition", () => {
     expect(result.errors).toContainEqual({
       path: "effects[5].durationTicks",
       message: "ApplyFreeze durationTicks must be a number."
+    });
+  });
+
+  it("validates OnStatusTicked and OnHealReceived reaction triggers", () => {
+    const result = validateCardDefinition(
+      createValidPassiveCard({
+        triggers: [
+          {
+            hook: "OnStatusTicked",
+            conditions: { status: "Burn", appliedByOwner: true, targetHasStatus: "Poison", sourceHasTag: "fire" },
+            internalCooldownTicks: 60,
+            maxTriggersPerTick: 1,
+            effects: [{ command: "DealDamage", amount: 1, damageType: "FIRE" }]
+          },
+          {
+            hook: "OnHealReceived",
+            conditions: { appliedByOwner: true, healedAmountAtLeast: 1, targetHasStatus: "Burn" },
+            internalCooldownTicks: 120,
+            maxTriggersPerTick: 1,
+            effects: [{ command: "GainArmor", amount: 2 }]
+          }
+        ]
+      })
+    );
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects malformed reaction triggers", () => {
+    const result = validateCardDefinition(
+      createValidPassiveCard({
+        triggers: [
+          {
+            hook: "OnStatusTicked",
+            conditions: { status: "Chill" },
+            maxTriggersPerTick: 1,
+            effects: [{ command: "HealHP" }]
+          },
+          {
+            hook: "OnHealReceived",
+            conditions: { healedAmountAtLeast: "some" },
+            internalCooldownTicks: 120,
+            maxTriggersPerTick: 0,
+            effects: [{ command: "GainArmor", amount: 2 }]
+          }
+        ] as CardDefinition["triggers"]
+      })
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual({
+      path: "triggers[0].internalCooldownTicks",
+      message: "OnStatusTicked internalCooldownTicks must be a positive number."
+    });
+    expect(result.errors).toContainEqual({
+      path: "triggers[0].conditions.status",
+      message: "Trigger status must be Burn or Poison."
+    });
+    expect(result.errors).toContainEqual({
+      path: "triggers[0].effects[0].amount",
+      message: "HealHP amount must be a number."
+    });
+    expect(result.errors).toContainEqual({
+      path: "triggers[1].maxTriggersPerTick",
+      message: "maxTriggersPerTick must be a positive number when present."
+    });
+    expect(result.errors).toContainEqual({
+      path: "triggers[1].conditions.healedAmountAtLeast",
+      message: "healedAmountAtLeast must be a number."
     });
   });
 });

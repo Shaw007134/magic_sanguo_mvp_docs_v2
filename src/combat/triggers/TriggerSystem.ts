@@ -7,7 +7,7 @@ import type { PassiveTriggerDefinition, TriggerHook } from "./TriggerDefinition.
 import type { TriggerRuntimeState } from "./TriggerRuntimeState.js";
 import type { ReplayEvent } from "../../model/result.js";
 import type { ResolutionStack } from "../ResolutionStack.js";
-import type { StatusName } from "../status/StatusEffect.js";
+import type { StatusDamageSourceContribution, StatusName } from "../status/StatusEffect.js";
 
 export interface TriggerEvent {
   readonly hook: TriggerHook;
@@ -16,7 +16,11 @@ export interface TriggerEvent {
   readonly sourceCardDefinition?: CardDefinition;
   readonly sourceCombatant?: RuntimeCombatant;
   readonly targetCombatant?: RuntimeCombatant;
+  readonly healedCombatant?: RuntimeCombatant;
   readonly status?: StatusName;
+  readonly hpDamage?: number;
+  readonly healedAmount?: number;
+  readonly statusSourceContributions?: readonly StatusDamageSourceContribution[];
   readonly triggerDepth?: number;
 }
 
@@ -35,6 +39,7 @@ export class TriggerSystem {
   readonly #resolutionStack: ResolutionStack;
   readonly #combatLog: CombatLog;
   readonly #replayEvents: ReplayEvent[];
+  readonly #cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
 
   constructor(input: TriggerSystemInput) {
     this.#triggers = createTriggerRuntimeStates(input.combatants, input.cardInstancesById, input.cardDefinitionsById);
@@ -42,11 +47,12 @@ export class TriggerSystem {
     this.#resolutionStack = input.resolutionStack;
     this.#combatLog = input.combatLog;
     this.#replayEvents = input.replayEvents;
+    this.#cardDefinitionsById = input.cardDefinitionsById;
   }
 
   fire(event: TriggerEvent): void {
     const eligibleTriggers = this.#triggers
-      .filter((triggerState) => canFireTrigger(triggerState, event))
+      .filter((triggerState) => canFireTrigger(triggerState, event, this.#cardDefinitionsById))
       .sort(compareTriggerRuntimeStates);
     const commandsToPush: TriggeredCombatCommand[] = [];
 
@@ -60,9 +66,7 @@ export class TriggerSystem {
 
       triggerState.triggersThisTick += 1;
       triggerState.lastTriggeredTick = event.tick;
-      this.#combatLog.add(
-        `${event.tick}: ${triggerState.sourceCardDefinition.name} triggered ${triggerState.trigger.hook}.`
-      );
+      this.#combatLog.add(`${event.tick}: ${triggerState.sourceCardDefinition.name} triggered ${triggerState.trigger.hook}.`);
       this.#replayEvents.push({
         tick: event.tick,
         type: "TriggerFired",
@@ -183,13 +187,19 @@ function isTriggerHook(hook: unknown): hook is TriggerHook {
     hook === "OnDamageDealt" ||
     hook === "OnDamageTaken" ||
     hook === "OnStatusApplied" ||
+    hook === "OnStatusTicked" ||
     hook === "OnBurnTick" ||
+    hook === "OnHealReceived" ||
     hook === "OnCooldownModified" ||
     hook === "OnCombatEnd"
   );
 }
 
-function canFireTrigger(triggerState: TriggerRuntimeState, event: TriggerEvent): boolean {
+function canFireTrigger(
+  triggerState: TriggerRuntimeState,
+  event: TriggerEvent,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): boolean {
   if (triggerState.trigger.hook !== event.hook) {
     return false;
   }
@@ -202,10 +212,14 @@ function canFireTrigger(triggerState: TriggerRuntimeState, event: TriggerEvent):
     return false;
   }
 
-  return conditionsPass(triggerState, event);
+  return conditionsPass(triggerState, event, cardDefinitionsById);
 }
 
-function conditionsPass(triggerState: TriggerRuntimeState, event: TriggerEvent): boolean {
+function conditionsPass(
+  triggerState: TriggerRuntimeState,
+  event: TriggerEvent,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): boolean {
   const conditions = triggerState.trigger.conditions;
   if (!conditions) {
     return true;
@@ -220,7 +234,12 @@ function conditionsPass(triggerState: TriggerRuntimeState, event: TriggerEvent):
       return false;
     }
 
-    const appliedByOwner = event.sourceCombatant?.formation.id === triggerState.ownerCombatant.formation.id;
+    const appliedByOwner =
+      event.hook === "OnStatusTicked"
+        ? (event.statusSourceContributions ?? []).some(
+            (contribution) => contribution.sourceCombatantId === triggerState.ownerCombatant.formation.id
+          )
+        : event.sourceCombatant?.formation.id === triggerState.ownerCombatant.formation.id;
     if (conditions.appliedByOwner !== appliedByOwner) {
       return false;
     }
@@ -228,7 +247,7 @@ function conditionsPass(triggerState: TriggerRuntimeState, event: TriggerEvent):
 
   if (
     conditions.sourceHasTag !== undefined &&
-    !event.sourceCardDefinition?.tags.includes(conditions.sourceHasTag)
+    !eventSourceHasTag(event, conditions.sourceHasTag, cardDefinitionsById)
   ) {
     return false;
   }
@@ -241,6 +260,27 @@ function conditionsPass(triggerState: TriggerRuntimeState, event: TriggerEvent):
     if (conditions.cardIsAdjacent !== adjacent) {
       return false;
     }
+  }
+
+  if (
+    conditions.targetHasStatus !== undefined &&
+    (!event.targetCombatant || !combatantHasStatus(event.targetCombatant, conditions.targetHasStatus))
+  ) {
+    return false;
+  }
+
+  if (
+    conditions.ownerHasStatus !== undefined &&
+    !combatantHasStatus(triggerState.ownerCombatant, conditions.ownerHasStatus)
+  ) {
+    return false;
+  }
+
+  if (
+    conditions.healedAmountAtLeast !== undefined &&
+    (event.healedAmount ?? 0) < conditions.healedAmountAtLeast
+  ) {
+    return false;
   }
 
   if (
@@ -258,6 +298,25 @@ function conditionsPass(triggerState: TriggerRuntimeState, event: TriggerEvent):
   }
 
   return true;
+}
+
+function eventSourceHasTag(
+  event: TriggerEvent,
+  tag: string,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): boolean {
+  if (event.sourceCardDefinition?.tags.includes(tag)) {
+    return true;
+  }
+  return (event.statusSourceContributions ?? []).some((contribution) => {
+    const definitionId = contribution.sourceCardDefinitionId;
+    return definitionId !== undefined && cardDefinitionsById.get(definitionId)?.tags.includes(tag);
+  });
+}
+
+function combatantHasStatus(combatant: RuntimeCombatant, status: StatusName): boolean {
+  const kind = status === "Poison" ? "POISON" : "BURN";
+  return combatant.statuses.some((candidate) => candidate.kind === kind);
 }
 
 function isHpBelowPercent(combatant: RuntimeCombatant, percent: number): boolean {

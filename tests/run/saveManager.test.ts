@@ -182,6 +182,16 @@ describe("SaveManager", () => {
               expiresAtTick: 243,
               targetCardInstanceId: "run-card-5"
             }
+          },
+          {
+            tick: 64,
+            type: "TriggerFired",
+            sourceId: "run-card-6",
+            targetId: "enemy",
+            payload: {
+              hook: "OnStatusTicked",
+              triggerId: "run-card-6:0"
+            }
           }
         ]
       },
@@ -202,6 +212,7 @@ describe("SaveManager", () => {
     expect(save.ok).toBe(true);
     expect(save.ok ? save.value : "").not.toContain('"statuses"');
     expect(save.ok ? save.value : "").not.toContain('"controlStatuses"');
+    expect(save.ok ? save.value : "").not.toContain('"triggersThisTick"');
     const loaded = deserializeRunState(save.ok ? save.value : "");
 
     expect(loaded.ok).toBe(true);

@@ -34,7 +34,8 @@ function formatTrigger(trigger: TriggerDefinition): string {
   const effects = Array.isArray(trigger["effects"])
     ? trigger["effects"].map(formatEffect).join(" + ")
     : "Effect";
-  return `${hook}: ${effects}.`;
+  const limit = formatTriggerLimit(trigger);
+  return `${hook}: ${effects}${limit ? `. ${limit}` : ""}.`;
 }
 
 function formatTriggerHook(trigger: TriggerDefinition): string {
@@ -52,6 +53,24 @@ function formatTriggerHook(trigger: TriggerDefinition): string {
   if (hook === "OnStatusApplied" && conditions["status"] === "Poison") {
     return "When Poison is applied";
   }
+  if (hook === "OnStatusTicked" && conditions["status"] === "Burn" && conditions["appliedByOwner"] === true) {
+    return "When your Burn deals damage";
+  }
+  if (hook === "OnStatusTicked" && conditions["status"] === "Burn") {
+    return "When Burn deals damage";
+  }
+  if (hook === "OnStatusTicked" && conditions["status"] === "Poison" && conditions["appliedByOwner"] === true) {
+    return "When your Poison deals damage";
+  }
+  if (hook === "OnStatusTicked" && conditions["status"] === "Poison") {
+    return "When Poison deals damage";
+  }
+  if (hook === "OnHealReceived" && conditions["appliedByOwner"] === true) {
+    return "When you heal";
+  }
+  if (hook === "OnHealReceived") {
+    return "When healing happens";
+  }
   switch (hook) {
     case "OnCardActivated":
       return "When a card activates";
@@ -61,6 +80,10 @@ function formatTriggerHook(trigger: TriggerDefinition): string {
       return "When damage is taken";
     case "OnBurnTick":
       return "When Burn deals damage";
+    case "OnStatusTicked":
+      return "When status damage happens";
+    case "OnHealReceived":
+      return "When healing happens";
     case "OnCooldownModified":
       return "When cooldown changes";
     case "OnCombatStart":
@@ -72,6 +95,15 @@ function formatTriggerHook(trigger: TriggerDefinition): string {
     default:
       return "When triggered";
   }
+}
+
+function formatTriggerLimit(trigger: TriggerDefinition): string | undefined {
+  if (trigger["hook"] !== "OnStatusTicked" && trigger["hook"] !== "OnHealReceived") {
+    return undefined;
+  }
+  return typeof trigger["internalCooldownTicks"] === "number"
+    ? `Limited to every ${formatTickDuration(trigger["internalCooldownTicks"])}`
+    : undefined;
 }
 
 function formatEffect(effect: EffectDefinition): string {
@@ -122,13 +154,13 @@ function formatControlTarget(value: unknown): string {
     case "SELF":
       return "this card";
     case "ADJACENT_ALLY":
-      return "adjacent allies";
+      return "adjacent active allies";
     case "OWNER_ALL_CARDS":
-      return "all your cards";
+      return "all your active cards";
     case "OPPOSITE_ENEMY_CARD":
-      return "the opposite enemy card";
+      return "the opposite enemy active card";
     case "ENEMY_LEFTMOST_ACTIVE":
-      return "the leftmost enemy card";
+      return "the leftmost enemy active card";
     default:
       return "cards";
   }

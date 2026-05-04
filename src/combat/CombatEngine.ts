@@ -175,7 +175,8 @@ export class CombatEngine {
         combatLog,
         replayEvents,
         triggerSystem,
-        modifierSystem
+        modifierSystem,
+        cardDefinitionsById: input.cardDefinitionsById
       });
 
       const statusStackResult = resolveStack({

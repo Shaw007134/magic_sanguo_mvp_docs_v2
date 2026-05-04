@@ -99,24 +99,25 @@ function resolveTargets(
   kind: CardControlStatusKind,
   context: CombatExecutionContext
 ): MutableCardRuntimeState[] {
-  const sourceCard = context.sourceCard
+  const activeSourceCard = context.sourceCard
     ? context.sourceCombatant.cards.find((card) => card.instanceId === context.sourceCard?.instanceId)
     : undefined;
+  const sourceAnchor = activeSourceCard ?? context.sourceCard;
   switch (target) {
     case "SELF":
-      return sourceCard && kind !== "FREEZE" ? [sourceCard] : [];
+      return activeSourceCard && kind !== "FREEZE" ? [activeSourceCard] : [];
     case "ADJACENT_ALLY":
-      if (!sourceCard || kind !== "HASTE") return [];
+      if (!sourceAnchor || kind !== "HASTE") return [];
       return context.sourceCombatant.cards
-        .filter((card) => card.instanceId !== sourceCard.instanceId)
-        .filter((card) => Math.abs(card.slotIndex - sourceCard.slotIndex) === 1)
+        .filter((card) => card.instanceId !== sourceAnchor.instanceId)
+        .filter((card) => Math.abs(card.slotIndex - sourceAnchor.slotIndex) === 1)
         .sort(compareCards);
     case "OWNER_ALL_CARDS":
       return kind === "HASTE" ? [...context.sourceCombatant.cards].sort(compareCards) : [];
     case "OPPOSITE_ENEMY_CARD":
-      if (!sourceCard) return [];
+      if (!sourceAnchor) return [];
       return context.targetCombatant.cards
-        .filter((card) => card.slotIndex === sourceCard.slotIndex)
+        .filter((card) => card.slotIndex === sourceAnchor.slotIndex)
         .sort(compareCards)
         .slice(0, 1);
     case "ENEMY_LEFTMOST_ACTIVE":

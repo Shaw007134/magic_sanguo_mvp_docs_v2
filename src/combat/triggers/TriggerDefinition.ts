@@ -6,7 +6,9 @@ export type TriggerHook =
   | "OnDamageDealt"
   | "OnDamageTaken"
   | "OnStatusApplied"
+  | "OnStatusTicked"
   | "OnBurnTick"
+  | "OnHealReceived"
   | "OnCooldownModified"
   | "OnCombatEnd";
 
@@ -15,6 +17,9 @@ export interface TriggerConditionDefinition {
   readonly appliedByOwner?: boolean;
   readonly sourceHasTag?: string;
   readonly cardIsAdjacent?: boolean;
+  readonly targetHasStatus?: "Burn" | "Poison";
+  readonly ownerHasStatus?: "Burn" | "Poison";
+  readonly healedAmountAtLeast?: number;
   readonly ownerHpBelowPercent?: number;
   readonly targetHpBelowPercent?: number;
 }

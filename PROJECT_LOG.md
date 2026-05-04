@@ -1244,3 +1244,56 @@ Known issues:
 - Control application summary counts applications by source card but does not yet report uptime or prevented activations.
 Next recommended task:
 - Phase 14D: status reaction/combo support, keeping Phase 14A-C attribution and DOT safety rules intact.
+
+---
+
+Date: 2026-05-04
+Phase: 14D
+Task: Implemented status reaction/combo support.
+Files changed:
+- data/cards/general/control.json
+- data/cards/general/reactions.json
+- src/combat/CombatEngine.ts
+- src/combat/commands/ApplyControlStatusCommand.ts
+- src/combat/commands/HealHPCommand.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/combat/triggers/TriggerDefinition.ts
+- src/combat/triggers/TriggerSystem.ts
+- src/content/cards/activeCards.ts
+- src/content/cards/contentPools.ts
+- src/ui/presentation/cardDisplay.ts
+- src/validation/cardValidation.ts
+- tests/combat/statusReactions.test.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/run/saveManager.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/validation/cardValidation.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- OnStatusTicked fires for Burn and Poison DOT damage.
+- OnHealReceived fires only when HealHP actually restores HP and does not fire for zero healing.
+- Poison ticks can trigger HealHP reactions through ResolutionStack.
+- Burn ticking on a Poisoned enemy can trigger bonus Fire damage.
+- Heal received can trigger GainArmor.
+- internalCooldownTicks and maxTriggersPerTick prevent reaction spam.
+- triggerDepth and ResolutionStack safety still bound recursive OnHealReceived loops.
+- Reaction-created status commands do not create same-tick DOT loops.
+- Passive control reactions target active runtime cards only and never passive cards.
+- Passive SELF Haste/Slow resolves to no target, while adjacent/opposite passive-slot anchoring works for active targets.
+- Haste, Slow, and Freeze reactions do not affect Burn or Poison tick intervals.
+- Same combat input produces identical reaction replay and summary.
+- Save/load preserves reaction replay/result data without persisting combat-only reaction runtime state into RunState.
+- Phase 14D content registry, validation, card display, and readable reaction summaries are covered.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Reaction summaries count TriggerFired by card through existing summary data; they do not break down reaction uptime or prevented activations.
+- Control-status payoff conditions such as "enemy card is Frozen" are deferred.
+- OnBurnTick remains as legacy Burn-only trigger support; new reaction content uses OnStatusTicked.
+- No Burn decay, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, lifesteal keyword, overheal, absorb layer, or new resource was added.
+Next recommended task:
+- Phase 14E: Burn decay identity polish, preserving Phase 14A-D status attribution, reaction safety, and DOT clock readability.

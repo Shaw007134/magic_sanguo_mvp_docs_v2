@@ -1,0 +1,110 @@
+[
+  {
+    "id": "venom-leech",
+    "name": "Venom Leech",
+    "tier": "BRONZE",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["poison", "heal", "reaction"],
+    "triggers": [
+      {
+        "hook": "OnStatusTicked",
+        "conditions": { "status": "Poison", "appliedByOwner": true },
+        "internalCooldownTicks": 60,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "HealHP", "amount": 1 }]
+      }
+    ],
+    "description": "When your Poison deals damage, heal 1 HP once per second."
+  },
+  {
+    "id": "toxic-flame-seal",
+    "name": "Toxic Flame Seal",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["fire", "poison", "reaction"],
+    "triggers": [
+      {
+        "hook": "OnStatusTicked",
+        "conditions": { "status": "Burn", "appliedByOwner": true, "targetHasStatus": "Poison" },
+        "internalCooldownTicks": 60,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "DealDamage", "amount": 1, "damageType": "FIRE" }]
+      }
+    ],
+    "description": "When your Burn damages a Poisoned enemy, deal 1 Fire damage once per second."
+  },
+  {
+    "id": "fever-drum",
+    "name": "Fever Drum",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["burn", "haste", "drum", "reaction"],
+    "triggers": [
+      {
+        "hook": "OnStatusTicked",
+        "conditions": { "status": "Burn", "appliedByOwner": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ApplyHaste", "target": "ADJACENT_ALLY", "percent": 15, "durationTicks": 60 }]
+      }
+    ],
+    "description": "When your Burn deals damage, Haste adjacent active allies by 15% for 1 second."
+  },
+  {
+    "id": "field-triage",
+    "name": "Field Triage",
+    "tier": "BRONZE",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["heal", "armor", "reaction"],
+    "triggers": [
+      {
+        "hook": "OnHealReceived",
+        "conditions": { "appliedByOwner": true, "healedAmountAtLeast": 1 },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "GainArmor", "amount": 2 }]
+      }
+    ],
+    "description": "When you heal, gain 2 Armor once every 2 seconds."
+  },
+  {
+    "id": "poisoned-net",
+    "name": "Poisoned Net",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["poison", "slow", "control", "reaction"],
+    "triggers": [
+      {
+        "hook": "OnStatusTicked",
+        "conditions": { "status": "Poison", "appliedByOwner": true },
+        "internalCooldownTicks": 180,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 15, "durationTicks": 60 }]
+      }
+    ],
+    "description": "When your Poison deals damage, Slow the leftmost enemy active card by 15% for 1 second."
+  },
+  {
+    "id": "burning-remedy",
+    "name": "Burning Remedy",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["heal", "poison", "burn", "reaction"],
+    "triggers": [
+      {
+        "hook": "OnHealReceived",
+        "conditions": { "appliedByOwner": true, "targetHasStatus": "Burn", "healedAmountAtLeast": 1 },
+        "internalCooldownTicks": 180,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ApplyPoison", "amount": 1 }]
+      }
+    ],
+    "description": "When you heal while the enemy is Burning, apply 1 Poison once every 3 seconds."
+  }
+]

@@ -20,7 +20,8 @@ export type ArchetypeName =
   | "Crit Execution"
   | "Poison Inevitable"
   | "Medic Support"
-  | "Control Tempo";
+  | "Control Tempo"
+  | "Status Reaction";
 
 export interface CardPoolMetadata {
   readonly role: CardRole;
@@ -98,7 +99,13 @@ export const CARD_POOL_METADATA = {
   "frost-chain": { role: "payoff", archetypes: ["Control Tempo"], stage: "mid", quality: 3 },
   "cold-spear": { role: "starter", archetypes: ["Control Tempo", "Hybrid Bruiser"], stage: "mid", quality: 3 },
   "rally-drummer": { role: "engine", archetypes: ["Control Tempo", "Drum Command"], stage: "mid", quality: 3 },
-  "heavy-net": { role: "connector", archetypes: ["Control Tempo"], stage: "mid", quality: 3 }
+  "heavy-net": { role: "connector", archetypes: ["Control Tempo"], stage: "mid", quality: 3 },
+  "venom-leech": { role: "connector", archetypes: ["Poison Inevitable", "Medic Support", "Status Reaction"], stage: "early", quality: 2 },
+  "field-triage": { role: "defense", archetypes: ["Medic Support", "Armor Counter", "Status Reaction"], stage: "early", quality: 2 },
+  "toxic-flame-seal": { role: "payoff", archetypes: ["Burn Engine", "Poison Inevitable", "Status Reaction"], stage: "mid", quality: 3 },
+  "fever-drum": { role: "engine", archetypes: ["Burn Engine", "Drum Command", "Status Reaction"], stage: "mid", quality: 3 },
+  "poisoned-net": { role: "connector", archetypes: ["Poison Inevitable", "Control Tempo", "Status Reaction"], stage: "mid", quality: 3 },
+  "burning-remedy": { role: "payoff", archetypes: ["Medic Support", "Burn Engine", "Poison Inevitable", "Status Reaction"], stage: "mid", quality: 3 }
 } as const satisfies Record<string, CardPoolMetadata>;
 
 export const STARTER_SHOP_POOL = ["rusty-blade", "wooden-shield", "oil-flask"] as const;
@@ -119,7 +126,9 @@ export const EARLY_SHOP_POOL = [
   "field-medic",
   "toxic-lance",
   "war-chant",
-  "mud-trap"
+  "mud-trap",
+  "venom-leech",
+  "field-triage"
 ] as const;
 export const MID_SHOP_POOL = [
   ...EARLY_SHOP_POOL,
@@ -144,7 +153,11 @@ export const MID_SHOP_POOL = [
   "frost-chain",
   "cold-spear",
   "rally-drummer",
-  "heavy-net"
+  "heavy-net",
+  "toxic-flame-seal",
+  "fever-drum",
+  "poisoned-net",
+  "burning-remedy"
 ] as const;
 export const LATE_SHOP_POOL = [
   ...MID_SHOP_POOL,
@@ -193,7 +206,9 @@ export const BUILD_VITAL_SUPPORT_POOL = [
   "field-medic",
   "venom-jar",
   "war-chant",
-  "mud-trap"
+  "mud-trap",
+  "venom-leech",
+  "field-triage"
 ] as const;
 
 export const BOSS_REWARD_POOL = [
@@ -228,7 +243,8 @@ export const ARCHETYPE_POOLS = {
   "Crit Execution": ["execution-halberd", "captains-finisher", "duelists-dao", "vanguard-saber", "discipline-drill"],
   "Poison Inevitable": ["poison-needle", "toxic-lance", "venom-jar", "rotting-wine", "field-medic"],
   "Medic Support": ["field-medic", "herbal-poultice", "wooden-shield", "frontline-banner", "iron-guard"],
-  "Control Tempo": ["war-chant", "mud-trap", "command-banner", "frost-chain", "cold-spear", "rally-drummer", "heavy-net"]
+  "Control Tempo": ["war-chant", "mud-trap", "command-banner", "frost-chain", "cold-spear", "rally-drummer", "heavy-net", "poisoned-net"],
+  "Status Reaction": ["venom-leech", "toxic-flame-seal", "fever-drum", "field-triage", "poisoned-net", "burning-remedy"]
 } as const satisfies Record<ArchetypeName, readonly string[]>;
 
 export const IRON_WARLORD_TERMINALS = [
