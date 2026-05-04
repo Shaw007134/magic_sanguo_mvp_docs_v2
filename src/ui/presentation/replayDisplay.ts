@@ -21,6 +21,8 @@ export function formatReplayEvent(event: ReplayEvent, context: ReplayDisplayCont
       return `${time}: ${sourceName} dealt ${getNumber(payload, "hpDamage", "amount")} damage${payload["critical"] === true ? " with a critical hit" : ""}.`;
     case "ArmorGained":
       return `${time}: ${sourceName} gained ${getNumber(payload, "amount")} Armor.`;
+    case "HpHealed":
+      return `${time}: ${sourceName} healed ${getNumber(payload, "amount")} HP.`;
     case "ArmorBlocked":
       return `${time}: Armor blocked ${getNumber(payload, "amount")} damage.`;
     case "StatusApplied":
@@ -43,7 +45,7 @@ export function formatReplayEvent(event: ReplayEvent, context: ReplayDisplayCont
 function getSourceName(event: ReplayEvent, context: ReplayDisplayContext): string {
   if (!event.sourceId) {
     const command = event.payload?.["command"];
-    return command === "BurnTick" ? "Burn" : "Effect";
+    return command === "BurnTick" ? "Burn" : command === "PoisonTick" ? "Poison" : "Effect";
   }
   const instance = context.cardInstancesById.get(event.sourceId);
   const definition = instance ? context.cardDefinitionsById.get(instance.definitionId) : undefined;

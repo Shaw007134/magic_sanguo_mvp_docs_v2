@@ -4,7 +4,8 @@ import type { CombatLog } from "../CombatLog.js";
 import type { RuntimeCombatant } from "../types.js";
 import type { TriggerSystem } from "../triggers/TriggerSystem.js";
 import type { ModifierSystem } from "../modifiers/ModifierSystem.js";
-import type { StatusDamageSourceContribution, StatusSourceContribution } from "./StatusEffect.js";
+import type { DamageType } from "../DamageCalculator.js";
+import type { StatusDamageSourceContribution, StatusEffect, StatusName, StatusSourceContribution } from "./StatusEffect.js";
 
 export interface StatusEffectSystemInput {
   readonly tick: number;
@@ -20,50 +21,11 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
     const remainingStatuses = [];
 
     for (const status of combatant.statuses) {
-      if (status.kind === "BURN" && input.tick >= status.nextTickAt && input.tick <= status.expiresAtTick) {
-        const statusSourceContributions = allocateStatusDamageBySource(
-          status.sourceContributions ?? [],
-          status.amount,
-          Math.min(combatant.hp, status.amount)
-        );
-        // MVP rule: Burn is Fire DOT and ignores Armor so DOT keeps a clear tactical role.
-        // Burn attribution is reported for replay/summary only; source-owned damage modifiers still do not modify Burn ticks.
-        applyDamage({
-          tick: input.tick,
-          sourceName: "Burn",
-          target: combatant,
-          amount: status.amount,
-          damageType: "FIRE",
-          combatants: input.combatants,
-          modifierSystem: input.modifierSystem,
-          ignoresArmor: true,
-          command: "BurnTick",
-          statusSourceContributions,
-          combatLog: input.combatLog,
-          replayEvents: input.replayEvents
-        });
-        input.replayEvents.push({
-          tick: input.tick,
-          type: "StatusTicked",
-          targetId: combatant.formation.id,
-          payload: {
-            status: "Burn",
-            amount: status.amount,
-            sourceContributions: statusSourceContributions,
-            expiresAtTick: status.expiresAtTick
-          }
-        });
-        input.triggerSystem?.fire({
-          hook: "OnBurnTick",
-          tick: input.tick,
-          targetCombatant: combatant,
-          status: "Burn",
-          triggerDepth: 0
-        });
-        status.nextTickAt += status.tickIntervalTicks;
+      if (isTickReady(status, input.tick)) {
+        tickStatus(status, combatant, input);
       }
 
-      if (input.tick < status.expiresAtTick) {
+      if (status.expiresAtTick === undefined || input.tick < status.expiresAtTick) {
         remainingStatuses.push(status);
       } else {
         input.replayEvents.push({
@@ -79,6 +41,64 @@ export function updateStatusEffects(input: StatusEffectSystemInput): void {
 
     combatant.statuses = remainingStatuses;
   }
+}
+
+function isTickReady(status: StatusEffect, tick: number): boolean {
+  return tick >= status.nextTickAt && (status.expiresAtTick === undefined || tick <= status.expiresAtTick);
+}
+
+function tickStatus(status: StatusEffect, combatant: RuntimeCombatant, input: StatusEffectSystemInput): void {
+  const statusName = getStatusName(status);
+  const statusSourceContributions = allocateStatusDamageBySource(
+    status.sourceContributions ?? [],
+    status.amount,
+    Math.min(combatant.hp, status.amount)
+  );
+  // MVP rule: DOT statuses ignore Armor so they can pressure defensive/Armor-heavy enemies.
+  // Attribution is reported for replay/summary only; source-owned damage modifiers still do not modify DOT ticks.
+  applyDamage({
+    tick: input.tick,
+    sourceName: statusName,
+    target: combatant,
+    amount: status.amount,
+    damageType: getStatusDamageType(status),
+    combatants: input.combatants,
+    modifierSystem: input.modifierSystem,
+    ignoresArmor: true,
+    command: `${statusName}Tick`,
+    statusSourceContributions,
+    combatLog: input.combatLog,
+    replayEvents: input.replayEvents
+  });
+  input.replayEvents.push({
+    tick: input.tick,
+    type: "StatusTicked",
+    targetId: combatant.formation.id,
+    payload: {
+      status: statusName,
+      amount: status.amount,
+      sourceContributions: statusSourceContributions,
+      ...(status.expiresAtTick !== undefined ? { expiresAtTick: status.expiresAtTick } : {})
+    }
+  });
+  if (status.kind === "BURN") {
+    input.triggerSystem?.fire({
+      hook: "OnBurnTick",
+      tick: input.tick,
+      targetCombatant: combatant,
+      status: "Burn",
+      triggerDepth: 0
+    });
+  }
+  status.nextTickAt += status.tickIntervalTicks;
+}
+
+function getStatusName(status: StatusEffect): StatusName {
+  return status.kind === "POISON" ? "Poison" : "Burn";
+}
+
+function getStatusDamageType(status: StatusEffect): DamageType {
+  return status.kind === "POISON" ? "POISON" : "FIRE";
 }
 
 function allocateStatusDamageBySource(

@@ -60,6 +60,7 @@ function fakeCombatResult(winner: CombatResult["winner"], playerFinalHp = 12): C
       statusDamage: {},
       statusDamageByCard: {},
       armorGainedByCard: {},
+      healingByCard: {},
       armorBlocked: 0,
       activationsByCard: {},
       triggerCountByCard: {},

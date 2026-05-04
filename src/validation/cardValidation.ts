@@ -41,11 +41,17 @@ function validateEffect(
   errors: ValidationIssue[]
 ): void {
   if (effect["command"] === "DealDamage") {
-    if (effect["damageType"] !== undefined && !["DIRECT", "PHYSICAL", "FIRE"].includes(String(effect["damageType"]))) {
-      errors.push({ path: `${path}.damageType`, message: "DealDamage damageType must be DIRECT, PHYSICAL, or FIRE." });
+    if (effect["damageType"] !== undefined && !["DIRECT", "PHYSICAL", "FIRE", "POISON"].includes(String(effect["damageType"]))) {
+      errors.push({ path: `${path}.damageType`, message: "DealDamage damageType must be DIRECT, PHYSICAL, FIRE, or POISON." });
     }
     if (effect["ignoresArmor"] !== undefined && typeof effect["ignoresArmor"] !== "boolean") {
       errors.push({ path: `${path}.ignoresArmor`, message: "DealDamage ignoresArmor must be a boolean when present." });
     }
+  }
+  if ((effect["command"] === "ApplyPoison" || effect["command"] === "HealHP") && typeof effect["amount"] !== "number") {
+    errors.push({ path: `${path}.amount`, message: `${String(effect["command"])} amount must be a number.` });
+  }
+  if (effect["command"] === "ApplyPoison" && effect["durationTicks"] !== undefined && typeof effect["durationTicks"] !== "number") {
+    errors.push({ path: `${path}.durationTicks`, message: "ApplyPoison durationTicks must be a number when present." });
   }
 }

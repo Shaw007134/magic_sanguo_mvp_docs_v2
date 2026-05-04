@@ -84,16 +84,17 @@ function conditionPasses(condition: ModifierCondition, ownerId: string, context:
     return false;
   }
 
-  if (
-    condition.targetHasStatus !== undefined &&
-    !context.targetCombatant?.statuses.some((status) => status.kind === "BURN")
-  ) {
-    return false;
+  const targetStatus = condition.targetHasStatus;
+  if (targetStatus !== undefined) {
+    if (!context.targetCombatant?.statuses.some((status) => status.kind === getStatusKind(targetStatus))) {
+      return false;
+    }
   }
 
-  if (condition.ownerHasStatus !== undefined) {
+  const ownerStatus = condition.ownerHasStatus;
+  if (ownerStatus !== undefined) {
     const owner = context.combatants.find((combatant) => combatant.formation.id === ownerId);
-    if (!owner?.statuses.some((status) => status.kind === "BURN")) {
+    if (!owner?.statuses.some((status) => status.kind === getStatusKind(ownerStatus))) {
       return false;
     }
   }
@@ -107,4 +108,8 @@ function conditionPasses(condition: ModifierCondition, ownerId: string, context:
   }
 
   return true;
+}
+
+function getStatusKind(status: "Burn" | "Poison") {
+  return status === "Poison" ? "POISON" : "BURN";
 }

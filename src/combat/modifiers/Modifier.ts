@@ -1,4 +1,5 @@
 import type { DamageType } from "../DamageCalculator.js";
+import type { StatusName } from "../status/StatusEffect.js";
 import type { ModifierHook } from "./ModifierHooks.js";
 
 export type ModifierOperationType =
@@ -11,8 +12,8 @@ export type ModifierOperationType =
 
 export interface ModifierCondition {
   readonly sourceHasTag?: string;
-  readonly targetHasStatus?: "Burn";
-  readonly ownerHasStatus?: "Burn";
+  readonly targetHasStatus?: StatusName;
+  readonly ownerHasStatus?: StatusName;
   readonly damageType?: DamageType;
   readonly cardInSlot?: number;
   readonly always?: boolean;

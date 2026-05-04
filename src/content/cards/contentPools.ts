@@ -17,7 +17,9 @@ export type ArchetypeName =
   | "Siege Fire"
   | "Hybrid Bruiser"
   | "Armor Terminal"
-  | "Crit Execution";
+  | "Crit Execution"
+  | "Poison Inevitable"
+  | "Medic Support";
 
 export interface CardPoolMetadata {
   readonly role: CardRole;
@@ -81,7 +83,14 @@ export const CARD_POOL_METADATA = {
   "flame-ram": { role: "terminal", archetypes: ["Siege Fire"], stage: "late", quality: 5 },
   "burning-trebuchet": { role: "terminal", archetypes: ["Siege Fire"], stage: "boss", quality: 6 },
   "fire-cart-battery": { role: "engine", archetypes: ["Siege Fire", "Burn Engine"], stage: "late", quality: 5 },
-  "siege-command": { role: "connector", archetypes: ["Siege Fire", "Drum Command"], stage: "late", quality: 5 }
+  "siege-command": { role: "connector", archetypes: ["Siege Fire", "Drum Command"], stage: "late", quality: 5 },
+
+  "poison-needle": { role: "starter", archetypes: ["Poison Inevitable"], stage: "early", quality: 2, buildVital: true },
+  "field-medic": { role: "defense", archetypes: ["Medic Support", "Hybrid Bruiser"], stage: "early", quality: 2, buildVital: true },
+  "toxic-lance": { role: "starter", archetypes: ["Poison Inevitable", "Hybrid Bruiser"], stage: "early", quality: 3 },
+  "venom-jar": { role: "engine", archetypes: ["Poison Inevitable"], stage: "mid", quality: 3, buildVital: true },
+  "herbal-poultice": { role: "defense", archetypes: ["Medic Support", "Armor Counter"], stage: "mid", quality: 3 },
+  "rotting-wine": { role: "payoff", archetypes: ["Poison Inevitable"], stage: "late", quality: 4 }
 } as const satisfies Record<string, CardPoolMetadata>;
 
 export const STARTER_SHOP_POOL = ["rusty-blade", "wooden-shield", "oil-flask"] as const;
@@ -97,7 +106,10 @@ export const EARLY_SHOP_POOL = [
   "guarded-torch",
   "vanguard-saber",
   "frontline-banner",
-  "kindling-spear"
+  "kindling-spear",
+  "poison-needle",
+  "field-medic",
+  "toxic-lance"
 ] as const;
 export const MID_SHOP_POOL = [
   ...EARLY_SHOP_POOL,
@@ -115,7 +127,9 @@ export const MID_SHOP_POOL = [
   "battle-standard",
   "guard-captain",
   "siege-brazier",
-  "siege-crossbow"
+  "siege-crossbow",
+  "venom-jar",
+  "herbal-poultice"
 ] as const;
 export const LATE_SHOP_POOL = [
   ...MID_SHOP_POOL,
@@ -130,7 +144,8 @@ export const LATE_SHOP_POOL = [
   "flame-ram",
   "burning-trebuchet",
   "fire-cart-battery",
-  "siege-command"
+  "siege-command",
+  "rotting-wine"
 ] as const;
 
 export const EARLY_REWARD_POOL = EARLY_SHOP_POOL;
@@ -158,7 +173,10 @@ export const BUILD_VITAL_SUPPORT_POOL = [
   "veteran-plate",
   "fire-arrow-cart",
   "war-drum",
-  "battle-standard"
+  "battle-standard",
+  "poison-needle",
+  "field-medic",
+  "venom-jar"
 ] as const;
 
 export const BOSS_REWARD_POOL = [
@@ -190,7 +208,9 @@ export const ARCHETYPE_POOLS = {
   "Siege Fire": ["siege-crossbow", "fire-arrow-cart", "war-drum", "flame-ram", "burning-trebuchet", "fire-cart-battery", "siege-command"],
   "Hybrid Bruiser": ["militia-spear", "guarded-torch", "spear-and-shield-line", "frontline-banner", "guard-captain", "burning-shield", "warlords-mandate"],
   "Armor Terminal": ["iron-guard", "shield-wall", "veteran-plate", "battle-standard", "frontline-bulwark", "iron-bastion-strike"],
-  "Crit Execution": ["execution-halberd", "captains-finisher", "duelists-dao", "vanguard-saber", "discipline-drill"]
+  "Crit Execution": ["execution-halberd", "captains-finisher", "duelists-dao", "vanguard-saber", "discipline-drill"],
+  "Poison Inevitable": ["poison-needle", "toxic-lance", "venom-jar", "rotting-wine", "field-medic"],
+  "Medic Support": ["field-medic", "herbal-poultice", "wooden-shield", "frontline-banner", "iron-guard"]
 } as const satisfies Record<ArchetypeName, readonly string[]>;
 
 export const IRON_WARLORD_TERMINALS = [

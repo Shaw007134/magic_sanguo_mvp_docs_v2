@@ -21,6 +21,7 @@ describe("ResultSummary", () => {
       statusDamage: { Burn: 4 },
       statusDamageByCard: { Burn: { "run-card-2": 3 } },
       armorGainedByCard: {},
+      healingByCard: { "run-card-3": 2 },
       armorBlocked: 0,
       activationsByCard: { "run-card-1": 2 },
       triggerCountByCard: {},
@@ -40,6 +41,7 @@ describe("ResultSummary", () => {
         cardInstancesById={new Map([
           ["run-card-1", { instanceId: "run-card-1", definitionId: "rusty-blade" }],
           ["run-card-2", { instanceId: "run-card-2", definitionId: "flame-spear" }],
+          ["run-card-3", { instanceId: "run-card-3", definitionId: "wooden-shield" }],
           ["training-dummy:training-staff:1", { instanceId: "training-dummy:training-staff:1", definitionId: "training-staff" }]
         ])}
         cardDefinitionsById={cardDefinitionsById}
@@ -51,6 +53,7 @@ describe("ResultSummary", () => {
     expect(html).toContain("Burn");
     expect(html).toContain("Burn damage by card");
     expect(html).toContain("Flame Spear");
+    expect(html).toContain("Healing");
     expect(html).not.toContain("run-card-1");
     expect(html).not.toContain("training-dummy:training-staff:1");
     expect(html).not.toContain("Training Staff</span><strong>0</strong>");

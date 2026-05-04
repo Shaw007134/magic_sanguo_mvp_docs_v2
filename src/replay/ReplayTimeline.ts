@@ -5,6 +5,7 @@ const PLAYER_FACING_EVENT_TYPES = new Set<ReplayEvent["type"]>([
   "CardActivated",
   "DamageDealt",
   "ArmorGained",
+  "HpHealed",
   "ArmorBlocked",
   "StatusApplied",
   "StatusTicked",

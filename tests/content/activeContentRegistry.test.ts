@@ -6,6 +6,7 @@ import classSiegeFireJson from "../../data/cards/class_iron_warlord/siege_fire.j
 import generalBasicKitJson from "../../data/cards/general/basic_kit.json" with { type: "json" };
 import generalBladeArmorJson from "../../data/cards/general/blade_armor.json" with { type: "json" };
 import generalFireSupportJson from "../../data/cards/general/fire_support.json" with { type: "json" };
+import generalPoisonHealJson from "../../data/cards/general/poison_heal.json" with { type: "json" };
 import monsterCardsJson from "../../data/cards/monster_cards.json" with { type: "json" };
 import mvpSkillsJson from "../../data/skills/mvp_skills.json" with { type: "json" };
 import { CombatEngine } from "../../src/combat/CombatEngine.js";
@@ -51,7 +52,12 @@ import { getCardDisplayInfo } from "../../src/ui/presentation/cardDisplay.js";
 import { validateCardDefinition } from "../../src/validation/cardValidation.js";
 import { validateFormationSnapshot } from "../../src/validation/formationValidation.js";
 
-const generalJsonCards = [...generalBasicKitJson, ...generalBladeArmorJson, ...generalFireSupportJson] as readonly CardDefinition[];
+const generalJsonCards = [
+  ...generalBasicKitJson,
+  ...generalBladeArmorJson,
+  ...generalFireSupportJson,
+  ...generalPoisonHealJson
+] as readonly CardDefinition[];
 const ironWarlordJsonCards = [
   ...classBladeTempoJson,
   ...classCommandArmorJson,
@@ -79,7 +85,7 @@ const BOSS_IDS = ["gate-captain-elite", "siege-marshal", "cinder-strategist"] as
 
 describe("active MVP content registry", () => {
   it("loads the requested card pack sizes and preserves legacy MVP cards", () => {
-    expect(generalJsonCards).toHaveLength(18);
+    expect(generalJsonCards).toHaveLength(24);
     expect(ironWarlordJsonCards).toHaveLength(20);
     expect(GENERAL_CARD_DEFINITIONS).toEqual(generalJsonCards);
     expect(IRON_WARLORD_CARD_DEFINITIONS).toEqual(ironWarlordJsonCards);
@@ -91,7 +97,7 @@ describe("active MVP content registry", () => {
     for (const card of [...generalJsonCards, ...ironWarlordJsonCards]) {
       expect(activeCardsById.has(card.id), card.id).toBe(true);
     }
-    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 38);
+    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 44);
   });
 
   it("all active cards validate and use only MVP grammar", () => {
@@ -508,12 +514,12 @@ describe("active MVP content registry", () => {
 });
 
 function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: string): void {
-  expect(["DealDamage", "GainArmor", "ApplyBurn", "ModifyCooldown"], `${cardId}:command`).toContain(effect["command"]);
+  expect(["DealDamage", "GainArmor", "ApplyBurn", "ApplyPoison", "HealHP", "ModifyCooldown"], `${cardId}:command`).toContain(effect["command"]);
   expect(JSON.stringify(effect), cardId).not.toMatch(/Barrier|Ward|EnergyShield|Energy Shield|absorb|Freeze|Haste|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
   if (effect["command"] === "DealDamage") {
     expect(effect["amount"], `${cardId}:amount`).toBeTypeOf("number");
     if (effect["damageType"] !== undefined) {
-      expect(["DIRECT", "PHYSICAL", "FIRE"], `${cardId}:damageType`).toContain(effect["damageType"]);
+      expect(["DIRECT", "PHYSICAL", "FIRE", "POISON"], `${cardId}:damageType`).toContain(effect["damageType"]);
     }
     if (effect["ignoresArmor"] !== undefined) {
       expect(effect["ignoresArmor"], `${cardId}:ignoresArmor`).toBeTypeOf("boolean");
@@ -546,6 +552,15 @@ function validateEffect(effect: Readonly<Record<string, unknown>>, cardId: strin
   if (effect["command"] === "ApplyBurn") {
     expect(effect["durationTicks"], `${cardId}:durationTicks`).toBeTypeOf("number");
   }
+  if (effect["command"] === "ApplyPoison") {
+    expect(effect["amount"], `${cardId}:amount`).toBeTypeOf("number");
+    if (effect["durationTicks"] !== undefined) {
+      expect(effect["durationTicks"], `${cardId}:durationTicks`).toBeTypeOf("number");
+    }
+  }
+  if (effect["command"] === "HealHP") {
+    expect(effect["amount"], `${cardId}:amount`).toBeTypeOf("number");
+  }
   if (effect["command"] === "ModifyCooldown") {
     expect(["SELF", "ADJACENT_ALLY", undefined], `${cardId}:target`).toContain(effect["target"]);
   }
@@ -566,7 +581,7 @@ function validateTrigger(trigger: Readonly<Record<string, unknown>>, cardId: str
       expect(["status", "appliedByOwner", "sourceHasTag", "cardIsAdjacent", "ownerHpBelowPercent", "targetHpBelowPercent"], `${cardId}:condition:${key}`).toContain(key);
     }
     if (conditions["status"] !== undefined) {
-      expect(conditions["status"], `${cardId}:conditions.status`).toBe("Burn");
+      expect(["Burn", "Poison"], `${cardId}:conditions.status`).toContain(conditions["status"]);
     }
     for (const booleanKey of ["appliedByOwner", "cardIsAdjacent"]) {
       if (conditions[booleanKey] !== undefined) {

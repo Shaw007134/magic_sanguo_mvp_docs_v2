@@ -5,7 +5,7 @@ import type { ModifierSystem } from "./modifiers/ModifierSystem.js";
 import type { StatusDamageSourceContribution } from "./status/StatusEffect.js";
 import type { RuntimeCombatant } from "./types.js";
 
-export type DamageType = "DIRECT" | "PHYSICAL" | "FIRE";
+export type DamageType = "DIRECT" | "PHYSICAL" | "FIRE" | "POISON";
 
 export interface DamageCalculationInput {
   readonly tick: number;

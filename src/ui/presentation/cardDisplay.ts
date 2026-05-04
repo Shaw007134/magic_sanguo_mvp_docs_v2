@@ -46,6 +46,12 @@ function formatTriggerHook(trigger: TriggerDefinition): string {
   if (hook === "OnStatusApplied" && conditions["status"] === "Burn") {
     return "When Burn is applied";
   }
+  if (hook === "OnStatusApplied" && conditions["status"] === "Poison" && conditions["appliedByOwner"] === true) {
+    return "When you apply Poison";
+  }
+  if (hook === "OnStatusApplied" && conditions["status"] === "Poison") {
+    return "When Poison is applied";
+  }
   switch (hook) {
     case "OnCardActivated":
       return "When a card activates";
@@ -79,6 +85,13 @@ function formatEffect(effect: EffectDefinition): string {
         return `Burn: ${effect["amount"]} damage/sec for ${formatTickDuration(effect["durationTicks"])}`;
       }
       return "Burn";
+    case "ApplyPoison":
+      if (typeof effect["amount"] === "number" && typeof effect["durationTicks"] === "number") {
+        return `Poison: ${effect["amount"]} damage/sec for ${formatTickDuration(effect["durationTicks"])}`;
+      }
+      return typeof effect["amount"] === "number" ? `Poison: ${effect["amount"]} damage/sec` : "Poison";
+    case "HealHP":
+      return typeof effect["amount"] === "number" ? `Heal: ${effect["amount"]} HP` : "Heal";
     case "ModifyCooldown":
       return typeof effect["amountTicks"] === "number"
         ? `Cooldown: ${formatSignedTickDuration(effect["amountTicks"])}`
@@ -122,6 +135,9 @@ function formatDamageLabel(value: unknown): string {
   }
   if (value === "FIRE") {
     return "Fire damage";
+  }
+  if (value === "POISON") {
+    return "Poison damage";
   }
   return "Damage";
 }

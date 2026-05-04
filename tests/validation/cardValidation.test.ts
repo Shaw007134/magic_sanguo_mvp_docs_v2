@@ -52,7 +52,8 @@ describe("validateCardDefinition", () => {
           { command: "DealDamage", amount: 1 },
           { command: "DealDamage", amount: 1, damageType: "DIRECT" },
           { command: "DealDamage", amount: 1, damageType: "PHYSICAL" },
-          { command: "DealDamage", amount: 1, damageType: "FIRE" }
+          { command: "DealDamage", amount: 1, damageType: "FIRE" },
+          { command: "DealDamage", amount: 1, damageType: "POISON" }
         ]
       })
     );
@@ -70,7 +71,47 @@ describe("validateCardDefinition", () => {
     expect(result.valid).toBe(false);
     expect(result.errors).toContainEqual({
       path: "effects[0].damageType",
-      message: "DealDamage damageType must be DIRECT, PHYSICAL, or FIRE."
+      message: "DealDamage damageType must be DIRECT, PHYSICAL, FIRE, or POISON."
+    });
+  });
+
+  it("validates ApplyPoison and HealHP amount fields", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        effects: [
+          { command: "ApplyPoison", amount: 1 },
+          { command: "ApplyPoison", amount: 1, durationTicks: 120 },
+          { command: "HealHP", amount: 5 }
+        ]
+      })
+    );
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects malformed ApplyPoison and HealHP effects", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        effects: [
+          { command: "ApplyPoison" },
+          { command: "ApplyPoison", amount: 1, durationTicks: "soon" },
+          { command: "HealHP" }
+        ]
+      })
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContainEqual({
+      path: "effects[0].amount",
+      message: "ApplyPoison amount must be a number."
+    });
+    expect(result.errors).toContainEqual({
+      path: "effects[1].durationTicks",
+      message: "ApplyPoison durationTicks must be a number when present."
+    });
+    expect(result.errors).toContainEqual({
+      path: "effects[2].amount",
+      message: "HealHP amount must be a number."
     });
   });
 });

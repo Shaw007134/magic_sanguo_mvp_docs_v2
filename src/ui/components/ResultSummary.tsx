@@ -43,6 +43,7 @@ export function ResultSummary({ summary, cardInstancesById = new Map(), cardDefi
       <MetricList title="Critical hits" values={summary.critCountByCard ?? {}} resolveName={resolveName} />
       <MetricList title="Critical damage" values={summary.criticalDamageByCard ?? {}} resolveName={resolveName} />
       <MetricList title="Armor gained" values={summary.armorGainedByCard} resolveName={resolveName} />
+      <MetricList title="Healing" values={summary.healingByCard} resolveName={resolveName} />
       <MetricList title="Activations" values={summary.activationsByCard} resolveName={resolveName} />
       <MetricList title="Triggers" values={summary.triggerCountByCard} resolveName={resolveName} />
     </section>
@@ -89,5 +90,8 @@ function resolveSourceName(
 }
 
 function formatStatusName(sourceId: string): string {
-  return sourceId === "Burn" ? "Burn" : sourceId;
+  if (sourceId === "Burn" || sourceId === "Poison") {
+    return sourceId;
+  }
+  return sourceId;
 }

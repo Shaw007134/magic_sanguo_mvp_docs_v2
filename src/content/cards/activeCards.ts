@@ -4,13 +4,15 @@ import classSiegeFireJson from "../../../data/cards/class_iron_warlord/siege_fir
 import generalBasicKitJson from "../../../data/cards/general/basic_kit.json" with { type: "json" };
 import generalBladeArmorJson from "../../../data/cards/general/blade_armor.json" with { type: "json" };
 import generalFireSupportJson from "../../../data/cards/general/fire_support.json" with { type: "json" };
+import generalPoisonHealJson from "../../../data/cards/general/poison_heal.json" with { type: "json" };
 import monsterCardsJson from "../../../data/cards/monster_cards.json" with { type: "json" };
 import type { CardDefinition } from "../../model/card.js";
 
 export const GENERAL_CARD_DEFINITIONS = [
   ...generalBasicKitJson,
   ...generalBladeArmorJson,
-  ...generalFireSupportJson
+  ...generalFireSupportJson,
+  ...generalPoisonHealJson
 ] as readonly CardDefinition[];
 
 export const IRON_WARLORD_CARD_DEFINITIONS = [

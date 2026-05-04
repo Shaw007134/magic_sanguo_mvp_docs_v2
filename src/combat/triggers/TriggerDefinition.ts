@@ -11,7 +11,7 @@ export type TriggerHook =
   | "OnCombatEnd";
 
 export interface TriggerConditionDefinition {
-  readonly status?: "Burn";
+  readonly status?: "Burn" | "Poison";
   readonly appliedByOwner?: boolean;
   readonly sourceHasTag?: string;
   readonly cardIsAdjacent?: boolean;

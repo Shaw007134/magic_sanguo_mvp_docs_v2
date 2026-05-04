@@ -5,6 +5,7 @@ export type ReplayEventType =
   | "CardActivated"
   | "DamageDealt"
   | "ArmorGained"
+  | "HpHealed"
   | "ArmorBlocked"
   | "StatusApplied"
   | "StatusTicked"
@@ -35,6 +36,7 @@ export interface CombatResultSummary {
   readonly statusDamage: Readonly<Record<string, number>>;
   readonly statusDamageByCard: Readonly<Record<string, Readonly<Record<string, number>>>>;
   readonly armorGainedByCard: Readonly<Record<string, number>>;
+  readonly healingByCard: Readonly<Record<string, number>>;
   readonly armorBlocked: number;
   readonly activationsByCard: Readonly<Record<string, number>>;
   readonly triggerCountByCard: Readonly<Record<string, number>>;
@@ -48,6 +50,7 @@ export interface CombatContribution {
   readonly score: number;
   readonly damage: number;
   readonly armorGained: number;
+  readonly healing?: number;
   readonly triggerCount: number;
 }
 

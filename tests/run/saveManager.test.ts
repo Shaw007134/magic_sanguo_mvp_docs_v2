@@ -74,6 +74,7 @@ function fakeCombatResult(winner: CombatResult["winner"] = "PLAYER"): CombatResu
       statusDamage: {},
       statusDamageByCard: {},
       armorGainedByCard: {},
+      healingByCard: {},
       armorBlocked: 0,
       activationsByCard: {},
       triggerCountByCard: {},
@@ -119,8 +120,8 @@ describe("SaveManager", () => {
     );
   });
 
-  it("save/load preserves attributed combat result payloads without persisting runtime status arrays", () => {
-    const manager = createNewRun("save-attributed-burn");
+  it("save/load preserves attributed DOT result payloads without persisting runtime status arrays", () => {
+    const manager = createNewRun("save-attributed-dot");
     const attributedResult: CombatResult = {
       ...fakeCombatResult("PLAYER"),
       replayTimeline: {
@@ -141,13 +142,40 @@ describe("SaveManager", () => {
                 }
               ]
             }
+          },
+          {
+            tick: 61,
+            type: "DamageDealt",
+            payload: {
+              command: "PoisonTick",
+              damageType: "POISON",
+              hpDamage: 2,
+              statusSourceContributions: [
+                {
+                  sourceCombatantId: "player",
+                  sourceCardInstanceId: "run-card-2",
+                  sourceCardDefinitionId: "poison-needle",
+                  amount: 2
+                }
+              ]
+            }
+          },
+          {
+            tick: 62,
+            type: "HpHealed",
+            sourceId: "run-card-3",
+            payload: {
+              command: "HealHP",
+              amount: 4
+            }
           }
         ]
       },
       summary: {
         ...fakeCombatResult("PLAYER").summary,
-        statusDamage: { Burn: 3 },
-        statusDamageByCard: { Burn: { "run-card-1": 3 } }
+        statusDamage: { Burn: 3, Poison: 2 },
+        statusDamageByCard: { Burn: { "run-card-1": 3 }, Poison: { "run-card-2": 2 } },
+        healingByCard: { "run-card-3": 4 }
       }
     };
     manager.state = {

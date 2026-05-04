@@ -26,7 +26,7 @@ export class ApplyBurnCommand implements CombatCommand {
       })
       : this.durationTicks;
     const burn = createBurn(this.amount, durationTicks, context.tick, sourceAttribution);
-    if (burn.amount <= 0 || burn.expiresAtTick <= context.tick) {
+    if (burn.amount <= 0 || (burn.expiresAtTick ?? 0) <= context.tick) {
       return;
     }
 

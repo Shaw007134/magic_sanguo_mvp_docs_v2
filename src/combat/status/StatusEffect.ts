@@ -12,12 +12,15 @@ export interface StatusDamageSourceContribution extends StatusSourceAttribution 
   readonly amount: number;
 }
 
+export type StatusKind = "BURN" | "POISON";
+export type StatusName = "Burn" | "Poison";
+
 export interface StatusEffect {
-  readonly kind: "BURN";
+  readonly kind: StatusKind;
   amount: number;
   tickIntervalTicks: number;
   appliedAtTick: number;
   nextTickAt: number;
-  expiresAtTick: number;
+  expiresAtTick?: number;
   sourceContributions?: StatusSourceContribution[];
 }

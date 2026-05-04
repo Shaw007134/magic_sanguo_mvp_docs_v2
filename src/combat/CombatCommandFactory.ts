@@ -1,6 +1,7 @@
 import type { EffectDefinition } from "../model/card.js";
 import type { CombatCommand } from "./commands/CombatCommand.js";
 import { ApplyBurnCommand } from "./commands/ApplyBurnCommand.js";
+import { ApplyPoisonCommand } from "./commands/ApplyPoisonCommand.js";
 import type { DamageType } from "./DamageCalculator.js";
 import {
   DealDamageCommand,
@@ -8,6 +9,7 @@ import {
   type DealDamageScalingDefinition
 } from "./commands/DealDamageCommand.js";
 import { GainArmorCommand } from "./commands/GainArmorCommand.js";
+import { HealHPCommand } from "./commands/HealHPCommand.js";
 import { ModifyCooldownCommand } from "./commands/ModifyCooldownCommand.js";
 import type { MutableCardRuntimeState, RuntimeCombatant } from "./types.js";
 
@@ -53,6 +55,16 @@ function createCombatCommandsForEffect(
         return [];
       }
       return [new ApplyBurnCommand(effect["amount"], effect["durationTicks"])];
+    case "ApplyPoison":
+      if (typeof effect["amount"] !== "number") {
+        return [];
+      }
+      return [new ApplyPoisonCommand(effect["amount"], readNumber(effect["durationTicks"]))];
+    case "HealHP":
+      if (typeof effect["amount"] !== "number") {
+        return [];
+      }
+      return [new HealHPCommand(effect["amount"])];
     case "ModifyCooldown":
       if (typeof effect["amountTicks"] !== "number") {
         return [];
@@ -68,7 +80,7 @@ function readNumber(value: unknown): number | undefined {
 }
 
 function parseDamageType(value: unknown): DamageType | undefined {
-  return value === "DIRECT" || value === "PHYSICAL" || value === "FIRE" ? value : undefined;
+  return value === "DIRECT" || value === "PHYSICAL" || value === "FIRE" || value === "POISON" ? value : undefined;
 }
 
 function parseScaling(value: unknown): DealDamageScalingDefinition | undefined {

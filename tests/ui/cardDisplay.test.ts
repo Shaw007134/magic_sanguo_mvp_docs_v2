@@ -52,6 +52,13 @@ describe("cardDisplay", () => {
     expect(display("fire-echo-seal").summary).not.toMatch(/On(Card|Damage|Burn|Cooldown|Combat|Status)|hook/i);
   });
 
+  it("summarizes Poison and Heal cards without raw tick labels", () => {
+    expect(display("poison-needle").summary).toBe("Poison: 1 damage/sec");
+    expect(display("field-medic").summary).toBe("Heal: 5 HP");
+    expect(display("toxic-lance").summary).toBe("Physical damage: 2 · Poison: 1 damage/sec");
+    expect(display("poison-needle").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
+  });
+
   it("formats whole-second cooldown modifications without raw tick suffixes", () => {
     const card = {
       ...cardsById.get("spark-drum")!,

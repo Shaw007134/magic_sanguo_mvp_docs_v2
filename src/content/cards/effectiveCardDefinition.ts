@@ -96,7 +96,11 @@ export function hasMeaningfulUpgrade(input: {
 
 function scaleEffect(effect: EffectDefinition, baseTier: CardTier, effectiveTier: CardTier): EffectDefinition {
   if (
-    (effect["command"] === "DealDamage" || effect["command"] === "GainArmor" || effect["command"] === "ApplyBurn") &&
+    (effect["command"] === "DealDamage" ||
+      effect["command"] === "GainArmor" ||
+      effect["command"] === "ApplyBurn" ||
+      effect["command"] === "ApplyPoison" ||
+      effect["command"] === "HealHP") &&
     typeof effect["amount"] === "number"
   ) {
     return { ...effect, amount: scaleAmount(effect["amount"], baseTier, effectiveTier) };
@@ -150,6 +154,12 @@ function getKeyStats(card: CardDefinition): readonly { readonly label: string; r
     if (effect["command"] === "ApplyBurn" && typeof effect["amount"] === "number") {
       stats.push({ label: "Burn", value: String(effect["amount"]) });
     }
+    if (effect["command"] === "ApplyPoison" && typeof effect["amount"] === "number") {
+      stats.push({ label: "Poison", value: String(effect["amount"]) });
+    }
+    if (effect["command"] === "HealHP" && typeof effect["amount"] === "number") {
+      stats.push({ label: "Heal", value: String(effect["amount"]) });
+    }
   }
   for (const trigger of card.triggers ?? []) {
     if (!Array.isArray(trigger["effects"])) {
@@ -167,6 +177,12 @@ function getKeyStats(card: CardDefinition): readonly { readonly label: string; r
       }
       if (effect["command"] === "ApplyBurn" && typeof effect["amount"] === "number") {
         stats.push({ label: "Burn", value: String(effect["amount"]) });
+      }
+      if (effect["command"] === "ApplyPoison" && typeof effect["amount"] === "number") {
+        stats.push({ label: "Poison", value: String(effect["amount"]) });
+      }
+      if (effect["command"] === "HealHP" && typeof effect["amount"] === "number") {
+        stats.push({ label: "Heal", value: String(effect["amount"]) });
       }
     }
   }

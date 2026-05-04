@@ -22,7 +22,7 @@ export function createBurn(
 
 export function mergeBurn(existingBurn: StatusEffect, nextBurn: StatusEffect): void {
   existingBurn.amount += nextBurn.amount;
-  existingBurn.expiresAtTick = Math.max(existingBurn.expiresAtTick, nextBurn.expiresAtTick);
+  existingBurn.expiresAtTick = Math.max(existingBurn.expiresAtTick ?? 0, nextBurn.expiresAtTick ?? 0);
   existingBurn.nextTickAt = Math.min(existingBurn.nextTickAt, nextBurn.nextTickAt);
   mergeSourceContributions(existingBurn, nextBurn.sourceContributions ?? []);
 }

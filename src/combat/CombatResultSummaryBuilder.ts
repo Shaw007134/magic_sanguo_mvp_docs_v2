@@ -13,6 +13,7 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
   const statusDamage: Record<string, number> = {};
   const statusDamageByCard: Record<string, Record<string, number>> = {};
   const armorGainedByCard: Record<string, number> = {};
+  const healingByCard: Record<string, number> = {};
   const activationsByCard: Record<string, number> = {};
   const triggerCountByCard: Record<string, number> = {};
   const critCountByCard: Record<string, number> = {};
@@ -34,10 +35,15 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
           addToRecord(criticalDamageByCard, event.sourceId, hpDamage);
         }
       }
-      if (command === "BurnTick") {
-        addToRecord(statusDamage, "Burn", hpDamage);
-        addStatusDamageByCard(statusDamageByCard, "Burn", event.payload?.statusSourceContributions);
+      if (command === "BurnTick" || command === "PoisonTick") {
+        const status = command === "PoisonTick" ? "Poison" : "Burn";
+        addToRecord(statusDamage, status, hpDamage);
+        addStatusDamageByCard(statusDamageByCard, status, event.payload?.statusSourceContributions);
       }
+    }
+
+    if (event.type === "HpHealed" && event.sourceId) {
+      addToRecord(healingByCard, event.sourceId, readNumber(event.payload?.amount));
     }
 
     if (event.type === "ArmorGained" && event.sourceId) {
@@ -62,23 +68,26 @@ export function buildCombatResultSummary(input: CombatResultSummaryInput): Comba
     statusDamage,
     statusDamageByCard,
     armorGainedByCard,
+    healingByCard,
     armorBlocked,
     activationsByCard,
     triggerCountByCard,
     critCountByCard,
     criticalDamageByCard,
-    topContributors: buildTopContributors(damageByCard, armorGainedByCard, triggerCountByCard)
+    topContributors: buildTopContributors(damageByCard, armorGainedByCard, healingByCard, triggerCountByCard)
   };
 }
 
 function buildTopContributors(
   damageByCard: Readonly<Record<string, number>>,
   armorGainedByCard: Readonly<Record<string, number>>,
+  healingByCard: Readonly<Record<string, number>>,
   triggerCountByCard: Readonly<Record<string, number>>
 ): readonly CombatContribution[] {
   const sourceIds = new Set([
     ...Object.keys(damageByCard),
     ...Object.keys(armorGainedByCard),
+    ...Object.keys(healingByCard),
     ...Object.keys(triggerCountByCard)
   ]);
 
@@ -86,12 +95,14 @@ function buildTopContributors(
     .map((sourceId) => {
       const damage = damageByCard[sourceId] ?? 0;
       const armorGained = armorGainedByCard[sourceId] ?? 0;
+      const healing = healingByCard[sourceId] ?? 0;
       const triggerCount = triggerCountByCard[sourceId] ?? 0;
       return {
         sourceId,
-        score: damage + armorGained + triggerCount,
+        score: damage + armorGained + healing + triggerCount,
         damage,
         armorGained,
+        healing,
         triggerCount
       };
     })

@@ -11,6 +11,7 @@ describe("ReplayTimeline", () => {
     const events: ReplayEvent[] = [
       { tick: 3, type: "CombatEnded" },
       { tick: 1, type: "DamageDealt", sourceId: "card-a" },
+      { tick: 2, type: "HpHealed", sourceId: "card-c" },
       { tick: 1, type: "ArmorGained", sourceId: "card-b" },
       { tick: 0, type: "CombatStarted" }
     ];
@@ -19,6 +20,7 @@ describe("ReplayTimeline", () => {
       "CombatStarted",
       "DamageDealt",
       "ArmorGained",
+      "HpHealed",
       "CombatEnded"
     ]);
   });
@@ -71,5 +73,30 @@ describe("ReplayTimeline", () => {
     expect(text).not.toContain("expiresAtTick");
     expect(text).not.toContain("durationTicks");
     expect(text).not.toContain("cooldownRemainingTicks");
+  });
+
+  it("formats healing replay events readably", () => {
+    const cardsById = getMonsterCardDefinitionsById();
+    const text = formatReplayEvent(
+      {
+        tick: 60,
+        type: "HpHealed",
+        sourceId: "card-1",
+        payload: {
+          command: "HealHP",
+          amount: 4,
+          requestedAmount: 5,
+          targetHp: 20
+        }
+      },
+      {
+        cardInstancesById: new Map([["card-1", { instanceId: "card-1", definitionId: "wooden-shield" }]]),
+        cardDefinitionsById: cardsById
+      }
+    );
+
+    expect(text).toBe("1.00s: Wooden Shield healed 4 HP.");
+    expect(text).not.toContain("HealHP");
+    expect(text).not.toContain("targetHp");
   });
 });

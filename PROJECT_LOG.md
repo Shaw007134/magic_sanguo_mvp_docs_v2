@@ -1126,3 +1126,64 @@ Known issues:
 - Burn attribution is replay/summary-only; Burn ticks still do not receive source-owned damage modifiers and no status reactions were added.
 Next recommended task:
 - Phase 14B: Poison and Heal pack, using the Phase 14A attribution foundation.
+
+---
+
+Date: 2026-05-04
+Phase: 14B
+Task: Implemented Poison and Heal pack.
+Files changed:
+- data/cards/general/poison_heal.json
+- src/combat/CombatCommandFactory.ts
+- src/combat/CombatResultSummaryBuilder.ts
+- src/combat/DamageCalculator.ts
+- src/combat/commands/ApplyBurnCommand.ts
+- src/combat/commands/ApplyPoisonCommand.ts
+- src/combat/commands/HealHPCommand.ts
+- src/combat/modifiers/Modifier.ts
+- src/combat/modifiers/ModifierSystem.ts
+- src/combat/status/Burn.ts
+- src/combat/status/Poison.ts
+- src/combat/status/StatusEffect.ts
+- src/combat/status/StatusEffectSystem.ts
+- src/combat/triggers/TriggerDefinition.ts
+- src/combat/triggers/TriggerSystem.ts
+- src/content/cards/activeCards.ts
+- src/content/cards/contentPools.ts
+- src/content/cards/effectiveCardDefinition.ts
+- src/index.ts
+- src/model/result.ts
+- src/replay/ReplayTimeline.ts
+- src/ui/components/ResultSummary.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/ui/presentation/replayDisplay.ts
+- src/validation/cardValidation.ts
+- tests/combat/poisonHeal.test.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/replay/replayTimeline.test.ts
+- tests/run/runManager.test.ts
+- tests/run/saveManager.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/ui/resultSummary.test.tsx
+- tests/validation/cardValidation.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Poison applies, ticks every 60 ticks, ignores Armor, stacks additively, keeps source attribution, and does not naturally expire.
+- Poison summary total and by-card attribution are covered.
+- HealHP restores HP, caps at max HP, emits replay events, and contributes healingByCard summary data.
+- Invalid ApplyPoison effects are ignored by the command factory and malformed ApplyPoison/HealHP fields are validation-covered.
+- Save/load preserves attributed Burn/Poison/heal combat result payloads without persisting runtime status arrays into RunState.
+- Same combat input produces the same Poison replay and summary.
+- Phase 14B content registry, card display, replay display, and curated pools are covered.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Poison has no decay in Phase 14B and can pressure timeout-style fights if tuned too high.
+- HealHP has no lifesteal, overheal, or absorb behavior; it only restores HP to max HP.
+- No Haste, Slow, Freeze, Burn decay, status reactions, or new resources were added.
+Next recommended task:
+- Phase 14C: Haste, Slow, and Freeze control pack.

@@ -7,6 +7,7 @@ import type { PassiveTriggerDefinition, TriggerHook } from "./TriggerDefinition.
 import type { TriggerRuntimeState } from "./TriggerRuntimeState.js";
 import type { ReplayEvent } from "../../model/result.js";
 import type { ResolutionStack } from "../ResolutionStack.js";
+import type { StatusName } from "../status/StatusEffect.js";
 
 export interface TriggerEvent {
   readonly hook: TriggerHook;
@@ -15,7 +16,7 @@ export interface TriggerEvent {
   readonly sourceCardDefinition?: CardDefinition;
   readonly sourceCombatant?: RuntimeCombatant;
   readonly targetCombatant?: RuntimeCombatant;
-  readonly status?: "Burn";
+  readonly status?: StatusName;
   readonly triggerDepth?: number;
 }
 
