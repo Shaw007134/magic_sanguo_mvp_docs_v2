@@ -63,7 +63,7 @@ export function App() {
   }
 
   function handleSaveRun(): void {
-    const saveResult = serializeRunState(manager.state);
+    const saveResult = serializeRunState(manager.state, cardDefinitionsById);
     if (!saveResult.ok) {
       setMessage(saveResult.error);
       return;

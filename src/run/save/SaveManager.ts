@@ -38,8 +38,11 @@ const BATTLE_DIFFICULTIES = ["EASY", "NORMAL", "ELITE", "BOSS"] as const;
 const CARD_TIERS = ["BRONZE", "SILVER", "GOLD", "JADE", "CELESTIAL"] as const;
 const COMBAT_WINNERS = ["PLAYER", "ENEMY", "DRAW"] as const;
 
-export function createRunSaveData(state: RunState): SaveLoadResult<RunSaveData> {
-  const validation = validateRunState(state);
+export function createRunSaveData(
+  state: RunState,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+): SaveLoadResult<RunSaveData> {
+  const validation = validateRunState(state, cardDefinitionsById);
   if (!validation.ok) {
     return validation;
   }
@@ -54,8 +57,11 @@ export function createRunSaveData(state: RunState): SaveLoadResult<RunSaveData> 
   };
 }
 
-export function serializeRunState(state: RunState): SaveLoadResult<string> {
-  const saveData = createRunSaveData(state);
+export function serializeRunState(
+  state: RunState,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+): SaveLoadResult<string> {
+  const saveData = createRunSaveData(state, cardDefinitionsById);
   if (!saveData.ok) {
     return saveData;
   }
@@ -159,6 +165,7 @@ export function validateRunState(
 
   if (!isNonEmptyString(state["runId"])) return failMissing("runId");
   if (!isNonEmptyString(state["seed"])) return failMissing("seed");
+  if (!isNonEmptyString(state["classId"])) return failMissing("classId");
   if (!isOneOf(state["status"], RUN_STATUSES)) {
     return { ok: false, error: `Invalid run status: ${String(state["status"])}.` };
   }
@@ -167,6 +174,8 @@ export function validateRunState(
       return { ok: false, error: `RunState field ${field} must be a number.` };
     }
   }
+  const numericDomainResult = validateNumericDomains(state);
+  if (!numericDomainResult.ok) return numericDomainResult;
 
   const nodeResult = validateRunNode(state["currentNode"], "currentNode");
   if (!nodeResult.ok) return nodeResult;
@@ -192,11 +201,13 @@ export function validateRunState(
   const skillsResult = validateSkillInstances(state["ownedSkills"]);
   if (!skillsResult.ok) return skillsResult;
 
-  const formationResult = validateRunFormationSlots(state["formationSlots"], ownedCardIds);
+  const formationResult = validateRunFormationSlots({
+    slots: state["formationSlots"],
+    ownedCards,
+    cardDefinitionsById,
+    formationSlotCount: state["formationSlotCount"]
+  });
   if (!formationResult.ok) return formationResult;
-  if (formationResult.value.length !== state["formationSlotCount"]) {
-    return { ok: false, error: "Formation slot count does not match formationSlots length." };
-  }
 
   for (const field of ["defeatedMonsters", "completedNodes"]) {
     if (!isStringArray(state[field])) {
@@ -322,15 +333,63 @@ function validateSkillInstances(skills: unknown): SaveLoadResult<RunState["owned
   return { ok: true, value: skills as RunState["ownedSkills"] };
 }
 
-function validateRunFormationSlots(slots: unknown, ownedCardIds: ReadonlySet<string>): SaveLoadResult<readonly RunFormationSlot[]> {
+function validateNumericDomains(state: Readonly<Record<string, unknown>>): SaveLoadResult<true> {
+  const checks = [
+    { field: "currentNodeIndex", valid: isNonNegativeInteger(state["currentNodeIndex"]), rule: "must be >= 0" },
+    { field: "level", valid: isPositiveInteger(state["level"]), rule: "must be >= 1" },
+    { field: "exp", valid: isNonNegativeInteger(state["exp"]), rule: "must be >= 0" },
+    { field: "expToNextLevel", valid: isPositiveInteger(state["expToNextLevel"]), rule: "must be > 0" },
+    { field: "gold", valid: isNonNegativeInteger(state["gold"]), rule: "must be >= 0" },
+    { field: "maxHp", valid: isPositiveInteger(state["maxHp"]), rule: "must be > 0" },
+    { field: "currentHp", valid: isNonNegativeInteger(state["currentHp"]), rule: "must be >= 0" },
+    { field: "formationSlotCount", valid: isPositiveInteger(state["formationSlotCount"]), rule: "must be > 0" },
+    { field: "chestCapacity", valid: isNonNegativeInteger(state["chestCapacity"]), rule: "must be >= 0" },
+    { field: "completedEncounterCount", valid: isNonNegativeInteger(state["completedEncounterCount"]), rule: "must be >= 0" },
+    { field: "defeatedBattleCount", valid: isNonNegativeInteger(state["defeatedBattleCount"]), rule: "must be >= 0" }
+  ] as const;
+  for (const check of checks) {
+    if (!check.valid) {
+      return { ok: false, error: `RunState field ${check.field} ${check.rule}.` };
+    }
+  }
+  if ((state["currentHp"] as number) > (state["maxHp"] as number)) {
+    return { ok: false, error: "RunState field currentHp must be <= maxHp." };
+  }
+  if ((state["chestCapacity"] as number) < (state["formationSlotCount"] as number)) {
+    return { ok: false, error: "RunState field chestCapacity must be >= formationSlotCount." };
+  }
+  return { ok: true, value: true };
+}
+
+function validateRunFormationSlots(input: {
+  readonly slots: unknown;
+  readonly ownedCards: readonly CardInstance[];
+  readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
+  readonly formationSlotCount: unknown;
+}): SaveLoadResult<readonly RunFormationSlot[]> {
+  const { slots, ownedCards, cardDefinitionsById, formationSlotCount } = input;
   if (!Array.isArray(slots)) return { ok: false, error: "formationSlots must be an array." };
+  if (!isPositiveInteger(formationSlotCount)) {
+    return { ok: false, error: "RunState field formationSlotCount must be > 0." };
+  }
+  if (slots.length !== formationSlotCount) {
+    return { ok: false, error: "Formation slot count does not match formationSlots length." };
+  }
+  const ownedCardsById = new Map(ownedCards.map((card) => [card.instanceId, card]));
+  const ownedCardIds = new Set(ownedCardsById.keys());
   const seenSlotIndexes = new Set<number>();
   const placedCards = new Set<string>();
   for (const [index, slot] of slots.entries()) {
     if (!isRecord(slot)) return { ok: false, error: `formationSlots[${index}] must be an object.` };
-    if (!isNumber(slot["slotIndex"])) return { ok: false, error: `formationSlots[${index}].slotIndex must be a number.` };
+    if (!isPositiveInteger(slot["slotIndex"])) return { ok: false, error: `formationSlots[${index}].slotIndex must be a positive integer.` };
+    if (slot["slotIndex"] < 1 || slot["slotIndex"] > formationSlotCount) {
+      return { ok: false, error: `Formation slot index ${slot["slotIndex"]} is outside formationSlotCount.` };
+    }
     if (seenSlotIndexes.has(slot["slotIndex"])) return { ok: false, error: `Formation slot ${slot["slotIndex"]} is duplicated.` };
     seenSlotIndexes.add(slot["slotIndex"]);
+    if (slot["cardInstanceId"] !== undefined && slot["lockedByInstanceId"] !== undefined) {
+      return { ok: false, error: `Formation slot ${slot["slotIndex"]} cannot contain a card and be locked.` };
+    }
     for (const field of ["cardInstanceId", "lockedByInstanceId"]) {
       if (slot[field] !== undefined) {
         if (!isNonEmptyString(slot[field]) || !ownedCardIds.has(slot[field])) {
@@ -344,6 +403,40 @@ function validateRunFormationSlots(slots: unknown, ownedCardIds: ReadonlySet<str
         return { ok: false, error: `Formation references card ${cardInstanceId} multiple times.` };
       }
       placedCards.add(cardInstanceId);
+    }
+  }
+  for (let slotIndex = 1; slotIndex <= formationSlotCount; slotIndex += 1) {
+    if (!seenSlotIndexes.has(slotIndex)) {
+      return { ok: false, error: `Formation slots must contain exact indexes 1..${formationSlotCount}.` };
+    }
+  }
+  const slotsByIndex = new Map(slots.map((slot) => [(slot as RunFormationSlot).slotIndex, slot as RunFormationSlot]));
+  for (const slot of slots as readonly RunFormationSlot[]) {
+    if (slot.cardInstanceId) {
+      const card = ownedCardsById.get(slot.cardInstanceId);
+      const definition = card ? cardDefinitionsById.get(card.definitionId) : undefined;
+      if (!definition) {
+        return { ok: false, error: `Formation slot ${slot.slotIndex} references a card without a definition.` };
+      }
+      const nextSlot = slotsByIndex.get(slot.slotIndex + 1);
+      if (definition.size === 2) {
+        if (!nextSlot || nextSlot.lockedByInstanceId !== slot.cardInstanceId || nextSlot.cardInstanceId !== undefined) {
+          return { ok: false, error: `Size 2 card ${slot.cardInstanceId} is missing its adjacent locked footprint.` };
+        }
+      } else if (nextSlot?.lockedByInstanceId === slot.cardInstanceId) {
+        return { ok: false, error: `Size 1 card ${slot.cardInstanceId} must not lock adjacent slots.` };
+      }
+    }
+    if (slot.lockedByInstanceId) {
+      const previousSlot = slotsByIndex.get(slot.slotIndex - 1);
+      if (previousSlot?.cardInstanceId !== slot.lockedByInstanceId) {
+        return { ok: false, error: `Locked slot ${slot.slotIndex} must be immediately after its size 2 owner.` };
+      }
+      const ownerCard = ownedCardsById.get(slot.lockedByInstanceId);
+      const ownerDefinition = ownerCard ? cardDefinitionsById.get(ownerCard.definitionId) : undefined;
+      if (ownerDefinition?.size !== 2) {
+        return { ok: false, error: `Locked slot ${slot.slotIndex} must point to a size 2 card.` };
+      }
     }
   }
   return { ok: true, value: slots as readonly RunFormationSlot[] };
@@ -580,6 +673,14 @@ function isNonEmptyString(value: unknown): value is string {
 
 function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isNonNegativeInteger(value: unknown): value is number {
+  return isNumber(value) && Number.isInteger(value) && value >= 0;
+}
+
+function isPositiveInteger(value: unknown): value is number {
+  return isNumber(value) && Number.isInteger(value) && value > 0;
 }
 
 function isStringArray(value: unknown): value is readonly string[] {

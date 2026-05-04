@@ -859,3 +859,32 @@ Known issues:
 - Browser UI uses localStorage only and provides placeholder Save Run, Load Run, and Clear Save buttons.
 Next recommended task:
 - Continue post-MVP iteration or add explicit save migration only when the RunState schema changes.
+
+---
+
+Date: 2026-05-04
+Phase: 12 validation/content-registry patch
+Task: Strengthened RunState save validation domains and formation footprint checks, and made save serialization accept the active card content registry.
+Files changed:
+- src/run/save/SaveManager.ts
+- src/ui/App.tsx
+- tests/run/saveManager.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Corrupt saves fail for slot indexes outside formationSlotCount.
+- Corrupt saves fail for missing size-2 locked footprints.
+- Corrupt saves fail when lockedByInstanceId points to a size-1 card.
+- Corrupt saves fail when a locked slot is not adjacent to its size-2 owner.
+- Corrupt saves fail for locked slots that also contain a card.
+- Corrupt saves fail for negative/out-of-domain gold, HP, level, EXP, counters, classId, and chest capacity.
+- serializeRunState accepts an injected cardDefinitionsById map for expanded content registries.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Save format version remains 1; future schema changes still need explicit migration or fail-fast unsupported-version handling.
+- Saves remain local-only MVP saves with no cloud/account sync.
+Next recommended task:
+- Continue post-MVP iteration or add explicit save migration only when the RunState schema changes.

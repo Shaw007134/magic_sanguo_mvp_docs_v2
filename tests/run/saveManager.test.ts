@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { getMonsterCardDefinitionsById } from "../../src/content/cards/monsterCards.js";
+import type { CardDefinition } from "../../src/model/card.js";
 import type { CombatResult } from "../../src/model/result.js";
 import { createNewRun, RunManager } from "../../src/run/RunManager.js";
 import {
@@ -15,6 +17,21 @@ function roundTrip(manager: RunManager): RunManager {
   const loaded = loadRunManagerFromSaveString(save.ok ? save.value : "");
   expect(loaded.ok).toBe(true);
   return loaded.ok ? loaded.value : manager;
+}
+
+function getSaveObject(manager: RunManager): { readonly version: number; readonly state: Record<string, unknown> } {
+  const save = serializeRunState(manager.state);
+  expect(save.ok).toBe(true);
+  return JSON.parse(save.ok ? save.value : "{}") as { version: number; state: Record<string, unknown> };
+}
+
+function deserializeMutatedState(
+  manager: RunManager,
+  mutate: (state: Record<string, unknown>) => void
+) {
+  const save = getSaveObject(manager);
+  mutate(save.state);
+  return deserializeRunState(JSON.stringify(save));
 }
 
 function chooseFirstShop(manager: RunManager) {
@@ -224,6 +241,155 @@ describe("SaveManager", () => {
     const missingResult = deserializeRunState(JSON.stringify(missingState));
     expect(missingResult.ok).toBe(false);
     expect(missingResult.ok ? "" : missingResult.error).toContain("missing required field: gold");
+  });
+
+  it("corrupt save with negative numeric domains fails clearly", () => {
+    const manager = createNewRun("save-negative-domains");
+    const corruptions = [
+      { field: "gold", value: -1, message: "gold must be >= 0" },
+      { field: "currentHp", value: -1, message: "currentHp must be >= 0" },
+      { field: "level", value: 0, message: "level must be >= 1" },
+      { field: "exp", value: -1, message: "exp must be >= 0" },
+      { field: "currentNodeIndex", value: -1, message: "currentNodeIndex must be >= 0" },
+      { field: "expToNextLevel", value: 0, message: "expToNextLevel must be > 0" },
+      { field: "maxHp", value: 0, message: "maxHp must be > 0" },
+      { field: "completedEncounterCount", value: -1, message: "completedEncounterCount must be >= 0" },
+      { field: "defeatedBattleCount", value: -1, message: "defeatedBattleCount must be >= 0" }
+    ] as const;
+
+    for (const corruption of corruptions) {
+      const result = deserializeMutatedState(manager, (state) => {
+        state[corruption.field] = corruption.value;
+      });
+
+      expect(result.ok).toBe(false);
+      expect(result.ok ? "" : result.error).toContain(corruption.message);
+    }
+
+    const overMaxHp = deserializeMutatedState(manager, (state) => {
+      state["currentHp"] = 41;
+    });
+    expect(overMaxHp.ok).toBe(false);
+    expect(overMaxHp.ok ? "" : overMaxHp.error).toContain("currentHp must be <= maxHp");
+  });
+
+  it("corrupt save with invalid classId or chest capacity domains fails clearly", () => {
+    const manager = createNewRun("save-class-domains");
+
+    const missingClass = deserializeMutatedState(manager, (state) => {
+      state["classId"] = "";
+    });
+    expect(missingClass.ok).toBe(false);
+    expect(missingClass.ok ? "" : missingClass.error).toContain("classId");
+
+    const badChest = deserializeMutatedState(manager, (state) => {
+      state["chestCapacity"] = 3;
+    });
+    expect(badChest.ok).toBe(false);
+    expect(badChest.ok ? "" : badChest.error).toContain("chestCapacity must be >= formationSlotCount");
+  });
+
+  it("corrupt save with slotIndex outside formationSlotCount fails", () => {
+    const manager = createNewRun("save-slot-index");
+    const result = deserializeMutatedState(manager, (state) => {
+      state["formationSlots"] = [
+        { slotIndex: 1 },
+        { slotIndex: 2 },
+        { slotIndex: 3 },
+        { slotIndex: 5 }
+      ];
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.error).toContain("outside formationSlotCount");
+  });
+
+  it("corrupt save with missing locked footprint for a size-2 card fails", () => {
+    const manager = createNewRun("save-missing-footprint");
+    manager.addCardToChest("spark-drum");
+    manager.moveCardFromChestToFormation(manager.state.ownedCards[0]!.instanceId, 1);
+
+    const result = deserializeMutatedState(manager, (state) => {
+      state["formationSlots"] = [
+        { slotIndex: 1, cardInstanceId: "run-card-1" },
+        { slotIndex: 2 },
+        { slotIndex: 3 },
+        { slotIndex: 4 }
+      ];
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.error).toContain("missing its adjacent locked footprint");
+  });
+
+  it("corrupt save with lockedByInstanceId pointing to a size-1 card fails", () => {
+    const manager = createNewRun("save-size-one-lock");
+    manager.addCardToChest("rusty-blade");
+
+    const result = deserializeMutatedState(manager, (state) => {
+      state["formationSlots"] = [
+        { slotIndex: 1, cardInstanceId: "run-card-1" },
+        { slotIndex: 2, lockedByInstanceId: "run-card-1" },
+        { slotIndex: 3 },
+        { slotIndex: 4 }
+      ];
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.error).toContain("Size 1 card run-card-1 must not lock adjacent slots");
+  });
+
+  it("corrupt save with locked slot not adjacent to its size-2 owner fails", () => {
+    const manager = createNewRun("save-non-adjacent-lock");
+    manager.addCardToChest("spark-drum");
+
+    const result = deserializeMutatedState(manager, (state) => {
+      state["formationSlots"] = [
+        { slotIndex: 1, cardInstanceId: "run-card-1" },
+        { slotIndex: 2 },
+        { slotIndex: 3, lockedByInstanceId: "run-card-1" },
+        { slotIndex: 4 }
+      ];
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.error).toContain("missing its adjacent locked footprint");
+  });
+
+  it("corrupt save with locked slot containing a card fails", () => {
+    const manager = createNewRun("save-locked-card");
+    manager.addCardToChest("spark-drum");
+    manager.addCardToChest("rusty-blade");
+
+    const result = deserializeMutatedState(manager, (state) => {
+      state["formationSlots"] = [
+        { slotIndex: 1, cardInstanceId: "run-card-1" },
+        { slotIndex: 2, cardInstanceId: "run-card-2", lockedByInstanceId: "run-card-1" },
+        { slotIndex: 3 },
+        { slotIndex: 4 }
+      ];
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.error).toContain("cannot contain a card and be locked");
+  });
+
+  it("serializeRunState accepts an injected cardDefinitionsById map", () => {
+    const baseDefinitionsById = getMonsterCardDefinitionsById();
+    const customCard: CardDefinition = {
+      ...baseDefinitionsById.get("rusty-blade")!,
+      id: "custom-blade",
+      name: "Custom Blade"
+    };
+    const customDefinitionsById = new Map([...baseDefinitionsById, [customCard.id, customCard]]);
+    const manager = RunManager.createNewRun("save-custom-registry", customDefinitionsById);
+    manager.addCardToChest(customCard.id);
+
+    expect(serializeRunState(manager.state).ok).toBe(false);
+    const save = serializeRunState(manager.state, customDefinitionsById);
+    expect(save.ok).toBe(true);
+    const loaded = save.ok ? loadRunManagerFromSaveString(save.value, customDefinitionsById) : { ok: false as const, error: "" };
+    expect(loaded.ok).toBe(true);
   });
 
   it("unknown node type, invalid card, invalid formation, and invalid enemy snapshot fail clearly", () => {

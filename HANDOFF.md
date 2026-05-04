@@ -80,7 +80,10 @@ Battle nodes materialize and store their enemy FormationSnapshot/currentEnemyCar
 Loading a battle node therefore uses saved enemy state and does not reroll through MonsterGenerator.
 Loading shop/event/reward/level-up nodes uses serialized currentChoices and pending choices, not regenerated choices.
 If a completed battle result is waiting for Continue, pendingCombatResult/pendingBattleResult are serialized so replay/summary UI resumes without rerunning combat.
-SaveManager returns typed SaveLoadResult values for success/failure and fails corrupt JSON, unsupported versions, missing required fields, unknown node types, invalid card refs, invalid formation refs, invalid enemy snapshots, and bad combat-result shapes with clear errors.
+SaveManager returns typed SaveLoadResult values for success/failure and fails corrupt JSON, unsupported versions, missing required fields, unknown node types, invalid numeric domains, invalid classId, invalid card refs, invalid formation refs, invalid enemy snapshots, and bad combat-result shapes with clear errors.
+RunState save validation now enforces currentNodeIndex >= 0, level >= 1, exp >= 0, expToNextLevel > 0, gold >= 0, maxHp > 0, currentHp between 0 and maxHp, formationSlotCount > 0, chestCapacity >= formationSlotCount, and nonnegative completed/defeated counters.
+Saved RunFormationSlot validation enforces exact slot indexes 1..formationSlotCount, no gaps/duplicates, owned-card references, no card inside locked slots, and correct size-2 adjacent locked footprints.
+createRunSaveData() and serializeRunState() accept an optional active cardDefinitionsById registry; the UI passes its active registry so expanded content can serialize without falling back to the MVP monster-card registry.
 The browser UI has minimal localStorage controls: Save Run, Load Run, and Clear Save. No cloud save, account system, or migration UI exists.
 New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
 RunManager owns chest/owned card state, ownedSkills, formation placement, selling, deterministic shop/event/reward choices, shop offer state, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
