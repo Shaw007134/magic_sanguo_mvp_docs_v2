@@ -105,7 +105,33 @@ export const CARD_POOL_METADATA = {
   "toxic-flame-seal": { role: "payoff", archetypes: ["Burn Engine", "Poison Inevitable", "Status Reaction"], stage: "mid", quality: 3 },
   "fever-drum": { role: "engine", archetypes: ["Burn Engine", "Drum Command", "Status Reaction"], stage: "mid", quality: 3 },
   "poisoned-net": { role: "connector", archetypes: ["Poison Inevitable", "Control Tempo", "Status Reaction"], stage: "mid", quality: 3 },
-  "burning-remedy": { role: "payoff", archetypes: ["Medic Support", "Burn Engine", "Poison Inevitable", "Status Reaction"], stage: "mid", quality: 3 }
+  "burning-remedy": { role: "payoff", archetypes: ["Medic Support", "Burn Engine", "Poison Inevitable", "Status Reaction"], stage: "mid", quality: 3 },
+
+  "quick-jab": { role: "starter", archetypes: ["Blade Tempo"], stage: "early", quality: 2 },
+  "ember-needle": { role: "starter", archetypes: ["Burn Engine", "Status Reaction"], stage: "early", quality: 2, buildVital: true },
+  "venom-prick": { role: "starter", archetypes: ["Poison Inevitable", "Status Reaction"], stage: "early", quality: 2, buildVital: true },
+  "self-starting-chant": { role: "connector", archetypes: ["Control Tempo", "Drum Command"], stage: "early", quality: 2 },
+  "cooling-fan": { role: "connector", archetypes: ["Drum Command"], stage: "mid", quality: 3 },
+  "battlefield-metronome": { role: "engine", archetypes: ["Control Tempo", "Drum Command"], stage: "mid", quality: 3 },
+  "ash-and-venom-seal": { role: "payoff", archetypes: ["Burn Engine", "Poison Inevitable", "Status Reaction"], stage: "mid", quality: 4 },
+  "green-smoke-lantern": { role: "connector", archetypes: ["Poison Inevitable", "Control Tempo", "Status Reaction"], stage: "mid", quality: 3 },
+  "menders-sash": { role: "defense", archetypes: ["Medic Support", "Armor Counter", "Status Reaction"], stage: "early", quality: 2 },
+  "toxin-brewer": { role: "connector", archetypes: ["Poison Inevitable", "Medic Support", "Status Reaction"], stage: "mid", quality: 3 },
+  "scalding-medic": { role: "defense", archetypes: ["Medic Support", "Burn Engine"], stage: "mid", quality: 3 },
+  "venom-pressure-cask": { role: "terminal", archetypes: ["Poison Inevitable"], stage: "late", quality: 5 },
+  "redline-finisher": { role: "terminal", archetypes: ["Crit Execution", "Blade Tempo"], stage: "late", quality: 5 },
+  "steady-wall-engine": { role: "terminal", archetypes: ["Armor Terminal", "Drum Command"], stage: "late", quality: 5 },
+
+  "iron-scout-saber": { role: "starter", archetypes: ["Blade Tempo", "Crit Execution"], stage: "early", quality: 3 },
+  "flank-executioner": { role: "payoff", archetypes: ["Crit Execution", "Blade Tempo"], stage: "mid", quality: 4 },
+  "command-runner": { role: "connector", archetypes: ["Drum Command", "Control Tempo"], stage: "mid", quality: 4, buildVital: true },
+  "war-kettle": { role: "connector", archetypes: ["Burn Engine", "Armor Counter"], stage: "mid", quality: 4 },
+  "siege-oil-chain": { role: "terminal", archetypes: ["Siege Fire", "Burn Engine", "Control Tempo"], stage: "late", quality: 5 },
+  "drumline-captain": { role: "engine", archetypes: ["Drum Command", "Armor Counter"], stage: "late", quality: 5 },
+  "banner-of-cinders": { role: "engine", archetypes: ["Burn Engine", "Drum Command", "Status Reaction"], stage: "mid", quality: 4 },
+  "venom-quartermaster": { role: "connector", archetypes: ["Poison Inevitable", "Medic Support", "Status Reaction"], stage: "mid", quality: 4 },
+  "bastion-foundry": { role: "terminal", archetypes: ["Armor Terminal"], stage: "late", quality: 6 },
+  "last-order-halberd": { role: "terminal", archetypes: ["Crit Execution"], stage: "late", quality: 6 }
 } as const satisfies Record<string, CardPoolMetadata>;
 
 export const STARTER_SHOP_POOL = ["rusty-blade", "wooden-shield", "oil-flask"] as const;
@@ -128,7 +154,13 @@ export const EARLY_SHOP_POOL = [
   "war-chant",
   "mud-trap",
   "venom-leech",
-  "field-triage"
+  "field-triage",
+  "quick-jab",
+  "ember-needle",
+  "venom-prick",
+  "self-starting-chant",
+  "menders-sash",
+  "iron-scout-saber"
 ] as const;
 export const MID_SHOP_POOL = [
   ...EARLY_SHOP_POOL,
@@ -157,7 +189,18 @@ export const MID_SHOP_POOL = [
   "toxic-flame-seal",
   "fever-drum",
   "poisoned-net",
-  "burning-remedy"
+  "burning-remedy",
+  "cooling-fan",
+  "battlefield-metronome",
+  "ash-and-venom-seal",
+  "green-smoke-lantern",
+  "toxin-brewer",
+  "scalding-medic",
+  "flank-executioner",
+  "command-runner",
+  "war-kettle",
+  "banner-of-cinders",
+  "venom-quartermaster"
 ] as const;
 export const LATE_SHOP_POOL = [
   ...MID_SHOP_POOL,
@@ -173,7 +216,14 @@ export const LATE_SHOP_POOL = [
   "burning-trebuchet",
   "fire-cart-battery",
   "siege-command",
-  "rotting-wine"
+  "rotting-wine",
+  "venom-pressure-cask",
+  "redline-finisher",
+  "steady-wall-engine",
+  "siege-oil-chain",
+  "drumline-captain",
+  "bastion-foundry",
+  "last-order-halberd"
 ] as const;
 
 export const EARLY_REWARD_POOL = EARLY_SHOP_POOL;
@@ -187,7 +237,13 @@ export const TERMINAL_POOL = [
   "warlords-mandate",
   "flame-ram",
   "burning-trebuchet",
-  "siege-crossbow"
+  "siege-crossbow",
+  "venom-pressure-cask",
+  "redline-finisher",
+  "steady-wall-engine",
+  "siege-oil-chain",
+  "bastion-foundry",
+  "last-order-halberd"
 ] as const;
 
 export const BUILD_VITAL_SUPPORT_POOL = [
@@ -208,7 +264,11 @@ export const BUILD_VITAL_SUPPORT_POOL = [
   "war-chant",
   "mud-trap",
   "venom-leech",
-  "field-triage"
+  "field-triage",
+  "ember-needle",
+  "venom-prick",
+  "menders-sash",
+  "command-runner"
 ] as const;
 
 export const BOSS_REWARD_POOL = [
@@ -216,6 +276,9 @@ export const BOSS_REWARD_POOL = [
   "warlords-mandate",
   "execution-halberd",
   "burning-trebuchet",
+  "bastion-foundry",
+  "last-order-halberd",
+  "redline-finisher",
   "command-gong",
   "signal-tower",
   "siege-command"
@@ -233,18 +296,18 @@ export const SKILL_REWARD_POOL = [
 ] as const;
 
 export const ARCHETYPE_POOLS = {
-  "Blade Tempo": ["rusty-blade", "patrol-spear", "twin-hook", "vanguard-saber", "left-flank-blade", "execution-halberd", "duelists-dao"],
-  "Burn Engine": ["oil-flask", "flame-spear", "fire-arrow-cart", "ember-banner", "cinder-seal", "kindling-spear", "siege-brazier"],
-  "Armor Counter": ["wooden-shield", "iron-guard", "shield-wall", "counter-stance", "veteran-plate", "frontline-bulwark"],
-  "Drum Command": ["field-drum", "spark-drum", "rallying-beat", "war-drum", "command-gong", "discipline-drill", "signal-tower"],
-  "Siege Fire": ["siege-crossbow", "fire-arrow-cart", "war-drum", "flame-ram", "burning-trebuchet", "fire-cart-battery", "siege-command"],
+  "Blade Tempo": ["rusty-blade", "quick-jab", "iron-scout-saber", "patrol-spear", "twin-hook", "vanguard-saber", "left-flank-blade", "execution-halberd", "duelists-dao", "redline-finisher"],
+  "Burn Engine": ["oil-flask", "flame-spear", "ember-needle", "fire-arrow-cart", "ember-banner", "cinder-seal", "kindling-spear", "siege-brazier", "war-kettle", "banner-of-cinders"],
+  "Armor Counter": ["wooden-shield", "iron-guard", "shield-wall", "counter-stance", "veteran-plate", "frontline-bulwark", "menders-sash", "war-kettle", "drumline-captain"],
+  "Drum Command": ["field-drum", "spark-drum", "cooling-fan", "command-runner", "battlefield-metronome", "rallying-beat", "war-drum", "command-gong", "discipline-drill", "signal-tower", "drumline-captain"],
+  "Siege Fire": ["siege-crossbow", "fire-arrow-cart", "war-drum", "flame-ram", "burning-trebuchet", "fire-cart-battery", "siege-command", "siege-oil-chain"],
   "Hybrid Bruiser": ["militia-spear", "guarded-torch", "spear-and-shield-line", "frontline-banner", "guard-captain", "burning-shield", "warlords-mandate"],
-  "Armor Terminal": ["iron-guard", "shield-wall", "veteran-plate", "battle-standard", "frontline-bulwark", "iron-bastion-strike"],
-  "Crit Execution": ["execution-halberd", "captains-finisher", "duelists-dao", "vanguard-saber", "discipline-drill"],
-  "Poison Inevitable": ["poison-needle", "toxic-lance", "venom-jar", "rotting-wine", "field-medic"],
-  "Medic Support": ["field-medic", "herbal-poultice", "wooden-shield", "frontline-banner", "iron-guard"],
-  "Control Tempo": ["war-chant", "mud-trap", "command-banner", "frost-chain", "cold-spear", "rally-drummer", "heavy-net", "poisoned-net"],
-  "Status Reaction": ["venom-leech", "toxic-flame-seal", "fever-drum", "field-triage", "poisoned-net", "burning-remedy"]
+  "Armor Terminal": ["iron-guard", "shield-wall", "veteran-plate", "battle-standard", "frontline-bulwark", "iron-bastion-strike", "steady-wall-engine", "bastion-foundry"],
+  "Crit Execution": ["iron-scout-saber", "flank-executioner", "execution-halberd", "captains-finisher", "duelists-dao", "vanguard-saber", "discipline-drill", "redline-finisher", "last-order-halberd"],
+  "Poison Inevitable": ["poison-needle", "venom-prick", "toxic-lance", "venom-jar", "rotting-wine", "field-medic", "venom-pressure-cask", "venom-quartermaster"],
+  "Medic Support": ["field-medic", "herbal-poultice", "wooden-shield", "frontline-banner", "iron-guard", "menders-sash", "toxin-brewer", "scalding-medic", "venom-quartermaster"],
+  "Control Tempo": ["war-chant", "self-starting-chant", "battlefield-metronome", "mud-trap", "command-banner", "frost-chain", "cold-spear", "rally-drummer", "heavy-net", "poisoned-net", "green-smoke-lantern", "siege-oil-chain"],
+  "Status Reaction": ["venom-leech", "toxic-flame-seal", "fever-drum", "field-triage", "poisoned-net", "burning-remedy", "ash-and-venom-seal", "green-smoke-lantern", "menders-sash", "toxin-brewer", "banner-of-cinders", "venom-quartermaster"]
 } as const satisfies Record<ArchetypeName, readonly string[]>;
 
 export const IRON_WARLORD_TERMINALS = [

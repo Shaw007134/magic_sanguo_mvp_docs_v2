@@ -1,0 +1,169 @@
+[
+  {
+    "id": "iron-scout-saber",
+    "name": "Iron Scout Saber",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical", "iron-warlord", "frequency"],
+    "cooldownTicks": 45,
+    "effects": [{ "command": "DealDamage", "amount": 1, "critChancePercent": 10, "critMultiplier": 2 }],
+    "description": "Every 0.75 seconds, deal 1 damage. 10% chance to crit for 2x damage."
+  },
+  {
+    "id": "flank-executioner",
+    "name": "Flank Executioner",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical", "execution", "iron-warlord"],
+    "cooldownTicks": 120,
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 3,
+        "conditionalMultiplier": { "targetHpBelowPercent": 50, "multiplier": 1.5 },
+        "critChancePercent": 30,
+        "critMultiplier": 2
+      }
+    ],
+    "description": "Every 2 seconds, deal 3 damage. Below 50% enemy HP, deal 1.5x damage. 30% chance to crit for 2x damage."
+  },
+  {
+    "id": "command-runner",
+    "name": "Command Runner",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["support", "haste", "drum", "iron-warlord"],
+    "cooldownTicks": 90,
+    "effects": [
+      { "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -20 },
+      { "command": "ApplyHaste", "target": "SELF", "percent": 20, "durationTicks": 60 }
+    ],
+    "description": "Every 1.5 seconds, ready adjacent allies 0.33 seconds sooner and Haste this card by 20% for 1 second."
+  },
+  {
+    "id": "war-kettle",
+    "name": "War Kettle",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["fire", "burn", "armor", "iron-warlord"],
+    "cooldownTicks": 180,
+    "effects": [
+      { "command": "GainArmor", "amount": 3 },
+      { "command": "ApplyBurn", "amount": 3, "durationTicks": 180 }
+    ],
+    "description": "Every 3 seconds, gain 3 Armor and apply 3 Burn for 3 seconds."
+  },
+  {
+    "id": "siege-oil-chain",
+    "name": "Siege Oil Chain",
+    "tier": "GOLD",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["fire", "burn", "siege", "control", "iron-warlord"],
+    "cooldownTicks": 300,
+    "effects": [
+      { "command": "ApplyBurn", "amount": 4, "durationTicks": 240 },
+      { "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 15, "durationTicks": 60 }
+    ],
+    "description": "Size 2. Every 5 seconds, apply 4 Burn for 4 seconds and Slow the leftmost enemy active card by 15% for 1 second."
+  },
+  {
+    "id": "drumline-captain",
+    "name": "Drumline Captain",
+    "tier": "GOLD",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["support", "drum", "armor", "iron-warlord"],
+    "triggers": [
+      {
+        "hook": "OnCooldownModified",
+        "conditions": { "cardIsAdjacent": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [
+          { "command": "GainArmor", "amount": 2 },
+          { "command": "DealDamage", "amount": 1 }
+        ]
+      }
+    ],
+    "description": "When an adjacent ally changes cooldowns, gain 2 Armor and deal 1 damage. Can trigger once every 2 seconds."
+  },
+  {
+    "id": "banner-of-cinders",
+    "name": "Banner of Cinders",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["fire", "banner", "reaction", "iron-warlord"],
+    "triggers": [
+      {
+        "hook": "OnStatusTicked",
+        "conditions": { "status": "Burn", "appliedByOwner": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ApplyHaste", "target": "ADJACENT_ALLY", "percent": 10, "durationTicks": 60 }]
+      }
+    ],
+    "description": "When your Burn deals damage, Haste adjacent active allies by 10% for 1 second. Can trigger once every 2 seconds."
+  },
+  {
+    "id": "venom-quartermaster",
+    "name": "Venom Quartermaster",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["poison", "heal", "iron-warlord", "reaction"],
+    "triggers": [
+      {
+        "hook": "OnStatusTicked",
+        "conditions": { "status": "Poison", "appliedByOwner": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "HealHP", "amount": 1 }]
+      }
+    ],
+    "description": "When your Poison deals damage, heal 1 HP. Can trigger once every 2 seconds."
+  },
+  {
+    "id": "bastion-foundry",
+    "name": "Bastion Foundry",
+    "tier": "JADE",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["armor", "physical", "terminal", "iron-warlord"],
+    "cooldownTicks": 360,
+    "effects": [
+      { "command": "GainArmor", "amount": 8 },
+      {
+        "command": "DealDamage",
+        "amount": 3,
+        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 80 }
+      }
+    ],
+    "description": "Size 2. Every 6 seconds, gain 8 Armor and deal 3 damage plus 80% of your Armor."
+  },
+  {
+    "id": "last-order-halberd",
+    "name": "Last Order Halberd",
+    "tier": "JADE",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["weapon", "physical", "execution", "terminal", "iron-warlord"],
+    "cooldownTicks": 360,
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 6,
+        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 30 },
+        "conditionalMultiplier": { "targetHpBelowPercent": 35, "multiplier": 2 },
+        "critChancePercent": 25,
+        "critMultiplier": 2
+      }
+    ],
+    "description": "Size 2. Every 6 seconds, deal 6 damage plus 30% of enemy missing HP. Below 35% enemy HP, deal 2x damage. 25% chance to crit for 2x damage."
+  }
+]

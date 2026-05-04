@@ -2,13 +2,15 @@
 
 ## Content Pack Summary
 
-Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 13B adds deterministic terminal mechanics for direct DealDamage effects, Phase 14B adds a small controlled Poison/Heal pack, Phase 14C adds a small Haste/Slow/Freeze control pack, Phase 14D adds a small status reaction pack, and Phase 14E gives Burn its decay identity:
+Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 13B adds deterministic terminal mechanics for direct DealDamage effects, Phase 14B adds a small controlled Poison/Heal pack, Phase 14C adds a small Haste/Slow/Freeze control pack, Phase 14D adds a small status reaction pack, Phase 14E gives Burn its decay identity, and Phase 15A expands the build surface plus deterministic balance reports without adding new mechanics:
 
-- 37 general cards in `data/cards/general/`.
-- 20 Iron Warlord cards in `data/cards/class_iron_warlord/`.
+- 51 general cards in `data/cards/general/`.
+- 30 Iron Warlord cards in `data/cards/class_iron_warlord/`.
 - 8 modifier-only skills in `data/skills/mvp_skills.json`.
 - 8 new normal/elite monster templates.
 - 3 boss templates, with `gate-captain-elite` wired as the current final boss.
+- Level-based player formation growth from 4 slots to 16 slots by level 10.
+- Fixed run card capacity of 16 owned cards.
 - Deterministic critical hits for direct DealDamage effects.
 - Limited terminal scaling from owner Armor, owner max HP, and target missing HP.
 - Tier-aware curated shop, event, and reward pools.
@@ -16,6 +18,7 @@ Phase 13A adds a large MVP content pack without adding engine mechanics, Phase 1
 - Temporary Haste/Slow/Freeze card-control effects.
 - Deterministic status reaction triggers for status damage and real healing.
 - Burn as burst DOT that loses 1 Burn after each Burn damage event.
+- `pnpm balance:report` writes deterministic JSON/Markdown reports under `debug/balance-reports/`.
 
 All content uses only DealDamage, GainArmor, ApplyBurn, ApplyPoison, HealHP, ModifyCooldown, ApplyHaste, ApplySlow, ApplyFreeze, Armor, Burn, Poison, existing trigger hooks/conditions, and existing ModifierSystem operations. Phase 14E does not add new resources, lifesteal keywords, overheal, absorb layers, cleanse/silence, card movement/destruction, control payoff conditions, or new statuses.
 
@@ -44,9 +47,11 @@ Iron Warlord should feel like discipline, formation timing, armor-backed aggress
 - General poison and heal: persistent Poison applicators plus conservative HP recovery tools.
 - General control: temporary Haste connectors, Slow disruption, and short Freeze effects.
 - General reactions: passive status combo connectors with explicit internal cooldowns.
+- General Phase 15A combo tools: low-frequency enablers, Burn/Poison bridges, Heal/Armor bridges, and neutral terminals for report fixtures.
 - Iron Warlord blade tempo: disciplined Weapon adjacency and finishers.
 - Iron Warlord command armor: drums, banners, and Armor-backed aggression.
 - Iron Warlord siege fire: size-2 fire engines and slow siege terminals.
+- Iron Warlord Phase 15A archetypes: crit execution, cooldown engines, siege/burn bridges, Armor terminals, and late payoff cards.
 
 ## Card Role Table
 
@@ -287,6 +292,61 @@ Control statuses still affect active cards only. Haste, Slow, and Freeze do not 
 
 Phase 14E tuning was intentionally conservative: Guarded Torch, Burning Shield, Kindling Spear, and Cinder Seal moved from 1 Burn to 2 Burn so single-application Burn cards do not collapse into invisible one-damage effects after decay. Poison, Heal, control values, and new card count were not raised.
 
+## Phase 15A Build Surface And Reports
+
+Phase 15A expands build testing space without adding new commands, statuses, resources, hooks, targeting modes, defense layers, or combat timing rules.
+
+Formation growth:
+
+- Level 1-2: 4 player formation slots.
+- Level 3-4: 6 slots.
+- Level 5-6: 8 slots.
+- Level 7: 10 slots.
+- Level 8: 12 slots.
+- Level 9: 14 slots.
+- Level 10: 16 slots.
+
+New slots are appended. Existing cards, size-2 locked footprints, owned cards, and chest state are preserved. Enemy formations may stay smaller and readable.
+
+Chest capacity is fixed at 16 owned cards for the whole run. Formation cards and chest-view cards are both part of ownedCards; chest view remains derived as owned cards not referenced by formation slots. This gives enough board space for real combo builds while preserving a hard deckbuilding choice.
+
+New Phase 15A card families:
+
+| Family | Examples | Purpose | Risk to watch |
+| --- | --- | --- | --- |
+| Crit / Execution | Quick Jab, Iron Scout Saber, Flank Executioner, Redline Finisher, Last Order Halberd | Chip early, then convert missing HP and crit fields into a clear finisher | boss burst below 10 seconds |
+| Cooldown / Haste | Cooling Fan, Command Runner, Battlefield Metronome, Drumline Captain | Test adjacent cooldown support and modest broad Haste | runaway activation counts |
+| Frequency enablers | Ember Needle, Venom Prick, Quick Jab | Feed status reactions without being strong alone | low readability trigger spam |
+| Status bridges | Ash and Venom Seal, Green Smoke Lantern, Mender's Sash, Toxin Brewer, Banner of Cinders, Venom Quartermaster | Test Burn/Poison/Heal/Armor bridges using existing OnStatusTicked and OnHealReceived | Poison + Heal + Slow stall |
+| Terminals | Venom Pressure Cask, Steady Wall Engine, Siege Oil Chain, Bastion Foundry | Give expanded boards clear payoff cards | too much burst or no clear terminal |
+
+Balance report command:
+
+```text
+pnpm balance:report
+```
+
+The command builds TypeScript, runs actual CombatEngine simulations using FormationSnapshot fixtures, and writes JSON plus Markdown to `debug/balance-reports/latest.json` and `debug/balance-reports/latest.md`. The debug folder is gitignored.
+
+Required sample builds:
+
+| Build | Archetype | What it proves |
+| --- | --- | --- |
+| Starter Blade | Blade Tempo | baseline onboarding combat |
+| Starter Burn | Burn Engine | decaying Burn early pressure |
+| Starter Poison | Poison Inevitable | persistent Poison pacing |
+| Armor Terminal | Armor Terminal | Armor payoff without immortal stall |
+| Crit Execution | Crit Execution | direct-damage crit and missing-HP finishers |
+| Siege Burn | Siege Fire | slow Burn siege pressure after decay |
+| Poison + Heal | Poison / Medic | long-fight sustain and stall risk |
+| Burn + Reaction | Status Reaction | Burn tick reactions stay bounded |
+| Haste / Drum Tempo | Drum Command | cooldown engines do not run away |
+| Control Slow / Freeze | Control Tempo | conservative control avoids lock chains |
+| Frequency Status Soup | Frequency / Status Reaction | high-frequency trigger readability |
+| Late 16-slot Combo Build | Mixed terminal combo | expanded-board stress test |
+
+Report warnings are intentionally simple first-pass heuristics: near timeouts, fast deaths, stall risk, cooldown runaway risk, Freeze/Slow lock risk, Poison+Heal stall, weak Burn, overly strong Poison, bursty terminals, trigger spam, low card contribution, no clear terminal, and too many zero contributors.
+
 ## Iron Warlord Terminal/Core Cards
 
 | Terminal | Mechanic | Support cards | Weakness |
@@ -307,6 +367,7 @@ Tier controls baseline reward excitement; mechanism controls build identity. Bro
 - Level 5-7: mid rewards more often contain engines, payoffs, and terminals; rare Jade cards can appear through pool composition.
 - Level 8-10: late pools contain Gold/Jade terminal options plus build-vital Bronze/Silver support and duplicates.
 - Boss/late contexts bias toward terminal, payoff, and strong support cards without guaranteeing a perfect build.
+- Level 8+ shops and rewards are expected to show at least one terminal/payoff/engine often enough to test expanded boards, while still preserving build-vital support and duplicate upgrade routes.
 
 Quality progression is role-aware. Higher-level rewards should have more engine, payoff, terminal, and build-completion options than level 1 rewards, while early rewards remain onboarding-safe.
 
@@ -319,7 +380,7 @@ Pool definitions live in `src/content/cards/contentPools.ts` near the active car
 - Early shop/reward: Bronze/Silver starter, defense, Burn, Poison, Heal, simple Haste/Slow, and low-risk reaction connector cards.
 - Mid shop/reward: early cards plus stronger engines, payoffs, Poison/Heal support, control cards, reaction cards, and size-2 build-around cards.
 - Late shop/reward: mid cards plus Iron Warlord terminals, strong drum/siege engines, and build-vital support.
-- Terminal pool: Execution Halberd, Captain's Finisher, Iron Bastion Strike, Warlord's Mandate, Flame Ram, Burning Trebuchet, Siege Crossbow.
+- Terminal pool: Execution Halberd, Captain's Finisher, Iron Bastion Strike, Warlord's Mandate, Flame Ram, Burning Trebuchet, Siege Crossbow, Venom Pressure Cask, Redline Finisher, Steady Wall Engine, Siege Oil Chain, Bastion Foundry, and Last Order Halberd.
 - Build-vital support pool: low/mid-tier enablers that keep builds coherent.
 - Boss reward pool: terminal and late support cards for future boss reward tuning.
 - Skill reward pool: the 8 MVP modifier-only skills.
@@ -344,6 +405,7 @@ Optional-card count is capped in `MonsterGenerator`: tutorial monsters add no op
 - Training Staff remains intentionally plain as legacy onboarding content.
 - Patrol Spear and Militia Spear are simple early cards and may need upgrade tuning if they fall off too quickly.
 - Some passive payoffs are harder to feel without richer replay grouping.
+- New Phase 15A bridge passives should be monitored for zero contribution because their value depends on adjacent status/heal density.
 
 ## Current Limitations
 
@@ -353,6 +415,7 @@ Optional-card count is capped in `MonsterGenerator`: tutorial monsters add no op
 - Haste/Slow/Freeze are cooldown/activation control only; there are no control-status payoff conditions, cleanse/silence, card movement, card destruction, or final control UI treatments.
 - No boss rotation unless implemented later.
 - No branching map, async PvP, cloud save/account system, or final art/Pixi/Phaser.
+- Balance report thresholds are first-pass deterministic heuristics, not automatic balance verdicts.
 
 ## Intentionally Not Implemented Yet
 

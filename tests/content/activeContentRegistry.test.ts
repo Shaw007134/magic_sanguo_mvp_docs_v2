@@ -2,11 +2,13 @@ import { describe, expect, it } from "vitest";
 
 import classBladeTempoJson from "../../data/cards/class_iron_warlord/blade_tempo.json" with { type: "json" };
 import classCommandArmorJson from "../../data/cards/class_iron_warlord/command_armor.json" with { type: "json" };
+import classPhase15BuildArchetypesJson from "../../data/cards/class_iron_warlord/phase15_build_archetypes.json" with { type: "json" };
 import classSiegeFireJson from "../../data/cards/class_iron_warlord/siege_fire.json" with { type: "json" };
 import generalBasicKitJson from "../../data/cards/general/basic_kit.json" with { type: "json" };
 import generalBladeArmorJson from "../../data/cards/general/blade_armor.json" with { type: "json" };
 import generalControlJson from "../../data/cards/general/control.json" with { type: "json" };
 import generalFireSupportJson from "../../data/cards/general/fire_support.json" with { type: "json" };
+import generalPhase15ComboToolsJson from "../../data/cards/general/phase15_combo_tools.json" with { type: "json" };
 import generalPoisonHealJson from "../../data/cards/general/poison_heal.json" with { type: "json" };
 import generalReactionsJson from "../../data/cards/general/reactions.json" with { type: "json" };
 import monsterCardsJson from "../../data/cards/monster_cards.json" with { type: "json" };
@@ -58,6 +60,7 @@ const generalJsonCards = [
   ...generalBasicKitJson,
   ...generalBladeArmorJson,
   ...generalFireSupportJson,
+  ...generalPhase15ComboToolsJson,
   ...generalPoisonHealJson,
   ...generalControlJson,
   ...generalReactionsJson
@@ -65,7 +68,8 @@ const generalJsonCards = [
 const ironWarlordJsonCards = [
   ...classBladeTempoJson,
   ...classCommandArmorJson,
-  ...classSiegeFireJson
+  ...classSiegeFireJson,
+  ...classPhase15BuildArchetypesJson
 ] as readonly CardDefinition[];
 const activeCardsById = getActiveCardDefinitionsById();
 const PHASE_13A_CARD_IDS = new Set([...generalJsonCards, ...ironWarlordJsonCards].map((card) => card.id));
@@ -87,10 +91,15 @@ const NEW_MONSTER_IDS = [
 
 const BOSS_IDS = ["gate-captain-elite", "siege-marshal", "cinder-strategist"] as const;
 
+const PHASE_15A_CARD_IDS = [
+  ...generalPhase15ComboToolsJson,
+  ...classPhase15BuildArchetypesJson
+].map((card) => card.id);
+
 describe("active MVP content registry", () => {
   it("loads the requested card pack sizes and preserves legacy MVP cards", () => {
-    expect(generalJsonCards).toHaveLength(37);
-    expect(ironWarlordJsonCards).toHaveLength(20);
+    expect(generalJsonCards).toHaveLength(51);
+    expect(ironWarlordJsonCards).toHaveLength(30);
     expect(GENERAL_CARD_DEFINITIONS).toEqual(generalJsonCards);
     expect(IRON_WARLORD_CARD_DEFINITIONS).toEqual(ironWarlordJsonCards);
     expect(LEGACY_MVP_CARD_DEFINITIONS).toEqual(monsterCardsJson);
@@ -101,7 +110,7 @@ describe("active MVP content registry", () => {
     for (const card of [...generalJsonCards, ...ironWarlordJsonCards]) {
       expect(activeCardsById.has(card.id), card.id).toBe(true);
     }
-    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 57);
+    expect(ACTIVE_CARD_DEFINITIONS).toHaveLength(monsterCardsJson.length + 81);
   });
 
   it("all active cards validate and use only MVP grammar", () => {
@@ -125,6 +134,41 @@ describe("active MVP content registry", () => {
     ).map((card) => card.id);
 
     expect(legacyBurnTickCards).toEqual([]);
+  });
+
+  it("Phase 15A cards are active, pooled, and avoid legacy Burn tick content", () => {
+    expect(PHASE_15A_CARD_IDS).toHaveLength(24);
+    for (const cardId of PHASE_15A_CARD_IDS) {
+      const card = activeCardsById.get(cardId);
+      expect(card, cardId).toBeDefined();
+      expect(CARD_POOL_METADATA[cardId as keyof typeof CARD_POOL_METADATA], `metadata:${cardId}`).toBeDefined();
+      expect((card?.triggers ?? []).some((trigger) => trigger.hook === "OnBurnTick"), cardId).toBe(false);
+    }
+
+    expect(MID_SHOP_POOL).toEqual(expect.arrayContaining([
+      "battlefield-metronome",
+      "ash-and-venom-seal",
+      "command-runner",
+      "banner-of-cinders",
+      "venom-quartermaster"
+    ]));
+    expect(LATE_SHOP_POOL).toEqual(expect.arrayContaining([
+      "venom-pressure-cask",
+      "redline-finisher",
+      "steady-wall-engine",
+      "siege-oil-chain",
+      "bastion-foundry",
+      "last-order-halberd"
+    ]));
+    expect(TERMINAL_POOL).toEqual(expect.arrayContaining([
+      "venom-pressure-cask",
+      "redline-finisher",
+      "steady-wall-engine",
+      "siege-oil-chain",
+      "bastion-foundry",
+      "last-order-halberd"
+    ]));
+    expect(STARTER_SHOP_POOL.some((cardId) => PHASE_15A_CARD_IDS.includes(cardId))).toBe(false);
   });
 
   it("all skill JSON loads, validates, and stays modifier-only", () => {

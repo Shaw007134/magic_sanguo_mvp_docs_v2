@@ -1,7 +1,7 @@
 export const COMBATANT_KINDS = ["PLAYER", "MONSTER", "BOSS", "ASYNC_PLAYER"] as const;
 export const FORMATION_SLOT_COUNT = 4;
 export const MIN_FORMATION_SLOT_INDEX = 1;
-export const MAX_FORMATION_SLOT_INDEX = FORMATION_SLOT_COUNT;
+export const MAX_FORMATION_SLOT_INDEX = 16;
 
 export type CombatantKind = (typeof COMBATANT_KINDS)[number];
 

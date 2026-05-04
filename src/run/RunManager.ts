@@ -30,7 +30,8 @@ import type {
 import type { SkillInstance } from "./skills/Skill.js";
 import { createSkillModifiers, getSkillDefinitionsById } from "./skills/skillDefinitions.js";
 
-const FORMATION_SLOT_COUNT = 4;
+export const STARTING_FORMATION_SLOT_COUNT = 4;
+export const FIXED_CHEST_CAPACITY = 16;
 const PLAYER_STARTING_MAX_HP = 40;
 const CLASS_ID_PLACEHOLDER = "class-placeholder";
 const EXP_TO_NEXT_LEVEL = 10;
@@ -109,9 +110,9 @@ export class RunManager {
         maxHp: PLAYER_STARTING_MAX_HP,
         ownedCards: [],
         ownedSkills: [],
-        formationSlots: createEmptyFormationSlots(FORMATION_SLOT_COUNT),
-        formationSlotCount: FORMATION_SLOT_COUNT,
-        chestCapacity: FORMATION_SLOT_COUNT * 2,
+        formationSlots: createEmptyFormationSlots(STARTING_FORMATION_SLOT_COUNT),
+        formationSlotCount: STARTING_FORMATION_SLOT_COUNT,
+        chestCapacity: FIXED_CHEST_CAPACITY,
         currentNode: node,
         currentChoices: [],
         pendingRewardChoices: [],
@@ -529,6 +530,9 @@ export class RunManager {
       exp: nextLevel >= MAX_LEVEL ? 0 : this.state.exp - this.state.expToNextLevel,
       maxHp: nextMaxHp,
       currentHp: nextMaxHp,
+      formationSlotCount: getFormationSlotCountForLevel(nextLevel),
+      formationSlots: growFormationSlots(this.state.formationSlots, getFormationSlotCountForLevel(nextLevel)),
+      chestCapacity: FIXED_CHEST_CAPACITY,
       currentNode: levelUpNode,
       currentChoices: choices,
       pendingLevelUpChoices: choices,
@@ -708,6 +712,16 @@ export function getRunNodes(): readonly RunNode[] {
   return STARTER_NODES;
 }
 
+export function getFormationSlotCountForLevel(level: number): number {
+  if (level >= 10) return 16;
+  if (level >= 9) return 14;
+  if (level >= 8) return 12;
+  if (level >= 7) return 10;
+  if (level >= 5) return 8;
+  if (level >= 3) return 6;
+  return STARTING_FORMATION_SLOT_COUNT;
+}
+
 function getNodeForIndex(index: number, level: number, status: RunState["status"]): RunNode {
   if (status !== "IN_PROGRESS") {
     return RUN_RESULT_NODE;
@@ -863,6 +877,21 @@ function updateCurrentShopState(
 
 function createEmptyFormationSlots(slotCount: number): readonly RunFormationSlot[] {
   return Array.from({ length: slotCount }, (_, index) => ({ slotIndex: index + 1 }));
+}
+
+function growFormationSlots(
+  formationSlots: readonly RunFormationSlot[],
+  targetSlotCount: number
+): readonly RunFormationSlot[] {
+  if (formationSlots.length >= targetSlotCount) {
+    return formationSlots;
+  }
+  return [
+    ...formationSlots,
+    ...Array.from({ length: targetSlotCount - formationSlots.length }, (_, index) => ({
+      slotIndex: formationSlots.length + index + 1
+    }))
+  ];
 }
 
 function getPlacedCardIds(formationSlots: readonly RunFormationSlot[]): ReadonlySet<string> {

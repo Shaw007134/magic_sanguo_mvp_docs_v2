@@ -3,7 +3,7 @@ import type { FormationSnapshot } from "../../model/formation.js";
 import type { CombatResult } from "../../model/result.js";
 import { getActiveCardDefinitionsById } from "../../content/cards/activeCards.js";
 import { validateFormationSnapshot } from "../../validation/formationValidation.js";
-import { RunManager } from "../RunManager.js";
+import { FIXED_CHEST_CAPACITY, RunManager } from "../RunManager.js";
 import type {
   EventChoice,
   LevelUpRewardChoice,
@@ -196,6 +196,9 @@ export function validateRunState(
   const ownedCardsResult = validateCardInstances(state["ownedCards"], cardDefinitionsById, "ownedCards");
   if (!ownedCardsResult.ok) return ownedCardsResult;
   const ownedCards = ownedCardsResult.value;
+  if (ownedCards.length > (state["chestCapacity"] as number)) {
+    return { ok: false, error: "ownedCards exceeds chestCapacity." };
+  }
   const ownedCardIds = new Set(ownedCards.map((card) => card.instanceId));
 
   const skillsResult = validateSkillInstances(state["ownedSkills"]);
@@ -355,8 +358,8 @@ function validateNumericDomains(state: Readonly<Record<string, unknown>>): SaveL
   if ((state["currentHp"] as number) > (state["maxHp"] as number)) {
     return { ok: false, error: "RunState field currentHp must be <= maxHp." };
   }
-  if ((state["chestCapacity"] as number) < (state["formationSlotCount"] as number)) {
-    return { ok: false, error: "RunState field chestCapacity must be >= formationSlotCount." };
+  if ((state["chestCapacity"] as number) !== FIXED_CHEST_CAPACITY) {
+    return { ok: false, error: `RunState field chestCapacity must be ${FIXED_CHEST_CAPACITY}.` };
   }
   return { ok: true, value: true };
 }

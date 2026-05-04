@@ -7,6 +7,7 @@ export interface ChestPanelProps {
   readonly selectedCardId?: string;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly formationSlotCount: number;
+  readonly chestCapacity?: number;
   readonly ownedCardCount: number;
   readonly onCardClick: (cardInstanceId: string) => void;
   readonly onSell: (cardInstanceId: string) => void;
@@ -17,7 +18,7 @@ export function ChestPanel(props: ChestPanelProps) {
     <section className="panel">
       <div className="panel-heading">
         <h2>Chest</h2>
-        <span>{props.ownedCardCount}/{getChestCapacity(props.formationSlotCount)}</span>
+        <span>{props.ownedCardCount}/{props.chestCapacity ?? getChestCapacity(props.formationSlotCount)}</span>
       </div>
       <div className="card-list">
         {props.cards.map((card) => {

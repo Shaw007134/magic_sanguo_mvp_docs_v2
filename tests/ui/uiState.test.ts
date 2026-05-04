@@ -32,8 +32,9 @@ function state(cards: readonly CardInstance[] = [cardInstance("bronze", "rusty-b
 }
 
 describe("uiState", () => {
-  it("chest capacity equals formation slot count times 2", () => {
-    expect(getChestCapacity(4)).toBe(8);
+  it("chest capacity stays fixed as formation slots grow", () => {
+    expect(getChestCapacity(4)).toBe(16);
+    expect(getChestCapacity(16)).toBe(16);
   });
 
   it("selling BRONZE card adds 1 gold and removes card from chest", () => {

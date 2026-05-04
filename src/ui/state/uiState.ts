@@ -2,6 +2,7 @@ import type { CardDefinition, CardInstance } from "../../model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../../model/formation.js";
 
 export const FORMATION_SLOT_COUNT = 4;
+export const FIXED_CHEST_CAPACITY = 16;
 
 export const SELL_PRICES = {
   BRONZE: 1,
@@ -28,7 +29,8 @@ export function createEmptyFormationSlots(slotCount = FORMATION_SLOT_COUNT): rea
 }
 
 export function getChestCapacity(formationSlotCount: number): number {
-  return formationSlotCount * 2;
+  void formationSlotCount;
+  return FIXED_CHEST_CAPACITY;
 }
 
 export function getPlacedCardIds(formationSlots: readonly UiFormationSlot[]): ReadonlySet<string> {

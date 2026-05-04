@@ -217,6 +217,7 @@ export function App() {
           selectedCardId={selection?.kind === "CHEST" ? selection.cardInstanceId : undefined}
           cardDefinitionsById={cardDefinitionsById}
           formationSlotCount={runState.formationSlotCount}
+          chestCapacity={runState.chestCapacity}
           ownedCardCount={runState.ownedCards.length}
           onCardClick={handleChestCardClick}
           onSell={handleSell}

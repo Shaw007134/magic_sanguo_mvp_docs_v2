@@ -5,8 +5,10 @@ import generalBasicKitJson from "../../../data/cards/general/basic_kit.json" wit
 import generalBladeArmorJson from "../../../data/cards/general/blade_armor.json" with { type: "json" };
 import generalControlJson from "../../../data/cards/general/control.json" with { type: "json" };
 import generalFireSupportJson from "../../../data/cards/general/fire_support.json" with { type: "json" };
+import generalPhase15ComboToolsJson from "../../../data/cards/general/phase15_combo_tools.json" with { type: "json" };
 import generalPoisonHealJson from "../../../data/cards/general/poison_heal.json" with { type: "json" };
 import generalReactionsJson from "../../../data/cards/general/reactions.json" with { type: "json" };
+import classPhase15BuildArchetypesJson from "../../../data/cards/class_iron_warlord/phase15_build_archetypes.json" with { type: "json" };
 import monsterCardsJson from "../../../data/cards/monster_cards.json" with { type: "json" };
 import type { CardDefinition } from "../../model/card.js";
 
@@ -14,6 +16,7 @@ export const GENERAL_CARD_DEFINITIONS = [
   ...generalBasicKitJson,
   ...generalBladeArmorJson,
   ...generalFireSupportJson,
+  ...generalPhase15ComboToolsJson,
   ...generalPoisonHealJson,
   ...generalControlJson,
   ...generalReactionsJson
@@ -22,7 +25,8 @@ export const GENERAL_CARD_DEFINITIONS = [
 export const IRON_WARLORD_CARD_DEFINITIONS = [
   ...classBladeTempoJson,
   ...classCommandArmorJson,
-  ...classSiegeFireJson
+  ...classSiegeFireJson,
+  ...classPhase15BuildArchetypesJson
 ] as readonly CardDefinition[];
 
 export const LEGACY_MVP_CARD_DEFINITIONS = monsterCardsJson as readonly CardDefinition[];

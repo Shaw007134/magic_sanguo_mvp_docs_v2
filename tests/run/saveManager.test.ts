@@ -57,6 +57,15 @@ function chooseFirstEvent(manager: RunManager) {
   expect(result.ok).toBe(true);
 }
 
+function chooseFirstLevelReward(manager: RunManager) {
+  const choice = manager.state.pendingLevelUpChoices[0];
+  if (!choice) {
+    throw new Error("Missing level-up choice.");
+  }
+  const result = manager.chooseLevelUpReward(choice.id);
+  expect(result.ok).toBe(true);
+}
+
 function fakeCombatResult(winner: CombatResult["winner"] = "PLAYER"): CombatResult {
   return {
     winner,
@@ -308,6 +317,33 @@ describe("SaveManager", () => {
     expect(loaded.state.ownedSkills).toEqual(manager.state.ownedSkills);
   });
 
+  it("save/load preserves grown formation slot count, layout, and fixed chest capacity", () => {
+    const manager = createNewRun("save-grown-formation");
+    manager.addCardToChest("rusty-blade");
+    manager.addCardToChest("spark-drum");
+    const blade = manager.state.ownedCards.find((card) => card.definitionId === "rusty-blade")!;
+    const drum = manager.state.ownedCards.find((card) => card.definitionId === "spark-drum")!;
+    manager.moveCardFromChestToFormation(blade.instanceId, 1);
+    manager.moveCardFromChestToFormation(drum.instanceId, 3);
+
+    manager.gainExp(70, "test");
+    while (manager.state.pendingLevelUpChoices.length > 0 && manager.state.level < 8) {
+      chooseFirstLevelReward(manager);
+    }
+    expect(manager.state.level).toBe(8);
+    expect(manager.state.formationSlotCount).toBe(12);
+    expect(manager.state.chestCapacity).toBe(16);
+
+    const loaded = roundTrip(manager);
+
+    expect(loaded.state.formationSlotCount).toBe(12);
+    expect(loaded.state.formationSlots).toEqual(manager.state.formationSlots);
+    expect(loaded.state.formationSlots[0]).toMatchObject({ slotIndex: 1, cardInstanceId: blade.instanceId });
+    expect(loaded.state.formationSlots[2]).toMatchObject({ slotIndex: 3, cardInstanceId: drum.instanceId });
+    expect(loaded.state.formationSlots[3]).toMatchObject({ slotIndex: 4, lockedByInstanceId: drum.instanceId });
+    expect(loaded.state.chestCapacity).toBe(16);
+  });
+
   it("enemy FormationSnapshot and completed battle result remain identical after load", () => {
     const manager = createNewRun("save-battle");
     reachFirstBattle(manager);
@@ -426,7 +462,20 @@ describe("SaveManager", () => {
       state["chestCapacity"] = 3;
     });
     expect(badChest.ok).toBe(false);
-    expect(badChest.ok ? "" : badChest.error).toContain("chestCapacity must be >= formationSlotCount");
+    expect(badChest.ok ? "" : badChest.error).toContain("chestCapacity must be 16");
+  });
+
+  it("corrupt save with too many owned cards fails fixed chest validation", () => {
+    const manager = createNewRun("save-too-many-owned");
+    const result = deserializeMutatedState(manager, (state) => {
+      state["ownedCards"] = Array.from({ length: 17 }, (_, index) => ({
+        instanceId: `run-card-${index + 1}`,
+        definitionId: "rusty-blade"
+      }));
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.error).toContain("ownedCards exceeds chestCapacity");
   });
 
   it("corrupt save with slotIndex outside formationSlotCount fails", () => {

@@ -56,4 +56,26 @@ describe("formation presentation", () => {
     expect(html).toContain("Spark Drum");
     expect(html).not.toContain("Size 2 footprint");
   });
+
+  it("expanded 16 slot player formation renders without breaking slot labels", () => {
+    const state: UiInventoryState = {
+      gold: 10,
+      ownedCards: [{ instanceId: "blade", definitionId: "rusty-blade" }],
+      formationSlots: createEmptyFormationSlots(16)
+    };
+    const placed = moveCardFromChestToFormation(state, "blade", 16, cardDefinitionsById);
+    const html = renderToStaticMarkup(
+      <FormationEditor
+        slots={placed.formationSlots}
+        cardInstancesById={new Map(placed.ownedCards.map((card) => [card.instanceId, card]))}
+        cardDefinitionsById={cardDefinitionsById}
+        onSlotClick={() => undefined}
+        onRemove={() => undefined}
+      />
+    );
+
+    expect(html).toContain("16 slots");
+    expect(html).toContain("Slot 16");
+    expect(html).toContain("Rusty Blade");
+  });
 });

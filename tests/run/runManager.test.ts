@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { CombatResult } from "../../src/model/result.js";
-import { createNewRun, getRunNodes, RunManager } from "../../src/run/RunManager.js";
+import { createNewRun, getFormationSlotCountForLevel, getRunNodes, RunManager } from "../../src/run/RunManager.js";
 
 function chooseFirstShop(manager: RunManager) {
   const choice = manager.state.currentChoices.find((candidate) => candidate.type === "SHOP_CARD");
@@ -116,7 +116,7 @@ describe("RunManager", () => {
     expect(manager.state.ownedCards).toEqual([]);
     expect(manager.state.formationSlotCount).toBe(4);
     expect(manager.state.formationSlots).toHaveLength(4);
-    expect(manager.state.chestCapacity).toBe(8);
+    expect(manager.state.chestCapacity).toBe(16);
     expect(manager.state.maxHp).toBe(40);
     expect(manager.state.currentHp).toBe(40);
     expect(manager.getCurrentNode().type).toBe("SHOP");
@@ -125,6 +125,69 @@ describe("RunManager", () => {
     expect(manager.getCurrentNode().type).toBe("SHOP");
     leaveShop(manager);
     expect(manager.getCurrentNode().type).toBe("EVENT");
+  });
+
+  it("formation slot count grows by level up to 16 while chest capacity stays fixed", () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(getFormationSlotCountForLevel)).toEqual([
+      4,
+      4,
+      6,
+      6,
+      8,
+      8,
+      10,
+      12,
+      14,
+      16
+    ]);
+
+    const manager = createNewRun("slot-growth");
+    const observed = new Map<number, number>([[manager.state.level, manager.state.formationSlotCount]]);
+    manager.gainExp(90, "test");
+    while (manager.state.pendingLevelUpChoices.length > 0) {
+      observed.set(manager.state.level, manager.state.formationSlotCount);
+      expect(manager.state.formationSlots).toHaveLength(manager.state.formationSlotCount);
+      expect(manager.state.chestCapacity).toBe(16);
+      chooseFirstLevelReward(manager);
+    }
+
+    expect([...observed.entries()]).toEqual([
+      [1, 4],
+      [2, 4],
+      [3, 6],
+      [4, 6],
+      [5, 8],
+      [6, 8],
+      [7, 10],
+      [8, 12],
+      [9, 14],
+      [10, 16]
+    ]);
+  });
+
+  it("slot growth preserves existing placements and size 2 locked footprints", () => {
+    const manager = createNewRun("slot-growth-layout");
+    manager.addCardToChest("rusty-blade");
+    manager.addCardToChest("spark-drum");
+    const blade = manager.state.ownedCards.find((card) => card.definitionId === "rusty-blade")!;
+    const drum = manager.state.ownedCards.find((card) => card.definitionId === "spark-drum")!;
+    expect(manager.moveCardFromChestToFormation(blade.instanceId, 1).ok).toBe(true);
+    expect(manager.moveCardFromChestToFormation(drum.instanceId, 3).ok).toBe(true);
+
+    const before = manager.state.formationSlots;
+    manager.gainExp(20, "test");
+    while (manager.state.pendingLevelUpChoices.length > 0 && manager.state.level < 3) {
+      chooseFirstLevelReward(manager);
+    }
+
+    expect(manager.state.level).toBe(3);
+    expect(manager.state.formationSlotCount).toBe(6);
+    expect(manager.state.formationSlots.slice(0, before.length)).toEqual(before);
+    expect(manager.state.formationSlots[4]).toEqual({ slotIndex: 5 });
+    expect(manager.state.formationSlots[5]).toEqual({ slotIndex: 6 });
+    expect(manager.state.formationSlots[2]).toMatchObject({ slotIndex: 3, cardInstanceId: drum.instanceId });
+    expect(manager.state.formationSlots[3]).toMatchObject({ slotIndex: 4, lockedByInstanceId: drum.instanceId });
+    expect(manager.state.ownedCards.map((card) => card.instanceId)).toEqual([blade.instanceId, drum.instanceId]);
   });
 
   it("resolving shop/event gives 1 exp and winning battle gives total 4 exp", () => {

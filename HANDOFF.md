@@ -81,7 +81,7 @@ BurnTick damage remains summarized as statusDamage.Burn and is also attributed b
 PoisonTick damage is summarized as statusDamage.Poison and attributed by applying card through summary.statusDamageByCard.Poison when source data exists.
 Minimal React + Vite UI prototype is implemented under src/ui.
 UI state helpers live under src/ui/state and own only local gold, chest, formation, and selling state.
-Chest capacity is formation slot count x 2. With 4 formation slots, the MVP chest capacity is 8.
+Chest capacity is fixed at 16 owned cards for the whole run. Formation cards are part of ownedCards, and chest view is derived as ownedCards not referenced by formation slots.
 Selling from chest uses MVP prices: BRONZE 1, SILVER 2, GOLD 4, JADE 8, CELESTIAL 12. Formation cards cannot be sold until removed back to chest.
 The UI builds a player FormationSnapshot from final pre-combat formation state and passes it to CombatEngine. React components do not calculate combat results.
 Enemy preview uses Phase 9 MonsterGenerator and renders locked adjacent slots as size-2 footprints.
@@ -101,7 +101,7 @@ Loading a battle node therefore uses saved enemy state and does not reroll throu
 Loading shop/event/reward/level-up nodes uses serialized currentChoices and pending choices, not regenerated choices.
 If a completed battle result is waiting for Continue, pendingCombatResult/pendingBattleResult are serialized so replay/summary UI resumes without rerunning combat.
 SaveManager returns typed SaveLoadResult values for success/failure and fails corrupt JSON, unsupported versions, missing required fields, unknown node types, invalid numeric domains, invalid classId, invalid card refs, invalid formation refs, invalid enemy snapshots, and bad combat-result shapes with clear errors.
-RunState save validation now enforces currentNodeIndex >= 0, level >= 1, exp >= 0, expToNextLevel > 0, gold >= 0, maxHp > 0, currentHp between 0 and maxHp, formationSlotCount > 0, chestCapacity >= formationSlotCount, and nonnegative completed/defeated counters.
+RunState save validation now enforces currentNodeIndex >= 0, level >= 1, exp >= 0, expToNextLevel > 0, gold >= 0, maxHp > 0, currentHp between 0 and maxHp, formationSlotCount > 0, chestCapacity exactly 16, ownedCards not exceeding chestCapacity, and nonnegative completed/defeated counters.
 Saved RunFormationSlot validation enforces exact slot indexes 1..formationSlotCount, no gaps/duplicates, owned-card references, no card inside locked slots, and correct size-2 adjacent locked footprints.
 createRunSaveData() and serializeRunState() accept an optional active cardDefinitionsById registry; the UI passes its active registry so expanded content can serialize without falling back to the MVP monster-card registry.
 Phase 13A active content registry lives at src/content/cards/activeCards.ts and combines legacy MVP monster cards, general cards, and Iron Warlord cards.
@@ -111,6 +111,8 @@ Phase 14B adds a small Poison/Heal pack in data/cards/general/poison_heal.json: 
 Phase 14C adds a small Haste/Slow/Freeze control pack in data/cards/general/control.json: War Chant, Mud Trap, Command Banner, Frost Chain, Cold Spear, Rally Drummer, and Heavy Net.
 Phase 14D adds a small status reaction pack in data/cards/general/reactions.json: Venom Leech, Toxic Flame Seal, Fever Drum, Field Triage, Poisoned Net, and Burning Remedy.
 Phase 14E makes Burn decay after each tick and lightly retunes amount-1 Burn cards so Burn stays readable as short-term pressure.
+Phase 15A adds build-surface expansion content in data/cards/general/phase15_combo_tools.json and data/cards/class_iron_warlord/phase15_build_archetypes.json using only existing mechanics.
+Phase 15A adds deterministic balance/readability reports through `pnpm balance:report`, implemented by scripts/runBalanceReport.ts and src/debug/BalanceReport.ts. Reports write to gitignored debug/balance-reports/.
 Expanded skill content is data-driven through data/skills/mvp_skills.json and still instantiates only existing ModifierSystem modifiers.
 Fire Study remains intentionally tag-based: it uses sourceHasTag "fire" to boost direct card damage from fire-tagged cards. DealDamage now supports damageType FIRE, but Fire Study has not been migrated to damageType-based support.
 Quick Hands and Drumline Training use ADD_COOLDOWN_RECOVERY_RATE instead of a small multiplier because cooldown recovery modifiers round to integer MVP values; a 1.25x multiplier on base recovery 1 is effectively a no-op.
@@ -130,7 +132,9 @@ Saved shop/reward choices are restored exactly and do not reroll through newer q
 MonsterGenerator now limits optional-card count by difficulty/day so early normal monsters are simpler and elite/boss formations can be more complete.
 Fire support remains tag-based, not damageType-based. Burn tick damage is attributed to applying cards for replay/summary readability, but Burn ticks are not boosted by Fire Study or crit mechanics.
 The browser UI has minimal localStorage controls: Save Run, Load Run, and Clear Save. No cloud save, account system, or migration UI exists.
-New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
+New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 16, max HP 40, and current HP 40.
+Player formation slots grow deterministically by level: levels 1-2 have 4 slots, 3-4 have 6, 5-6 have 8, level 7 has 10, level 8 has 12, level 9 has 14, and level 10 has 16.
+Slot growth appends empty slots and preserves existing card placements, size-2 locked footprints, owned card order, and save/load layout exactly.
 RunManager owns chest/owned card state, ownedSkills, formation placement, selling, deterministic shop/event/reward choices, shop offer state, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
 Run node order begins with starter shop, starter event, easy battle, reward, shop, normal battle, reward, shop, elite battle, reward, then repeats shop/event -> battle -> reward cycles until level 10.
 At level 10, the next generated battle node is the final boss; boss win sets VICTORY and boss loss/draw sets DEFEAT.
@@ -172,6 +176,7 @@ Phase 14A implemented explicit DealDamage damageType support and Burn source att
 Phase 14B implemented persistent Poison, HealHP, Poison/Heal replay and summary support, and a small controlled Poison/Heal content pack.
 Phase 14D implemented OnStatusTicked and OnHealReceived status reaction/combo support with active-card-only control targeting.
 Phase 14E implemented Burn decay identity polish while preserving Poison persistence and reaction safety.
+Phase 15A implemented formation growth, fixed 16-card owned capacity, a 24-card combo-testing content pack, curated pool updates, and deterministic balance/readability reports.
 Phase 14A is damage type and source attribution foundation.
 Phase 14B is Poison and Heal.
 Phase 14C implemented Haste, Slow, and Freeze.
@@ -184,10 +189,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 15:
+Phase 15B:
 
 ```text
-Run an end-to-end balance/readability playtest pass focused on Burn vs Poison identity, reaction clarity, and terminal build pacing before adding any new mechanics.
+Use `pnpm balance:report` output plus manual playtests to tune Phase 15A card numbers and warning thresholds before adding new mechanics.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -197,7 +202,7 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 ```text
 1. Run pnpm dev.
 2. Open the shown localhost URL.
-3. Confirm the run starts at level 1, 0 EXP, 10 gold, 40/40 HP, 0 owned cards, and a starter shop.
+3. Confirm the run starts at level 1, 0 EXP, 10 gold, 40/40 HP, 0 owned cards, 4 formation slots, chest capacity 16, and a starter shop.
 4. Buy one or more starter shop cards, confirm the shop stays open, then click Leave Shop and confirm shop EXP is granted once.
 5. Select a chest card, click a formation slot, and confirm the card moves out of chest view.
 6. Start battle, confirm Replay and Summary populate, then click Continue to reach reward or defeat.
@@ -234,6 +239,9 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 37. Confirm monsters later in the run feel more complete/harder, not just higher HP.
 38. Confirm save/load works after acquiring new cards, upgraded duplicates, skills, pending rewards, and terminal cards.
 39. Confirm no player-facing raw ticks/internal hook names appear.
+40. Level a run and confirm formation slots append at levels 3, 5, 7, 8, 9, and 10 without moving existing cards.
+41. Confirm owned card capacity remains 16 even when formation reaches 16 slots.
+42. Run pnpm balance:report and inspect debug/balance-reports/latest.md for the 12 sample builds and warning flags.
 ```
 
 ## Rules For Next Agent
@@ -254,4 +262,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use a Phase 15 balance/readability playtest prompt focused on Burn vs Poison identity, reaction clarity, and terminal build pacing before adding new mechanics.
+Use a Phase 15B balance/readability tuning prompt focused on the Phase 15A report output, expanded 16-slot builds, and card-number adjustments before adding new mechanics.

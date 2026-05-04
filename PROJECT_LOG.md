@@ -1345,3 +1345,59 @@ Known issues:
 - No new statuses, trigger hooks, control payoff conditions, cleanse/silence, card movement/destruction, absorb layers, resources, or PvP work were added.
 Next recommended task:
 - Run a balance/readability playtest pass focused on Burn vs Poison identity, reaction clarity, and terminal build pacing before adding new mechanics.
+
+---
+
+Date: 2026-05-04
+Phase: 15A
+Task: Implemented build surface expansion and deterministic balance/readability report foundation.
+Files changed:
+- data/cards/general/phase15_combo_tools.json
+- data/cards/class_iron_warlord/phase15_build_archetypes.json
+- scripts/runBalanceReport.ts
+- src/debug/BalanceReport.ts
+- src/content/cards/activeCards.ts
+- src/content/cards/contentPools.ts
+- src/model/formation.ts
+- src/run/RunManager.ts
+- src/run/save/SaveManager.ts
+- src/ui/App.tsx
+- src/ui/components/ChestPanel.tsx
+- src/ui/state/uiState.ts
+- src/ui/styles.css
+- tests/content/activeContentRegistry.test.ts
+- tests/debug/balanceReport.test.ts
+- tests/run/runManager.test.ts
+- tests/run/saveManager.test.ts
+- tests/ui/formationPresentation.test.tsx
+- tests/ui/uiState.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- New runs start with 4 formation slots and fixed chestCapacity 16.
+- Formation slots grow by level to 6, 8, 10, 12, 14, and 16 while preserving existing placements and size-2 locked footprints.
+- Save/load preserves grown formation slot count, exact formation layout, and fixed chestCapacity 16.
+- Owned card capacity is capped at 16 and save validation rejects ownedCards beyond fixed capacity.
+- UI state and formation presentation render expanded 16-slot formations without using the old slot-count x 2 chest rule.
+- Phase 15A cards validate, are included in active content, appear in curated pools, and do not use legacy OnBurnTick.
+- Starter pools remain simple while mid/late pools expose engines, bridges, and terminals.
+- Balance report sample fixtures create valid FormationSnapshot values, required build ids exist, report output is deterministic for a seed, and report entries include warnings, damage, status damage, healing, armor, activations, triggers, crits, and contributors.
+Content added:
+- 14 general combo tools covering fast chip, Burn/Poison frequency, modest Haste/cooldown support, status bridges, Heal/Armor bridges, and neutral terminals.
+- 10 Iron Warlord archetype cards covering crit execution, cooldown engines, Burn siege bridges, Poison/Heal support, Armor terminals, and late payoffs.
+Report command:
+- pnpm balance:report
+- Outputs gitignored JSON and Markdown at debug/balance-reports/latest.json and debug/balance-reports/latest.md.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+- pnpm balance:report
+Known issues:
+- Balance report warning thresholds are first-pass deterministic heuristics, not final balance judgments.
+- New Phase 15A numbers are intentionally conservative enough for combo testing but still need playtest tuning from report output.
+- Enemy formations remain smaller/readable in this phase; only player formation growth reaches 16 slots.
+- No new statuses, commands, hooks, targeting modes, resources, defense layers, combat timing rules, or progression/save models were added.
+Next recommended task:
+- Phase 15B: use balance report output and manual playtests to tune card numbers, report thresholds, and readability before adding mechanics.
