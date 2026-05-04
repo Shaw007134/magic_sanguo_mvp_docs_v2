@@ -36,12 +36,12 @@
     "type": "ACTIVE",
     "size": 1,
     "tags": ["support", "haste", "drum", "iron-warlord"],
-    "cooldownTicks": 90,
+    "cooldownTicks": 120,
     "effects": [
-      { "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -20 },
+      { "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -15 },
       { "command": "ApplyHaste", "target": "SELF", "percent": 20, "durationTicks": 60 }
     ],
-    "description": "Every 1.5 seconds, ready adjacent allies 0.33 seconds sooner and Haste this card by 20% for 1 second."
+    "description": "Every 2 seconds, ready adjacent allies 0.25 seconds sooner and Haste this card by 20% for 1 second."
   },
   {
     "id": "war-kettle",
@@ -137,14 +137,14 @@
     "tags": ["armor", "physical", "terminal", "iron-warlord"],
     "cooldownTicks": 360,
     "effects": [
-      { "command": "GainArmor", "amount": 8 },
+      { "command": "GainArmor", "amount": 6 },
       {
         "command": "DealDamage",
         "amount": 3,
-        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 80 }
+        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 55 }
       }
     ],
-    "description": "Size 2. Every 6 seconds, gain 8 Armor and deal 3 damage plus 80% of your Armor."
+    "description": "Size 2. Every 6 seconds, gain 6 Armor and deal 3 damage plus 55% of your Armor."
   },
   {
     "id": "last-order-halberd",
@@ -158,12 +158,12 @@
       {
         "command": "DealDamage",
         "amount": 6,
-        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 30 },
-        "conditionalMultiplier": { "targetHpBelowPercent": 35, "multiplier": 2 },
-        "critChancePercent": 25,
+        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 24 },
+        "conditionalMultiplier": { "targetHpBelowPercent": 35, "multiplier": 1.5 },
+        "critChancePercent": 20,
         "critMultiplier": 2
       }
     ],
-    "description": "Size 2. Every 6 seconds, deal 6 damage plus 30% of enemy missing HP. Below 35% enemy HP, deal 2x damage. 25% chance to crit for 2x damage."
+    "description": "Size 2. Every 6 seconds, deal 6 damage plus 24% of enemy missing HP. Below 35% enemy HP, deal 1.5x damage. 20% chance to crit for 2x damage."
   }
 ]

@@ -18,8 +18,8 @@
     "size": 1,
     "tags": ["slow", "control"],
     "cooldownTicks": 300,
-    "effects": [{ "command": "ApplySlow", "target": "OPPOSITE_ENEMY_CARD", "percent": 30, "durationTicks": 180 }],
-    "description": "Every 5 seconds, Slow the opposite enemy active card by 30% for 3 seconds."
+    "effects": [{ "command": "ApplySlow", "target": "OPPOSITE_ENEMY_CARD", "percent": 25, "durationTicks": 120 }],
+    "description": "Every 5 seconds, Slow the opposite enemy active card by 25% for 2 seconds."
   },
   {
     "id": "command-banner",
@@ -76,7 +76,7 @@
     "size": 1,
     "tags": ["slow", "control"],
     "cooldownTicks": 300,
-    "effects": [{ "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 25, "durationTicks": 240 }],
-    "description": "Every 5 seconds, Slow the leftmost enemy active card by 25% for 4 seconds."
+    "effects": [{ "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 20, "durationTicks": 120 }],
+    "description": "Every 5 seconds, Slow the leftmost enemy active card by 20% for 2 seconds."
   }
 ]

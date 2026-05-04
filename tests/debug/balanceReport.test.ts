@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
 import {
+  BALANCE_WARNING_FLAGS,
   createBalanceReport,
   createSampleFormation,
   REQUIRED_SAMPLE_BUILD_IDS,
+  renderMarkdownReport,
   SAMPLE_BUILDS
 } from "../../src/debug/BalanceReport.js";
 import { createNewRun } from "../../src/run/RunManager.js";
@@ -48,10 +50,16 @@ describe("Phase 15A balance report", () => {
     const report = createBalanceReport("balance-report-fields");
 
     expect(report.entries.length).toBe(SAMPLE_BUILDS.length * 6);
+    expect(report.entries.length).toBe(72);
+    expect(report.sampleBuilds).toHaveLength(12);
     expect(report.entries.every((entry) => entry.seed === "balance-report-fields")).toBe(true);
+    for (const buildId of REQUIRED_SAMPLE_BUILD_IDS) {
+      expect(report.entries.some((entry) => entry.buildId === buildId && entry.enemyId === "gate-captain-elite"), buildId).toBe(true);
+    }
     for (const entry of report.entries) {
       expect(entry.timeElapsedSeconds).toBeGreaterThan(0);
       expect(entry.warningFlags).toBeDefined();
+      expect(entry.warningFlags.every((flag) => BALANCE_WARNING_FLAGS.includes(flag))).toBe(true);
       expect(entry.cardActivationsByCard).toBeDefined();
       expect(entry.damageByCard).toBeDefined();
       expect(entry.statusDamageByApplyingCard).toBeDefined();
@@ -68,6 +76,24 @@ describe("Phase 15A balance report", () => {
       expect(entry.totalDirectDamage).toBeGreaterThanOrEqual(0);
       expect(entry.burnDamage).toBeGreaterThanOrEqual(0);
       expect(entry.poisonDamage).toBeGreaterThanOrEqual(0);
+      expect(entry.topContributors.length).toBeGreaterThan(0);
     }
+  });
+
+  it("renders the readable Phase 15B Markdown sections deterministically", () => {
+    const report = createBalanceReport("balance-report-markdown");
+    const first = renderMarkdownReport(report);
+    const second = renderMarkdownReport(report);
+
+    expect(second).toBe(first);
+    expect(first).toContain("## Executive Summary");
+    expect(first).toContain("## Build Summary");
+    expect(first).toContain("## Boss Summary");
+    expect(first).toContain("## Warning Hotspots");
+    expect(first).toContain("## Top Contributor Snapshot");
+    expect(first).toContain("## Trigger / Activation Outliers");
+    expect(first).toContain("## Tuning Notes");
+    expect(first).toContain("## Fight Detail");
+    expect(first).toContain("Gate Captain Elite");
   });
 });

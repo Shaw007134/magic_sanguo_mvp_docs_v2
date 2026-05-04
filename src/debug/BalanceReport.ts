@@ -11,22 +11,25 @@ import type { SkillInstance } from "../run/skills/Skill.js";
 const REPORT_SEED = "phase-15a-balance-report";
 export const BALANCE_REPORT_MAX_COMBAT_TICKS = RUN_MAX_COMBAT_TICKS;
 
-export type BalanceWarningFlag =
-  | "TIMEOUT_OR_NEAR_TIMEOUT"
-  | "PLAYER_DEAD_TOO_FAST"
-  | "ENEMY_DEAD_TOO_FAST"
-  | "STALL_RISK"
-  | "RUNAWAY_COOLDOWN_RISK"
-  | "FREEZE_LOCK_RISK"
-  | "SLOW_STALL_RISK"
-  | "POISON_HEAL_STALL_RISK"
-  | "BURN_TOO_WEAK"
-  | "POISON_TOO_STRONG"
-  | "TERMINAL_TOO_BURSTY"
-  | "LOW_READABILITY_TRIGGER_SPAM"
-  | "LOW_CARD_CONTRIBUTION"
-  | "NO_CLEAR_TERMINAL"
-  | "TOO_MANY_ZERO_CONTRIBUTORS";
+export const BALANCE_WARNING_FLAGS = [
+  "TIMEOUT_OR_NEAR_TIMEOUT",
+  "PLAYER_DEAD_TOO_FAST",
+  "ENEMY_DEAD_TOO_FAST",
+  "STALL_RISK",
+  "RUNAWAY_COOLDOWN_RISK",
+  "FREEZE_LOCK_RISK",
+  "SLOW_STALL_RISK",
+  "POISON_HEAL_STALL_RISK",
+  "BURN_TOO_WEAK",
+  "POISON_TOO_STRONG",
+  "TERMINAL_TOO_BURSTY",
+  "LOW_READABILITY_TRIGGER_SPAM",
+  "LOW_CARD_CONTRIBUTION",
+  "NO_CLEAR_TERMINAL",
+  "TOO_MANY_ZERO_CONTRIBUTORS"
+] as const;
+
+export type BalanceWarningFlag = (typeof BALANCE_WARNING_FLAGS)[number];
 
 export interface BalanceSampleBuild {
   readonly id: string;
@@ -442,20 +445,20 @@ function collectWarningFlags(input: {
     .reduce((total, [, amount]) => total + amount, 0);
 
   if (elapsedSeconds >= 55) flags.add("TIMEOUT_OR_NEAR_TIMEOUT");
-  if (input.result.winner === "ENEMY" && elapsedSeconds <= 12) flags.add("PLAYER_DEAD_TOO_FAST");
-  if (input.result.winner === "PLAYER" && isBoss && elapsedSeconds < 10) flags.add("ENEMY_DEAD_TOO_FAST");
+  if (input.result.winner === "ENEMY" && elapsedSeconds <= 10) flags.add("PLAYER_DEAD_TOO_FAST");
+  if (input.result.winner === "PLAYER" && isBoss && elapsedSeconds < 8) flags.add("ENEMY_DEAD_TOO_FAST");
   if (elapsedSeconds >= 45 && (input.healing + input.armorGained + input.summary.armorBlocked) > input.totalDirectDamage) flags.add("STALL_RISK");
-  if (Math.max(0, ...Object.values(input.summary.activationsByCard)) >= 45) flags.add("RUNAWAY_COOLDOWN_RISK");
+  if (Math.max(0, ...Object.values(input.summary.activationsByCard)) >= 55) flags.add("RUNAWAY_COOLDOWN_RISK");
   if (sumValues(input.freezeApplications) >= 8 || (sumValues(input.freezeApplications) >= 4 && enemyActivationTotal <= 2)) flags.add("FREEZE_LOCK_RISK");
-  if (sumValues(input.slowApplications) >= 12) flags.add("SLOW_STALL_RISK");
+  if (sumValues(input.slowApplications) >= 14 && elapsedSeconds >= 20) flags.add("SLOW_STALL_RISK");
   if ((input.summary.statusDamage.Poison ?? 0) >= 25 && input.healing >= 10 && elapsedSeconds >= 35) flags.add("POISON_HEAL_STALL_RISK");
   if (input.build.archetype.includes("Burn") && (input.summary.statusDamage.Burn ?? 0) < 4 && elapsedSeconds >= 20) flags.add("BURN_TOO_WEAK");
   if ((input.summary.statusDamage.Poison ?? 0) > input.totalDirectDamage * 1.5 && elapsedSeconds >= 30) flags.add("POISON_TOO_STRONG");
-  if (isBoss && Math.max(0, ...Object.values(input.summary.damageByCard)) >= 45) flags.add("TERMINAL_TOO_BURSTY");
-  if (Math.max(0, ...Object.values(input.triggerCountByCard)) > 30) flags.add("LOW_READABILITY_TRIGGER_SPAM");
-  if (input.summary.topContributors.length > 0 && input.summary.topContributors[0]?.score < 8 && elapsedSeconds >= 20) flags.add("NO_CLEAR_TERMINAL");
-  if (Object.values(input.summary.damageByCard).filter((value) => value <= 0).length >= 4) flags.add("TOO_MANY_ZERO_CONTRIBUTORS");
-  if (input.summary.topContributors.some((entry) => entry.score <= 1)) flags.add("LOW_CARD_CONTRIBUTION");
+  if (isBoss && elapsedSeconds < 15 && Math.max(0, ...Object.values(input.summary.damageByCard)) >= 50) flags.add("TERMINAL_TOO_BURSTY");
+  if (Math.max(0, ...Object.values(input.triggerCountByCard)) > 35) flags.add("LOW_READABILITY_TRIGGER_SPAM");
+  if (input.build.level >= 7 && input.summary.topContributors.length > 0 && input.summary.topContributors[0]?.score < 8 && elapsedSeconds >= 15) flags.add("NO_CLEAR_TERMINAL");
+  if (elapsedSeconds >= 8 && Object.values(input.summary.damageByCard).filter((value) => value <= 0).length >= 4) flags.add("TOO_MANY_ZERO_CONTRIBUTORS");
+  if (elapsedSeconds >= 8 && input.summary.topContributors.some((entry) => entry.score <= 1)) flags.add("LOW_CARD_CONTRIBUTION");
 
   return [...flags].sort();
 }
@@ -469,10 +472,78 @@ function roundSeconds(value: number): number {
 }
 
 export function renderMarkdownReport(report: BalanceReport): string {
+  const warningCounts = countWarnings(report.entries);
+  const totalFights = report.entries.length;
+  const playerWins = report.entries.filter((entry) => entry.winner === "PLAYER").length;
+  const timeoutCount = warningCounts.TIMEOUT_OR_NEAR_TIMEOUT ?? 0;
+  const buildSummaries = summarizeByBuild(report.entries);
+  const bossEntries = report.entries.filter((entry) => entry.enemyId === "gate-captain-elite" || entry.enemyId === "siege-marshal");
+  const hotspots = report.entries
+    .filter((entry) => entry.warningFlags.some((flag) => isSeriousWarning(flag)))
+    .sort(compareEntryRisk)
+    .slice(0, 12);
+  const triggerOutliers = collectOutliers(report.entries, "triggerCountByCard", 20);
+  const activationOutliers = collectOutliers(report.entries, "cardActivationsByCard", 45);
   const lines = [
-    "# Phase 15A Balance Report",
+    "# Phase 15B Balance Report",
     "",
     `Seed: ${report.seed}`,
+    "",
+    "## Executive Summary",
+    "",
+    `- Total fights: ${totalFights}`,
+    `- Player win rate: ${formatPercent(playerWins / Math.max(1, totalFights))}`,
+    `- Timeout or near-timeout count: ${timeoutCount}`,
+    `- Most common warnings: ${formatWarningCounts(warningCounts, 5)}`,
+    "",
+    "## Build Summary",
+    "",
+    "| Build | Win Rate | Avg Time | Main Warnings |",
+    "| --- | ---: | ---: | --- |",
+    ...buildSummaries.map((summary) =>
+      `| ${summary.buildName} | ${formatPercent(summary.playerWins / summary.fights)} | ${roundSeconds(summary.totalTime / summary.fights)}s | ${formatWarningCounts(summary.warningCounts, 3)} |`
+    ),
+    "",
+    "## Boss Summary",
+    "",
+    "| Build | Boss | Winner | Time | Warnings |",
+    "| --- | --- | --- | ---: | --- |",
+    ...bossEntries.map((entry) =>
+      `| ${entry.buildName} | ${entry.enemyName} | ${entry.winner} | ${entry.timeElapsedSeconds}s | ${entry.warningFlags.join(", ") || "None"} |`
+    ),
+    "",
+    "## Warning Hotspots",
+    "",
+    hotspots.length > 0 ? "| Build | Enemy | Winner | Time | Warnings |" : "No serious warning hotspots.",
+    ...(hotspots.length > 0 ? [
+      "| --- | --- | --- | ---: | --- |",
+      ...hotspots.map((entry) =>
+        `| ${entry.buildName} | ${entry.enemyName} | ${entry.winner} | ${entry.timeElapsedSeconds}s | ${entry.warningFlags.join(", ")} |`
+      )
+    ] : []),
+    "",
+    "## Top Contributor Snapshot",
+    "",
+    "| Build | Enemy | Top Contributor | Score |",
+    "| --- | --- | --- | ---: |",
+    ...report.entries.map((entry) => {
+      const top = entry.topContributors[0];
+      return `| ${entry.buildName} | ${entry.enemyName} | ${top?.sourceId ?? "None"} | ${top?.score ?? 0} |`;
+    }),
+    "",
+    "## Trigger / Activation Outliers",
+    "",
+    triggerOutliers.length > 0 ? "Trigger outliers:" : "Trigger outliers: None.",
+    ...triggerOutliers.map((outlier) => `- ${outlier.sourceId}: ${outlier.count} triggers in ${outlier.buildName} vs ${outlier.enemyName}`),
+    "",
+    activationOutliers.length > 0 ? "Activation outliers:" : "Activation outliers: None.",
+    ...activationOutliers.map((outlier) => `- ${outlier.sourceId}: ${outlier.count} activations in ${outlier.buildName} vs ${outlier.enemyName}`),
+    "",
+    "## Tuning Notes",
+    "",
+    ...createTuningNotes(warningCounts),
+    "",
+    "## Fight Detail",
     "",
     "| Build | Enemy | Winner | Time | Burn | Poison | Healing | Warnings |",
     "| --- | --- | --- | ---: | ---: | ---: | ---: | --- |"
@@ -482,4 +553,130 @@ export function renderMarkdownReport(report: BalanceReport): string {
   }
   lines.push("");
   return lines.join("\n");
+}
+
+interface BuildReportSummary {
+  readonly buildId: string;
+  readonly buildName: string;
+  readonly fights: number;
+  readonly playerWins: number;
+  readonly totalTime: number;
+  readonly warningCounts: Partial<Record<BalanceWarningFlag, number>>;
+}
+
+interface ReportOutlier {
+  readonly buildName: string;
+  readonly enemyName: string;
+  readonly sourceId: string;
+  readonly count: number;
+}
+
+function summarizeByBuild(entries: readonly BalanceReportEntry[]): readonly BuildReportSummary[] {
+  const byBuild = new Map<string, {
+    buildId: string;
+    buildName: string;
+    fights: number;
+    playerWins: number;
+    totalTime: number;
+    warningCounts: Partial<Record<BalanceWarningFlag, number>>;
+  }>();
+  for (const entry of entries) {
+    const summary = byBuild.get(entry.buildId) ?? {
+      buildId: entry.buildId,
+      buildName: entry.buildName,
+      fights: 0,
+      playerWins: 0,
+      totalTime: 0,
+      warningCounts: {}
+    };
+    summary.fights += 1;
+    summary.playerWins += entry.winner === "PLAYER" ? 1 : 0;
+    summary.totalTime += entry.timeElapsedSeconds;
+    for (const warning of entry.warningFlags) {
+      summary.warningCounts[warning] = (summary.warningCounts[warning] ?? 0) + 1;
+    }
+    byBuild.set(entry.buildId, summary);
+  }
+  return [...byBuild.values()];
+}
+
+function countWarnings(entries: readonly BalanceReportEntry[]): Partial<Record<BalanceWarningFlag, number>> {
+  const counts: Partial<Record<BalanceWarningFlag, number>> = {};
+  for (const entry of entries) {
+    for (const warning of entry.warningFlags) {
+      counts[warning] = (counts[warning] ?? 0) + 1;
+    }
+  }
+  return counts;
+}
+
+function formatWarningCounts(
+  counts: Partial<Record<BalanceWarningFlag, number>>,
+  limit: number
+): string {
+  const ranked = Object.entries(counts)
+    .filter((entry): entry is [BalanceWarningFlag, number] => entry[1] > 0)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit);
+  return ranked.length > 0 ? ranked.map(([warning, count]) => `${warning} (${count})`).join(", ") : "None";
+}
+
+function isSeriousWarning(flag: BalanceWarningFlag): boolean {
+  return flag === "TIMEOUT_OR_NEAR_TIMEOUT" ||
+    flag === "PLAYER_DEAD_TOO_FAST" ||
+    flag === "STALL_RISK" ||
+    flag === "RUNAWAY_COOLDOWN_RISK" ||
+    flag === "FREEZE_LOCK_RISK" ||
+    flag === "POISON_HEAL_STALL_RISK" ||
+    flag === "TERMINAL_TOO_BURSTY";
+}
+
+function compareEntryRisk(a: BalanceReportEntry, b: BalanceReportEntry): number {
+  const warningDelta = b.warningFlags.length - a.warningFlags.length;
+  if (warningDelta !== 0) return warningDelta;
+  return b.timeElapsedSeconds - a.timeElapsedSeconds;
+}
+
+function collectOutliers(
+  entries: readonly BalanceReportEntry[],
+  field: "triggerCountByCard" | "cardActivationsByCard",
+  threshold: number
+): readonly ReportOutlier[] {
+  return entries.flatMap((entry) =>
+    Object.entries(entry[field])
+      .filter(([, count]) => count >= threshold)
+      .map(([sourceId, count]) => ({
+        buildName: entry.buildName,
+        enemyName: entry.enemyName,
+        sourceId,
+        count
+      }))
+  ).sort((a, b) => b.count - a.count || a.sourceId.localeCompare(b.sourceId)).slice(0, 12);
+}
+
+function createTuningNotes(counts: Partial<Record<BalanceWarningFlag, number>>): readonly string[] {
+  const notes: string[] = [];
+  if ((counts.TERMINAL_TOO_BURSTY ?? 0) > 0) {
+    notes.push("- Terminal burst remains present; check Armor and missing-HP terminal numbers before adding stronger bosses.");
+  }
+  if ((counts.RUNAWAY_COOLDOWN_RISK ?? 0) > 0) {
+    notes.push("- Cooldown engine outliers remain; keep adjacent cooldown and broad Haste values modest.");
+  }
+  if ((counts.STALL_RISK ?? 0) > 0 || (counts.TIMEOUT_OR_NEAR_TIMEOUT ?? 0) > 0) {
+    notes.push("- Some fights still approach stall; avoid raising Heal, Armor, Slow, or Freeze until those entries are reviewed.");
+  }
+  if ((counts.BURN_TOO_WEAK ?? 0) === 0) {
+    notes.push("- Burn currently avoids weak-pressure flags after decay; future buffs should be small and aimed at readability.");
+  }
+  if ((counts.POISON_TOO_STRONG ?? 0) === 0 && (counts.POISON_HEAL_STALL_RISK ?? 0) === 0) {
+    notes.push("- Poison/Heal is not currently tripping long-fight inevitability or stall flags.");
+  }
+  if (notes.length === 0) {
+    notes.push("- No warning family dominates this report; use manual playtests for feel before changing numbers.");
+  }
+  return notes;
+}
+
+function formatPercent(value: number): string {
+  return `${Math.round(value * 100)}%`;
 }

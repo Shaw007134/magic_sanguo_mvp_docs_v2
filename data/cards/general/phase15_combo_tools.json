@@ -17,12 +17,12 @@
     "type": "ACTIVE",
     "size": 1,
     "tags": ["fire", "burn", "frequency"],
-    "cooldownTicks": 60,
+    "cooldownTicks": 90,
     "effects": [
       { "command": "DealDamage", "amount": 1, "damageType": "FIRE" },
       { "command": "ApplyBurn", "amount": 1, "durationTicks": 120 }
     ],
-    "description": "Every 1 second, deal 1 Fire damage and apply 1 Burn for 2 seconds."
+    "description": "Every 1.5 seconds, deal 1 Fire damage and apply 1 Burn for 2 seconds."
   },
   {
     "id": "venom-prick",
@@ -31,9 +31,9 @@
     "type": "ACTIVE",
     "size": 1,
     "tags": ["poison", "frequency"],
-    "cooldownTicks": 60,
+    "cooldownTicks": 90,
     "effects": [{ "command": "ApplyPoison", "amount": 1 }],
-    "description": "Every 1 second, apply 1 Poison."
+    "description": "Every 1.5 seconds, apply 1 Poison."
   },
   {
     "id": "self-starting-chant",
@@ -53,9 +53,9 @@
     "type": "ACTIVE",
     "size": 1,
     "tags": ["support", "tempo"],
-    "cooldownTicks": 120,
-    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -20 }],
-    "description": "Every 2 seconds, ready adjacent allies 0.33 seconds sooner."
+    "cooldownTicks": 150,
+    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -15 }],
+    "description": "Every 2.5 seconds, ready adjacent allies 0.25 seconds sooner."
   },
   {
     "id": "battlefield-metronome",
@@ -65,8 +65,8 @@
     "size": 1,
     "tags": ["support", "haste", "drum"],
     "cooldownTicks": 360,
-    "effects": [{ "command": "ApplyHaste", "target": "OWNER_ALL_CARDS", "percent": 12, "durationTicks": 180 }],
-    "description": "Every 6 seconds, Haste all your active cards by 12% for 3 seconds."
+    "effects": [{ "command": "ApplyHaste", "target": "OWNER_ALL_CARDS", "percent": 10, "durationTicks": 120 }],
+    "description": "Every 6 seconds, Haste all your active cards by 10% for 2 seconds."
   },
   {
     "id": "ash-and-venom-seal",
@@ -177,13 +177,13 @@
       {
         "command": "DealDamage",
         "amount": 4,
-        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 25 },
+        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 20 },
         "conditionalMultiplier": { "targetHpBelowPercent": 40, "multiplier": 1.5 },
         "critChancePercent": 20,
         "critMultiplier": 2
       }
     ],
-    "description": "Size 2. Every 5 seconds, deal 4 damage plus 25% of enemy missing HP. Below 40% enemy HP, deal 1.5x damage. 20% chance to crit for 2x damage."
+    "description": "Size 2. Every 5 seconds, deal 4 damage plus 20% of enemy missing HP. Below 40% enemy HP, deal 1.5x damage. 20% chance to crit for 2x damage."
   },
   {
     "id": "steady-wall-engine",
@@ -194,9 +194,9 @@
     "tags": ["armor", "support", "terminal"],
     "cooldownTicks": 300,
     "effects": [
-      { "command": "GainArmor", "amount": 10 },
+      { "command": "GainArmor", "amount": 8 },
       { "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }
     ],
-    "description": "Size 2. Every 5 seconds, gain 10 Armor and ready adjacent allies 0.5 seconds sooner."
+    "description": "Size 2. Every 5 seconds, gain 8 Armor and ready adjacent allies 0.5 seconds sooner."
   }
 ]

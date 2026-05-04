@@ -7,8 +7,8 @@
     "size": 1,
     "tags": ["support", "drum", "iron-warlord"],
     "cooldownTicks": 120,
-    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -45 }],
-    "description": "Every 2 seconds, ready adjacent allies 0.75 seconds sooner."
+    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }],
+    "description": "Every 2 seconds, ready adjacent allies 0.5 seconds sooner."
   },
   {
     "id": "command-gong",
@@ -97,10 +97,10 @@
       {
         "command": "DealDamage",
         "amount": 2,
-        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 100 }
+        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 75 }
       }
     ],
-    "description": "Size 2. Every 5 seconds, deal 2 damage plus damage equal to 100% of your Armor."
+    "description": "Size 2. Every 5 seconds, deal 2 damage plus damage equal to 75% of your Armor."
   },
   {
     "id": "warlords-mandate",

@@ -62,10 +62,10 @@ describe("cardDisplay", () => {
   it("summarizes Haste, Slow, and Freeze cards without raw tick labels", () => {
     expect(display("war-chant").summary).toBe("Haste adjacent active allies by 25% for 3s");
     expect(display("command-banner").summary).toBe("Haste all your active cards by 20% for 3s");
-    expect(display("mud-trap").summary).toBe("Slow the opposite enemy active card by 30% for 3s");
+    expect(display("mud-trap").summary).toBe("Slow the opposite enemy active card by 25% for 2s");
     expect(display("frost-chain").summary).toBe("Freeze the opposite enemy active card for 1s");
     expect(display("cold-spear").summary).toBe("Physical damage: 2 · Freeze the opposite enemy active card for 1s");
-    expect(display("heavy-net").summary).toBe("Slow the leftmost enemy active card by 25% for 4s");
+    expect(display("heavy-net").summary).toBe("Slow the leftmost enemy active card by 20% for 2s");
     expect(display("war-chant").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
   });
 
@@ -73,7 +73,7 @@ describe("cardDisplay", () => {
     expect(display("venom-leech").summary).toBe("When your Poison deals damage: Heal: 1 HP. Limited to every 1s.");
     expect(display("toxic-flame-seal").summary).toBe("When your Burn deals damage: Fire damage: 1. Limited to every 1s.");
     expect(display("field-triage").summary).toBe("When you heal: Armor: 2. Limited to every 2s.");
-    expect(display("poisoned-net").summary).toBe("When your Poison deals damage: Slow the leftmost enemy active card by 15% for 1s. Limited to every 3s.");
+    expect(display("poisoned-net").summary).toBe("When your Poison deals damage: Slow the leftmost enemy active card by 10% for 1s. Limited to every 3s.");
     expect(display("burning-remedy").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
   });
 
@@ -95,7 +95,7 @@ describe("cardDisplay", () => {
   });
 
   it("summarizes terminal scaling text readably", () => {
-    expect(display("iron-bastion-strike").summary).toContain("100% of your Armor");
+    expect(display("iron-bastion-strike").summary).toContain("75% of your Armor");
     expect(display("warlords-mandate").summary).toContain("20% of your max HP");
     expect(display("burning-trebuchet").summary).toContain("20% of enemy missing HP");
     expect(display("burning-trebuchet").summary).toContain("20% chance to crit for 2x");

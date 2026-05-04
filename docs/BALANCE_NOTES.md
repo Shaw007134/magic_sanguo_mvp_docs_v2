@@ -349,6 +349,49 @@ Required sample builds:
 
 Report warnings are intentionally simple first-pass heuristics: near timeouts, fast deaths, stall risk, cooldown runaway risk, Freeze/Slow lock risk, Poison+Heal stall, weak Burn, overly strong Poison, bursty terminals, trigger spam, low card contribution, no clear terminal, and too many zero contributors.
 
+## Phase 15B Balance Tuning And Readability
+
+Phase 15B used the deterministic report to tune existing numbers only. No new commands, statuses, resources, hooks, targeting modes, defense layers, or combat timing rules were added.
+
+Tuning changes:
+
+| Area | Cards | Change | Reason |
+| --- | --- | --- | --- |
+| Frequency DOT enablers | Ember Needle, Venom Prick | Cooldowns increased from 1s to 1.5s | Keep Burn/Poison frequency cards useful with reactions without making starter DOT builds end boss fights too quickly |
+| Cooldown engines | Cooling Fan, Command Runner, War Drum, Battlefield Metronome | Smaller cooldown reductions, slower Command Runner, shorter/lower broad Haste | Reduce runaway activation warnings while preserving 运转牌 identity |
+| Slow control | Mud Trap, Heavy Net, Poisoned Net | Lower Slow percent/duration | Make Slow disruptive without reading as permanent stall |
+| Armor terminals | Iron Bastion Strike, Bastion Foundry, Steady Wall Engine | Lower Armor scaling and Armor gain | Keep Armor terminal visible without boss deletion |
+| Execution terminals | Redline Finisher, Last Order Halberd | Lower missing-HP scaling, crit chance, and execute multiplier where needed | Keep crit/execution exciting but less bursty |
+
+Report readability changes:
+
+- Markdown now has Executive Summary, Build Summary, Boss Summary, Warning Hotspots, Top Contributor Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
+- Warning thresholds now distinguish short harmless fights from real low-contribution noise.
+- Slow stall and terminal burst flags are more timing-aware.
+- Warning names are exported as a stable list for tests.
+
+Current report snapshot after tuning:
+
+- Total fights: 72.
+- Player win rate: about 93%.
+- Timeout or near-timeout: 2 fights.
+- Most common warnings: ENEMY_DEAD_TOO_FAST, RUNAWAY_COOLDOWN_RISK, STALL_RISK, TIMEOUT_OR_NEAR_TIMEOUT.
+- Burn has no weak-pressure flags after decay.
+- Poison + Heal has no long-fight stall or Poison-too-strong flags.
+- 16-slot late build is promising but still very fast into current low-HP bosses, so future tuning should consider boss durability or stricter terminal pacing before adding mechanics.
+
+Current strongest builds:
+
+- Armor Terminal still kills bosses quickly even after scaling nerfs, but no longer trips terminal burst in the tuned report.
+- Late 16-slot Combo Build is explosive and readable enough to show multiple endpoints, but boss fights remain short.
+- Burn + Reaction and Frequency Status Soup are fast, readable pressure builds with bounded trigger counts.
+
+Current weakest or riskiest builds:
+
+- Haste / Drum Tempo still has cooldown outliers and can lose into Gate Captain Elite.
+- Control Slow / Freeze can still trip one Slow stall warning and can lose into Siege Marshal.
+- Starter Blade can still stall against Armor-heavy enemies because both sides generate substantial Armor over long fights.
+
 ## Iron Warlord Terminal/Core Cards
 
 | Terminal | Mechanic | Support cards | Weakness |

@@ -1429,3 +1429,51 @@ Known issues:
 - Save version 1 migration remains intentionally unimplemented; old local saves fail clearly until a migration is explicitly added.
 Next recommended task:
 - Phase 15B: use balance report output and manual playtests to tune card numbers, report thresholds, and readability before adding mechanics.
+
+---
+
+Date: 2026-05-04
+Phase: 15B
+Task: Implemented balance report tuning and readability pass.
+Files changed:
+- data/cards/general/phase15_combo_tools.json
+- data/cards/general/control.json
+- data/cards/general/reactions.json
+- data/cards/class_iron_warlord/phase15_build_archetypes.json
+- data/cards/class_iron_warlord/command_armor.json
+- src/debug/BalanceReport.ts
+- tests/debug/balanceReport.test.ts
+- tests/ui/cardDisplay.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Balance report Markdown includes Executive Summary, Build Summary, Boss Summary, Warning Hotspots, Top Contributor Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
+- Warning flag names are exported and asserted stable.
+- Every required sample build still has a Gate Captain Elite report entry.
+- Report aggregate baseline remains 72 entries from 12 sample builds against 6 enemies.
+- Top contributors are present for non-empty report fights.
+- Card display expectations were updated for tuned Slow and Armor terminal values.
+Tuning notes:
+- Ember Needle and Venom Prick were slowed from 1s to 1.5s cooldowns.
+- Cooling Fan, Command Runner, War Drum, and Battlefield Metronome were toned down to reduce cooldown runaway.
+- Mud Trap, Heavy Net, and Poisoned Net Slow values/durations were reduced.
+- Iron Bastion Strike, Bastion Foundry, Steady Wall Engine, Redline Finisher, and Last Order Halberd terminal pressure was reduced.
+Report warning changes observed:
+- RUNAWAY_COOLDOWN_RISK dropped from 6 to 3.
+- TERMINAL_TOO_BURSTY dropped from 5 to 1.
+- SLOW_STALL_RISK dropped from 4 to 1.
+- LOW_CARD_CONTRIBUTION and TOO_MANY_ZERO_CONTRIBUTORS no longer fire from short harmless fights.
+- ENEMY_DEAD_TOO_FAST remains common because current boss HP is low relative to expanded builds.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+- pnpm balance:report
+Known issues:
+- Bosses remain short against many expanded builds; Phase 15B did not tune monster HP because the phase was card/report focused.
+- Haste / Drum Tempo still has activation outliers and can lose into Gate Captain Elite.
+- Control Slow / Freeze still has one Slow stall warning and can lose into Siege Marshal.
+- Starter Blade can still stall against Armor-heavy enemies.
+Next recommended task:
+- Phase 15C: decide between enemy/boss durability tuning, contributor name/readability polish, or the next small mechanic after manual playtests.

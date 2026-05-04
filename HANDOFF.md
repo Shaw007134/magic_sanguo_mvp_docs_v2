@@ -170,7 +170,7 @@ The root debug/ folder is gitignored; browser UI does not write to the local fil
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
 Known limitation: Burn/Poison tick source attribution is summary/replay-only; fire-tagged skills affect direct damage from fire-tagged card effects but not DOT ticks.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
-Known limitation: save format version is 1 with fail-fast validation; future RunState schema changes need explicit migration or a clear unsupported-version failure.
+Known limitation: save format version is 2 with fail-fast validation; old version 1 local saves are intentionally unsupported after the Phase 15A fixed chest-capacity change unless a future migration is added.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn decay, Poison/Heal, Haste/Slow/Freeze, status reactions, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
 Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, control-status payoff conditions, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
 docs/MVP_BUILD_SEQUENCE.md now defines Phase 14 as a status/damage foundation sequence rather than PvP snapshot export.
@@ -179,6 +179,11 @@ Phase 14B implemented persistent Poison, HealHP, Poison/Heal replay and summary 
 Phase 14D implemented OnStatusTicked and OnHealReceived status reaction/combo support with active-card-only control targeting.
 Phase 14E implemented Burn decay identity polish while preserving Poison persistence and reaction safety.
 Phase 15A implemented formation growth, fixed 16-card owned capacity, a 24-card combo-testing content pack, curated pool updates, and deterministic balance/readability reports.
+Phase 15B tuned existing card numbers only: slower Phase 15A Burn/Poison frequency cards, softer cooldown/Haste engines, shorter/lower Slow, reduced Armor terminal scaling, and toned-down execution terminal scaling/crit pressure.
+Phase 15B Markdown reports now include Executive Summary, Build Summary, Boss Summary, Warning Hotspots, Top Contributor Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
+Current report command is `pnpm balance:report`; output location is `debug/balance-reports/latest.json` and `debug/balance-reports/latest.md`.
+Current strongest builds are Armor Terminal, Late 16-slot Combo Build, Burn + Reaction, and Frequency Status Soup. Current weakest/risky builds are Haste / Drum Tempo, Control Slow / Freeze, and Starter Blade into Armor-heavy enemies.
+Remaining Phase 15B risks: current boss HP is low relative to expanded 16-slot builds, Haste/Drum still has activation outliers, Starter Blade can stall into Armor-heavy enemies, and Slow/Freeze control needs more manual feel checks.
 Phase 14A is damage type and source attribution foundation.
 Phase 14B is Poison and Heal.
 Phase 14C implemented Haste, Slow, and Freeze.
@@ -191,10 +196,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 15B:
+Phase 15C:
 
 ```text
-Use `pnpm balance:report` output plus manual playtests to tune Phase 15A card numbers and warning thresholds before adding new mechanics.
+Use Phase 15B report output and manual runs to decide whether the next phase should tune enemy/boss durability, improve contributor naming/readability, or add the next small mechanic.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -264,4 +269,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use a Phase 15B balance/readability tuning prompt focused on the Phase 15A report output, expanded 16-slot builds, and card-number adjustments before adding new mechanics.
+Use a Phase 15C prompt focused on report-guided enemy/boss durability, contributor naming/readability, or the next small mechanic only after the current tuning risks are accepted.

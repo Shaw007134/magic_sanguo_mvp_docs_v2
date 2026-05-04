@@ -84,10 +84,10 @@
         "conditions": { "status": "Poison", "appliedByOwner": true },
         "internalCooldownTicks": 180,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 15, "durationTicks": 60 }]
+        "effects": [{ "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 10, "durationTicks": 60 }]
       }
     ],
-    "description": "When your Poison deals damage, Slow the leftmost enemy active card by 15% for 1 second."
+    "description": "When your Poison deals damage, Slow the leftmost enemy active card by 10% for 1 second."
   },
   {
     "id": "burning-remedy",
