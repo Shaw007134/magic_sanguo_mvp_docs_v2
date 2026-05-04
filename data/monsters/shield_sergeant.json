@@ -1,0 +1,21 @@
+{
+  "id": "shield-sergeant",
+  "name": "Shield Sergeant",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 32,
+  "startingArmor": 5,
+  "requiredCards": [
+    { "cardId": "iron-guard", "slot": 1 },
+    { "cardId": "shield-wall", "slot": 2 }
+  ],
+  "optionalCards": [{ "cardId": "counter-stance" }, { "cardId": "militia-spear" }, { "cardId": "veteran-plate" }],
+  "defenseStyle": "ARMOR",
+  "weakness": "Burn pressure bypasses Armor and keeps progress moving.",
+  "rewardPool": ["iron-guard", "shield-wall", "counter-stance", "veteran-plate", "frontline-bulwark"],
+  "minDay": 3,
+  "maxDay": 7,
+  "engine": "Armor cards keep refreshing the defensive line.",
+  "payoff": "It survives direct hits and chips down slower builds.",
+  "fixed": false
+}

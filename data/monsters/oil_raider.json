@@ -1,0 +1,21 @@
+{
+  "id": "oil-raider",
+  "name": "Oil Raider",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 26,
+  "startingArmor": 0,
+  "requiredCards": [
+    { "cardId": "oil-flask", "slot": 1 },
+    { "cardId": "ember-banner", "slot": 2 }
+  ],
+  "optionalCards": [{ "cardId": "kindling-spear" }, { "cardId": "fire-arrow-cart" }, { "cardId": "guarded-torch" }],
+  "defenseStyle": "HP",
+  "weakness": "Fast burst can end the fight before Burn stacks matter.",
+  "rewardPool": ["oil-flask", "ember-banner", "kindling-spear", "fire-arrow-cart", "cinder-seal"],
+  "minDay": 2,
+  "maxDay": 6,
+  "engine": "Oil Flask applies Burn and Ember Banner rewards each application.",
+  "payoff": "Burn pressure builds while the banner adds small extra hits.",
+  "fixed": false
+}

@@ -1,0 +1,22 @@
+{
+  "id": "cinder-captain",
+  "name": "Cinder Captain",
+  "difficulty": "ELITE",
+  "slotCount": 4,
+  "maxHp": 40,
+  "startingArmor": 3,
+  "requiredCards": [
+    { "cardId": "war-drum", "slot": 1 },
+    { "cardId": "fire-arrow-cart", "slot": 2 },
+    { "cardId": "ember-banner", "slot": 3 }
+  ],
+  "optionalCards": [{ "cardId": "cinder-seal" }, { "cardId": "burning-shield" }, { "cardId": "kindling-spear" }],
+  "defenseStyle": "MODERATE_HP",
+  "weakness": "Burst or strong Armor timing can keep the Burn engine from snowballing.",
+  "rewardPool": ["war-drum", "fire-arrow-cart", "ember-banner", "cinder-seal", "siege-brazier"],
+  "minDay": 5,
+  "maxDay": 9,
+  "engine": "Cooldown support helps repeated Burn applications.",
+  "payoff": "Burn application triggers and ticking Burn create layered pressure.",
+  "fixed": false
+}

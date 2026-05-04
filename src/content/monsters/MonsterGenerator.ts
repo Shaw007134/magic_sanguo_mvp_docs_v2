@@ -1,6 +1,6 @@
 import type { CardDefinition, CardInstance } from "../../model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../../model/formation.js";
-import { getMonsterCardDefinitionsById } from "../cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../cards/activeCards.js";
 import type { MonsterTemplate, MonsterTemplateCardChoice } from "./MonsterTemplate.js";
 import { getMonsterTemplateById } from "./monsterTemplates.js";
 
@@ -42,7 +42,7 @@ export class MonsterGenerator {
 }
 
 export function generateMonsterFormation(input: MonsterGenerationInput): MonsterGenerationResult {
-  const cardDefinitionsById = input.cardDefinitionsById ?? getMonsterCardDefinitionsById();
+  const cardDefinitionsById = input.cardDefinitionsById ?? getActiveCardDefinitionsById();
   const slots = createEmptySlots(input.template.slotCount);
   const cardInstances: CardInstance[] = [];
   const instanceCounts = new Map<string, number>();

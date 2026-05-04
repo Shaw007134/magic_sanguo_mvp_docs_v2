@@ -1,0 +1,92 @@
+[
+  {
+    "id": "vanguard-saber",
+    "name": "Vanguard Saber",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical", "iron-warlord"],
+    "cooldownTicks": 60,
+    "effects": [{ "command": "DealDamage", "amount": 3 }],
+    "description": "Every 1 second, deal 3 damage."
+  },
+  {
+    "id": "execution-halberd",
+    "name": "Execution Halberd",
+    "tier": "GOLD",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["weapon", "physical", "iron-warlord"],
+    "cooldownTicks": 240,
+    "effects": [{ "command": "DealDamage", "amount": 12 }],
+    "description": "Size 2. Every 4 seconds, deal 12 damage as a large finishing weapon."
+  },
+  {
+    "id": "left-flank-blade",
+    "name": "Left Flank Blade",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["weapon", "formation", "iron-warlord"],
+    "triggers": [
+      {
+        "hook": "OnCardActivated",
+        "conditions": { "sourceHasTag": "weapon", "cardIsAdjacent": true },
+        "internalCooldownTicks": 90,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "DealDamage", "amount": 2 }]
+      }
+    ],
+    "description": "When an adjacent Weapon activates, deal 2 damage. Can trigger once every 1.5 seconds."
+  },
+  {
+    "id": "discipline-drill",
+    "name": "Discipline Drill",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["support", "formation", "iron-warlord"],
+    "triggers": [
+      {
+        "hook": "OnCardActivated",
+        "conditions": { "cardIsAdjacent": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -15 }]
+      }
+    ],
+    "description": "When an adjacent ally activates, ready adjacent allies 0.25 seconds sooner. Can trigger once every 2 seconds."
+  },
+  {
+    "id": "spear-and-shield-line",
+    "name": "Spear and Shield Line",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "armor", "physical", "iron-warlord"],
+    "cooldownTicks": 120,
+    "effects": [
+      { "command": "DealDamage", "amount": 3 },
+      { "command": "GainArmor", "amount": 3 }
+    ],
+    "description": "Every 2 seconds, deal 3 damage and gain 3 Armor."
+  },
+  {
+    "id": "captains-finisher",
+    "name": "Captain's Finisher",
+    "tier": "GOLD",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["weapon", "payoff", "iron-warlord"],
+    "triggers": [
+      {
+        "hook": "OnDamageDealt",
+        "conditions": { "sourceHasTag": "weapon", "cardIsAdjacent": true, "targetHpBelowPercent": 35 },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "DealDamage", "amount": 4 }]
+      }
+    ],
+    "description": "When an adjacent Weapon hits an enemy below 35% HP, deal 4 damage. Can trigger once every 2 seconds."
+  }
+]

@@ -84,6 +84,13 @@ SaveManager returns typed SaveLoadResult values for success/failure and fails co
 RunState save validation now enforces currentNodeIndex >= 0, level >= 1, exp >= 0, expToNextLevel > 0, gold >= 0, maxHp > 0, currentHp between 0 and maxHp, formationSlotCount > 0, chestCapacity >= formationSlotCount, and nonnegative completed/defeated counters.
 Saved RunFormationSlot validation enforces exact slot indexes 1..formationSlotCount, no gaps/duplicates, owned-card references, no card inside locked slots, and correct size-2 adjacent locked footprints.
 createRunSaveData() and serializeRunState() accept an optional active cardDefinitionsById registry; the UI passes its active registry so expanded content can serialize without falling back to the MVP monster-card registry.
+Phase 13A active content registry lives at src/content/cards/activeCards.ts and combines legacy MVP monster cards, general cards, and Iron Warlord cards.
+RunManager, ShopNode, EventNode, RewardGenerator through RunManager, MonsterGenerator, SaveManager defaults, UI App cardDefinitionsById, debug replay export, and content tests now use the active registry.
+Expanded card content exists under data/cards/general/ and data/cards/class_iron_warlord/. Legacy ids in data/cards/monster_cards.json remain available for saves/tests.
+Expanded skill content is data-driven through data/skills/mvp_skills.json and still instantiates only existing ModifierSystem modifiers.
+Phase 13A monster templates include Bandit Duelist, Oil Raider, Shield Sergeant, Drum Adept, Siege Trainee, Banner Guard, Cinder Captain, and Iron Patrol.
+Phase 13A boss templates include Gate Captain Elite, Siege Marshal, and Cinder Strategist. Only Gate Captain Elite is wired as the current final boss.
+docs/BALANCE_NOTES.md documents the content pack, Iron Warlord identity, card roles, skills, monsters, bosses, risky combos, readability risks, and intentionally deferred systems.
 The browser UI has minimal localStorage controls: Save Run, Load Run, and Clear Save. No cloud save, account system, or migration UI exists.
 New runs start at level 1 with 0 exp, 10 gold, 0 owned cards, 4 formation slots, chest capacity 8, max HP 40, and current HP 40.
 RunManager owns chest/owned card state, ownedSkills, formation placement, selling, deterministic shop/event/reward choices, shop offer state, EXP, level-ups, HP, battle execution, battle completion, repeated node advancement, final boss, and run result.
@@ -119,18 +126,18 @@ The root debug/ folder is gitignored; browser UI does not write to the local fil
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
 Known limitation: save format version is 1 with fail-fast validation; future RunState schema changes need explicit migration or a clear unsupported-version failure.
-Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, UI state, expanded RunManager, and SaveManager tests pass.
-Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and complex content expansion are not implemented yet.
+Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, UI state, expanded RunManager, and SaveManager tests pass.
+Formula rewriting, rollback/snapshot, Freeze, Haste, Vulnerable, Silence, Barrier, Ward, Energy Shield, absorb layers, random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
 ```
 
 
 
 ## Next Task
 
-Post-Phase 12:
+Post-Phase 13A:
 
 ```text
-Continue MVP iteration, balancing, and future save migration planning as RunState evolves.
+Playtest expanded MVP content, tune card/monster numbers, and add explicit save migration only when the RunState schema changes.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -151,6 +158,17 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 11. Click Save Run, make a visible change such as New Run, then click Load Run and confirm the saved node, shop/reward choices, formation, skills, HP, gold, and pending replay/reward state return.
 12. Click Clear Save, then Load Run and confirm the UI reports that no saved run exists.
 13. Optional debug export: run pnpm export:sample-replay and inspect debug/combat-replays/*.json.
+14. Start a new run and verify the shop shows a mix of simple and synergy cards.
+15. Verify the first two nodes still let the player get at least one active card before first combat.
+16. Build at least one Burn Engine run.
+17. Build at least one Armor/Blade run.
+18. Build at least one Drum/Siege run.
+19. Confirm rewards sometimes show cards related to defeated monsters.
+20. Confirm card summaries are readable and show seconds, not raw ticks.
+21. Confirm passive trigger summaries do not expose internal hook names.
+22. Confirm no skills appear in chest.
+23. Confirm save/load still works after obtaining new cards, upgraded duplicates, skills, and pending rewards.
+24. Confirm enemy formations are readable and not random piles.
 ```
 
 ## Rules For Next Agent
@@ -171,4 +189,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use the next requested prompt from the product owner; Phase 12 save/load is complete.
+Use the next requested prompt from the product owner; Phase 13A content expansion is complete.

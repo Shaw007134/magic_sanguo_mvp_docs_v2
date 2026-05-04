@@ -1,0 +1,21 @@
+{
+  "id": "iron-patrol",
+  "name": "Iron Patrol",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 28,
+  "startingArmor": 2,
+  "requiredCards": [
+    { "cardId": "militia-spear", "slot": 1 },
+    { "cardId": "iron-guard", "slot": 2 }
+  ],
+  "optionalCards": [{ "cardId": "oil-flask" }, { "cardId": "patrol-spear" }, { "cardId": "frontline-banner" }],
+  "defenseStyle": "MODERATE_HP",
+  "weakness": "Specialized builds can outpace its balanced beginner formation.",
+  "rewardPool": ["militia-spear", "iron-guard", "oil-flask", "patrol-spear", "frontline-banner"],
+  "minDay": 2,
+  "maxDay": 6,
+  "engine": "Simple blades and shields teach the basic formation rhythm.",
+  "payoff": "Readable mixed damage and Armor gives a stable early test.",
+  "fixed": false
+}

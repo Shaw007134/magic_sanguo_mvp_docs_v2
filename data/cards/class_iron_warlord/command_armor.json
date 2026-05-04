@@ -1,0 +1,88 @@
+[
+  {
+    "id": "war-drum",
+    "name": "War Drum",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["support", "drum", "iron-warlord"],
+    "cooldownTicks": 120,
+    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -45 }],
+    "description": "Every 2 seconds, ready adjacent allies 0.75 seconds sooner."
+  },
+  {
+    "id": "command-gong",
+    "name": "Command Gong",
+    "tier": "GOLD",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["support", "drum", "iron-warlord"],
+    "cooldownTicks": 240,
+    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -90 }],
+    "description": "Size 2. Every 4 seconds, ready adjacent allies 1.5 seconds sooner."
+  },
+  {
+    "id": "battle-standard",
+    "name": "Battle Standard",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["support", "banner", "iron-warlord"],
+    "triggers": [
+      {
+        "hook": "OnCooldownModified",
+        "conditions": { "cardIsAdjacent": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "GainArmor", "amount": 3 }]
+      }
+    ],
+    "description": "When an adjacent ally changes cooldowns, gain 3 Armor. Can trigger once every 2 seconds."
+  },
+  {
+    "id": "frontline-banner",
+    "name": "Frontline Banner",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["armor", "banner", "iron-warlord"],
+    "cooldownTicks": 120,
+    "effects": [
+      { "command": "GainArmor", "amount": 4 },
+      { "command": "DealDamage", "amount": 1 }
+    ],
+    "description": "Every 2 seconds, gain 4 Armor and deal 1 damage."
+  },
+  {
+    "id": "guard-captain",
+    "name": "Guard Captain",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "armor", "physical", "iron-warlord"],
+    "cooldownTicks": 150,
+    "effects": [
+      { "command": "GainArmor", "amount": 5 },
+      { "command": "DealDamage", "amount": 4 }
+    ],
+    "description": "Every 2.5 seconds, gain 5 Armor and deal 4 damage."
+  },
+  {
+    "id": "signal-tower",
+    "name": "Signal Tower",
+    "tier": "GOLD",
+    "type": "PASSIVE",
+    "size": 2,
+    "tags": ["support", "formation", "iron-warlord"],
+    "triggers": [
+      {
+        "hook": "OnCardActivated",
+        "conditions": { "cardIsAdjacent": true },
+        "internalCooldownTicks": 180,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -60 }]
+      }
+    ],
+    "description": "Size 2. When an adjacent ally activates, ready adjacent allies 1 second sooner. Can trigger once every 3 seconds."
+  }
+]

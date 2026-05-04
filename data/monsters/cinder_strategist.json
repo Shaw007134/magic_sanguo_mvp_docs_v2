@@ -1,0 +1,23 @@
+{
+  "id": "cinder-strategist",
+  "name": "Cinder Strategist",
+  "difficulty": "BOSS",
+  "slotCount": 4,
+  "maxHp": 52,
+  "startingArmor": 6,
+  "requiredCards": [
+    { "cardId": "cinder-seal", "slot": 1 },
+    { "cardId": "fire-arrow-cart", "slot": 2 },
+    { "cardId": "burning-shield", "slot": 3 },
+    { "cardId": "ember-banner", "slot": 4 }
+  ],
+  "optionalCards": [],
+  "defenseStyle": "ARMOR_HP",
+  "weakness": "Strong burst or disciplined Armor timing can survive the Burn pressure.",
+  "rewardPool": ["cinder-seal", "fire-arrow-cart", "burning-shield", "ember-banner", "oil-flask"],
+  "minDay": 9,
+  "maxDay": 10,
+  "engine": "Burn applications stack with defensive support.",
+  "payoff": "Repeated Burn applications create pressure while Armor buys time.",
+  "fixed": true
+}

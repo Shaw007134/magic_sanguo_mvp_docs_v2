@@ -1,0 +1,21 @@
+{
+  "id": "banner-guard",
+  "name": "Banner Guard",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 34,
+  "startingArmor": 3,
+  "requiredCards": [
+    { "cardId": "frontline-banner", "slot": 1 },
+    { "cardId": "guard-captain", "slot": 2 }
+  ],
+  "optionalCards": [{ "cardId": "burning-shield" }, { "cardId": "militia-spear" }, { "cardId": "iron-guard" }],
+  "defenseStyle": "ARMOR_HP",
+  "weakness": "Scaling Burn or a stronger terminal can overtake its stable loop.",
+  "rewardPool": ["frontline-banner", "guard-captain", "burning-shield", "spear-and-shield-line", "iron-guard"],
+  "minDay": 4,
+  "maxDay": 8,
+  "engine": "A defensive banner supports one Armor-backed attacker.",
+  "payoff": "Stable Hybrid Bruiser pressure survives while dealing steady damage.",
+  "fixed": false
+}

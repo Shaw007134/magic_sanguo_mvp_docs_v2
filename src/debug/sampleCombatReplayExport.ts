@@ -1,4 +1,4 @@
-import { getMonsterCardDefinitionsById } from "../content/cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import type { CombatResult, CombatResultSummary, ReplayTimeline } from "../model/result.js";
 import { RunManager } from "../run/RunManager.js";
 
@@ -10,7 +10,7 @@ export interface SampleCombatReplayExport {
 }
 
 export function createSampleCombatReplayExport(seed = "debug-sample-combat"): SampleCombatReplayExport {
-  const cardDefinitionsById = getMonsterCardDefinitionsById();
+  const cardDefinitionsById = getActiveCardDefinitionsById();
   const manager = RunManager.createNewRun(seed, cardDefinitionsById);
   const shopChoice = manager.state.currentChoices.find((choice) => choice.type === "SHOP_CARD");
   if (!shopChoice) {

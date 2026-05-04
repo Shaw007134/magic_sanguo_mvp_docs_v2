@@ -1,0 +1,71 @@
+[
+  {
+    "id": "militia-spear",
+    "name": "Militia Spear",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical", "starter"],
+    "cooldownTicks": 60,
+    "effects": [{ "command": "DealDamage", "amount": 2 }],
+    "description": "Every 1 second, deal 2 damage. A simple starter weapon."
+  },
+  {
+    "id": "oil-flask",
+    "name": "Oil Flask",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["fire", "burn", "starter"],
+    "cooldownTicks": 90,
+    "effects": [{ "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }],
+    "description": "Every 1.5 seconds, apply 2 Burn for 3 seconds."
+  },
+  {
+    "id": "iron-guard",
+    "name": "Iron Guard",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["armor", "starter"],
+    "cooldownTicks": 60,
+    "effects": [{ "command": "GainArmor", "amount": 4 }],
+    "description": "Every 1 second, gain 4 Armor."
+  },
+  {
+    "id": "patrol-spear",
+    "name": "Patrol Spear",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical"],
+    "cooldownTicks": 90,
+    "effects": [{ "command": "DealDamage", "amount": 3 }],
+    "description": "Every 1.5 seconds, deal 3 damage."
+  },
+  {
+    "id": "field-drum",
+    "name": "Field Drum",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["support", "drum"],
+    "cooldownTicks": 120,
+    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }],
+    "description": "Every 2 seconds, ready adjacent allies 0.5 seconds sooner."
+  },
+  {
+    "id": "guarded-torch",
+    "name": "Guarded Torch",
+    "tier": "BRONZE",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["fire", "armor", "hybrid"],
+    "cooldownTicks": 120,
+    "effects": [
+      { "command": "GainArmor", "amount": 2 },
+      { "command": "ApplyBurn", "amount": 1, "durationTicks": 180 }
+    ],
+    "description": "Every 2 seconds, gain 2 Armor and apply 1 Burn for 3 seconds."
+  }
+]

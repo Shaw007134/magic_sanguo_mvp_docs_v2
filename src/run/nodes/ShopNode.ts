@@ -3,7 +3,7 @@ import { shuffleDeterministic } from "../deterministic.js";
 import { RUN_SELL_PRICES } from "../economy.js";
 import type { ShopChoice } from "../RunState.js";
 
-const STARTER_SHOP_CARDS = ["rusty-blade", "wooden-shield", "flame-spear"] as const;
+const STARTER_SHOP_CARDS = ["rusty-blade", "wooden-shield", "oil-flask"] as const;
 
 export function createShopChoices(input: {
   readonly seed: string;
@@ -12,7 +12,7 @@ export function createShopChoices(input: {
   readonly starter?: boolean;
 }): readonly ShopChoice[] {
   const cardIds = input.starter
-    ? STARTER_SHOP_CARDS
+    ? STARTER_SHOP_CARDS.filter((cardId) => input.cardDefinitionsById.has(cardId))
     : shuffleDeterministic([...input.cardDefinitionsById.keys()], `${input.seed}:shop:${input.nodeIndex}`).slice(0, 3);
 
   return cardIds.map((cardDefinitionId, index) => {

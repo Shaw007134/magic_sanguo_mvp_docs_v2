@@ -1,7 +1,7 @@
 import type { CardDefinition, CardInstance } from "../../model/card.js";
 import type { FormationSnapshot } from "../../model/formation.js";
 import type { CombatResult } from "../../model/result.js";
-import { getMonsterCardDefinitionsById } from "../../content/cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../../content/cards/activeCards.js";
 import { validateFormationSnapshot } from "../../validation/formationValidation.js";
 import { RunManager } from "../RunManager.js";
 import type {
@@ -40,7 +40,7 @@ const COMBAT_WINNERS = ["PLAYER", "ENEMY", "DRAW"] as const;
 
 export function createRunSaveData(
   state: RunState,
-  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
 ): SaveLoadResult<RunSaveData> {
   const validation = validateRunState(state, cardDefinitionsById);
   if (!validation.ok) {
@@ -59,7 +59,7 @@ export function createRunSaveData(
 
 export function serializeRunState(
   state: RunState,
-  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
 ): SaveLoadResult<string> {
   const saveData = createRunSaveData(state, cardDefinitionsById);
   if (!saveData.ok) {
@@ -70,7 +70,7 @@ export function serializeRunState(
 
 export function deserializeRunState(
   rawSaveData: string,
-  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
 ): SaveLoadResult<RunState> {
   let parsed: unknown;
   try {
@@ -83,7 +83,7 @@ export function deserializeRunState(
 
 export function loadRunManagerFromSaveString(
   rawSaveData: string,
-  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
 ): SaveLoadResult<RunManager> {
   const stateResult = deserializeRunState(rawSaveData, cardDefinitionsById);
   if (!stateResult.ok) {
@@ -97,7 +97,7 @@ export function loadRunManagerFromSaveString(
 
 export function parseRunSaveData(
   saveData: unknown,
-  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
 ): SaveLoadResult<RunState> {
   if (!isRecord(saveData)) {
     return { ok: false, error: "Save data must be an object." };
@@ -126,7 +126,7 @@ export function parseRunSaveData(
 
 export function validateRunState(
   state: unknown,
-  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
 ): SaveLoadResult<RunState> {
   if (!isRecord(state)) {
     return { ok: false, error: "RunState must be an object." };

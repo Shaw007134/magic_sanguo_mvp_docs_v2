@@ -1,0 +1,21 @@
+{
+  "id": "bandit-duelist",
+  "name": "Bandit Duelist",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 28,
+  "startingArmor": 1,
+  "requiredCards": [
+    { "cardId": "rusty-blade", "slot": 1 },
+    { "cardId": "twin-hook", "slot": 2 }
+  ],
+  "optionalCards": [{ "cardId": "patrol-spear" }, { "cardId": "militia-spear" }, { "cardId": "iron-guard" }],
+  "defenseStyle": "LOW_ARMOR",
+  "weakness": "Armor and burst can blunt its repeated small hits.",
+  "rewardPool": ["rusty-blade", "twin-hook", "patrol-spear", "duelists-dao", "left-flank-blade"],
+  "minDay": 2,
+  "maxDay": 6,
+  "engine": "Fast Blade Tempo weapons activate early and often.",
+  "payoff": "Repeated small Physical hits pressure weak defenses.",
+  "fixed": false
+}

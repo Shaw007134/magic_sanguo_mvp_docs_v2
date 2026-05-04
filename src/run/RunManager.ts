@@ -6,7 +6,7 @@ import {
   describeUpgradePreview,
   getEffectiveCardDefinitionId
 } from "../content/cards/effectiveCardDefinition.js";
-import { getMonsterCardDefinitionsById } from "../content/cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import type { CardDefinition, CardInstance, CardTier } from "../model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
 import { validateFormationSnapshot } from "../validation/formationValidation.js";
@@ -62,7 +62,7 @@ const STARTER_NODES: readonly RunNode[] = [
     day: 3,
     label: "Normal Monster",
     battleDifficulty: "NORMAL",
-    monsterTemplateId: "rust-bandit"
+    monsterTemplateId: "bandit-duelist"
   },
   { id: "reward-2", type: "REWARD", day: 3, label: "Reward" },
   { id: "shop-2", type: "SHOP", day: 4, label: "Shop" },
@@ -72,7 +72,7 @@ const STARTER_NODES: readonly RunNode[] = [
     day: 5,
     label: "Elite Monster",
     battleDifficulty: "ELITE",
-    monsterTemplateId: "fire-echo-adept"
+    monsterTemplateId: "cinder-captain"
   },
   { id: "reward-3", type: "REWARD", day: 5, label: "Reward" }
 ];
@@ -92,7 +92,7 @@ export class RunManager {
 
   static createNewRun(
     seed: string,
-    cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+    cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
   ): RunManager {
     const node = getNodeForIndex(0, 1, "IN_PROGRESS");
     const state: RunState = withNodeDerivedState(
@@ -130,7 +130,7 @@ export class RunManager {
 
   static restoreFromState(
     state: RunState,
-    cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getMonsterCardDefinitionsById()
+    cardDefinitionsById: ReadonlyMap<string, CardDefinition> = getActiveCardDefinitionsById()
   ): RunManager {
     const manager = new RunManager(state, cardDefinitionsById);
     manager.#nextCardInstanceNumber = getNextNumberFromInstances(state.ownedCards, "run-card-");
@@ -719,7 +719,7 @@ function getNodeForIndex(index: number, level: number, status: RunState["status"
       day: 10,
       label: "Final Boss",
       battleDifficulty: "BOSS",
-      monsterTemplateId: "gate-captain"
+      monsterTemplateId: "gate-captain-elite"
     };
   }
   const starterNode = STARTER_NODES[index];
@@ -745,7 +745,7 @@ function getNodeForIndex(index: number, level: number, status: RunState["status"
       day,
       label: elite ? "Elite Battle" : "Battle",
       battleDifficulty: elite ? "ELITE" : "NORMAL",
-      monsterTemplateId: elite ? "fire-echo-adept" : "rust-bandit"
+      monsterTemplateId: elite ? "cinder-captain" : getCycleMonsterTemplateId(cycleIndex)
     };
   }
   return { id: `cycle-reward-${cycleIndex}`, type: "REWARD", day, label: "Reward" };
@@ -776,6 +776,7 @@ function withNodeDerivedState(
         ? createEventChoices({
             seed: state.seed,
             nodeIndex: state.currentNodeIndex,
+            cardDefinitionsById,
             starter: state.currentNodeIndex === 1
           })
         : node.type === "REWARD"
@@ -804,6 +805,19 @@ function refreshCurrentChoices(
   cardDefinitionsById: ReadonlyMap<string, CardDefinition>
 ): RunState {
   return withNodeDerivedState({ ...state, currentChoices: [], pendingRewardChoices: [] }, cardDefinitionsById);
+}
+
+function getCycleMonsterTemplateId(cycleIndex: number): string {
+  const templates = [
+    "iron-patrol",
+    "oil-raider",
+    "shield-sergeant",
+    "drum-adept",
+    "siege-trainee",
+    "banner-guard",
+    "bandit-duelist"
+  ] as const;
+  return templates[Math.floor(cycleIndex / 3) % templates.length];
 }
 
 function ensureShopState(

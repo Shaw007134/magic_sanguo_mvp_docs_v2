@@ -1,0 +1,18 @@
+{
+  "id": "siege-trainee",
+  "name": "Siege Trainee",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 30,
+  "startingArmor": 0,
+  "requiredCards": [{ "cardId": "siege-crossbow", "slot": 1 }],
+  "optionalCards": [{ "cardId": "field-drum", "slot": 3 }, { "cardId": "oil-flask" }, { "cardId": "iron-guard" }],
+  "defenseStyle": "HP",
+  "weakness": "Fast tempo builds can win before the slow siege weapon repeats.",
+  "rewardPool": ["siege-crossbow", "field-drum", "flame-ram", "siege-command", "fire-arrow-cart"],
+  "minDay": 4,
+  "maxDay": 8,
+  "engine": "A slow size-2 Siege Crossbow asks for cooldown help.",
+  "payoff": "Large direct hits punish builds that take too long to close.",
+  "fixed": false
+}

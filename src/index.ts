@@ -24,6 +24,7 @@ export * from "./combat/triggers/TriggerDefinition.js";
 export * from "./combat/triggers/TriggerRuntimeState.js";
 export * from "./combat/triggers/TriggerSystem.js";
 export * from "./content/cards/effectiveCardDefinition.js";
+export * from "./content/cards/activeCards.js";
 export * from "./content/cards/monsterCards.js";
 export * from "./content/monsters/MonsterGenerator.js";
 export * from "./content/monsters/MonsterTemplate.js";

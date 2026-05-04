@@ -1,20 +1,27 @@
+import type { CardDefinition } from "../../model/card.js";
 import { shuffleDeterministic } from "../deterministic.js";
 import type { EventChoice } from "../RunState.js";
 
 const CARD_EVENT_CHOICES = [
   { label: "Take a Rusty Blade", cardDefinitionId: "rusty-blade" },
   { label: "Take a Wooden Shield", cardDefinitionId: "wooden-shield" },
-  { label: "Take a Flame Spear", cardDefinitionId: "flame-spear" }
+  { label: "Take an Oil Flask", cardDefinitionId: "oil-flask" },
+  { label: "Take an Iron Guard", cardDefinitionId: "iron-guard" },
+  { label: "Take a Militia Spear", cardDefinitionId: "militia-spear" }
 ] as const;
 
 export function createEventChoices(input: {
   readonly seed: string;
   readonly nodeIndex: number;
+  readonly cardDefinitionsById?: ReadonlyMap<string, CardDefinition>;
   readonly starter?: boolean;
 }): readonly EventChoice[] {
+  const availableCardChoices = CARD_EVENT_CHOICES.filter((choice) =>
+    input.cardDefinitionsById ? input.cardDefinitionsById.has(choice.cardDefinitionId) : true
+  );
   const cardChoices = input.starter
-    ? CARD_EVENT_CHOICES
-    : shuffleDeterministic(CARD_EVENT_CHOICES, `${input.seed}:event:${input.nodeIndex}`);
+    ? availableCardChoices
+    : shuffleDeterministic(availableCardChoices, `${input.seed}:event:${input.nodeIndex}`);
 
   const choices: EventChoice[] = [
     {

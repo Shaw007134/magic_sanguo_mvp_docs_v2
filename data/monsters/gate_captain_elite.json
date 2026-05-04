@@ -1,0 +1,22 @@
+{
+  "id": "gate-captain-elite",
+  "name": "Gate Captain Elite",
+  "difficulty": "BOSS",
+  "slotCount": 4,
+  "maxHp": 58,
+  "startingArmor": 8,
+  "requiredCards": [
+    { "cardId": "vanguard-saber", "slot": 1 },
+    { "cardId": "war-drum", "slot": 2 },
+    { "cardId": "shield-wall", "slot": 3 }
+  ],
+  "optionalCards": [],
+  "defenseStyle": "ARMOR_HP",
+  "weakness": "Balanced damage plus Burn can beat its Armor-backed tempo.",
+  "rewardPool": ["vanguard-saber", "shield-wall", "war-drum", "battle-standard", "guard-captain"],
+  "minDay": 9,
+  "maxDay": 10,
+  "engine": "Blade Tempo is protected by Armor and accelerated by command tools.",
+  "payoff": "The Captain survives long enough for disciplined repeated Saber hits.",
+  "fixed": true
+}

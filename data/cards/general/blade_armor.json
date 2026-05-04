@@ -1,0 +1,84 @@
+[
+  {
+    "id": "twin-hook",
+    "name": "Twin Hook",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical"],
+    "cooldownTicks": 60,
+    "effects": [
+      { "command": "DealDamage", "amount": 2 },
+      { "command": "DealDamage", "amount": 1 }
+    ],
+    "description": "Every 1 second, deal 2 damage, then 1 more damage."
+  },
+  {
+    "id": "shield-wall",
+    "name": "Shield Wall",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["armor", "formation"],
+    "cooldownTicks": 180,
+    "effects": [{ "command": "GainArmor", "amount": 10 }],
+    "description": "Size 2. Every 3 seconds, gain 10 Armor as a large defensive anchor."
+  },
+  {
+    "id": "counter-stance",
+    "name": "Counter Stance",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["armor", "counter"],
+    "triggers": [
+      {
+        "hook": "OnCardActivated",
+        "conditions": { "sourceHasTag": "armor", "cardIsAdjacent": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "DealDamage", "amount": 2 }]
+      }
+    ],
+    "description": "When an adjacent Armor card activates, deal 2 damage. Can trigger once every 2 seconds."
+  },
+  {
+    "id": "veteran-plate",
+    "name": "Veteran Plate",
+    "tier": "GOLD",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["armor"],
+    "cooldownTicks": 150,
+    "effects": [{ "command": "GainArmor", "amount": 8 }],
+    "description": "Every 2.5 seconds, gain 8 Armor."
+  },
+  {
+    "id": "duelists-dao",
+    "name": "Duelist's Dao",
+    "tier": "GOLD",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["weapon", "physical"],
+    "cooldownTicks": 45,
+    "effects": [{ "command": "DealDamage", "amount": 3 }],
+    "description": "Every 0.75 seconds, deal 3 damage."
+  },
+  {
+    "id": "frontline-bulwark",
+    "name": "Frontline Bulwark",
+    "tier": "GOLD",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["armor", "formation"],
+    "triggers": [
+      {
+        "hook": "OnCombatStart",
+        "internalCooldownTicks": 9999,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "GainArmor", "amount": 8 }]
+      }
+    ],
+    "description": "At combat start, gain 8 Armor."
+  }
+]

@@ -863,6 +863,65 @@ Next recommended task:
 ---
 
 Date: 2026-05-04
+Phase: 13A
+Task: Implemented Large MVP Content Expansion Pack with active content registry, expanded cards, skills, monsters, bosses, validation, and balance notes.
+Files changed:
+- data/cards/general/basic_kit.json
+- data/cards/general/blade_armor.json
+- data/cards/general/fire_support.json
+- data/cards/class_iron_warlord/blade_tempo.json
+- data/cards/class_iron_warlord/command_armor.json
+- data/cards/class_iron_warlord/siege_fire.json
+- data/cards/monster_cards.json
+- data/skills/mvp_skills.json
+- data/monsters/bandit_duelist.json
+- data/monsters/oil_raider.json
+- data/monsters/shield_sergeant.json
+- data/monsters/drum_adept.json
+- data/monsters/siege_trainee.json
+- data/monsters/banner_guard.json
+- data/monsters/cinder_captain.json
+- data/monsters/iron_patrol.json
+- data/monsters/gate_captain_elite.json
+- data/monsters/siege_marshal.json
+- data/monsters/cinder_strategist.json
+- src/content/cards/activeCards.ts
+- src/content/monsters/MonsterGenerator.ts
+- src/content/monsters/monsterTemplates.ts
+- src/run/RunManager.ts
+- src/run/nodes/EventNode.ts
+- src/run/nodes/ShopNode.ts
+- src/run/save/SaveManager.ts
+- src/run/skills/skillDefinitions.ts
+- src/ui/App.tsx
+- src/debug/sampleCombatReplayExport.ts
+- src/index.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/content/monsterGenerator.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Active content registry includes old MVP cards plus 18 general and 18 Iron Warlord cards.
+- All active cards and skills load and validate against MVP-only grammar.
+- Passive triggers require internalCooldownTicks and maxTriggersPerTick.
+- Monster and boss templates reference known active cards and generate valid FormationSnapshot output.
+- Shop, event, reward, and save/load paths use the active registry.
+- Deterministic combat smoke tests cover Blade Tempo, Burn Engine, Armor Counter, Drum Command, Siege Fire, and Hybrid Bruiser.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Only Gate Captain Elite is wired into the current final boss flow; Siege Marshal and Cinder Strategist are available for future rotation/tests.
+- Burn tick damage is still not source-attributed, so some fire skill tuning should wait for future Burn source tracking.
+- Monster generation still fills all fitting optional cards; future balance may add tighter optional-card counts.
+Next recommended task:
+- Playtest Phase 13A content, tune early rewards/monster HP, then consider boss rotation only when the run flow explicitly supports it.
+
+---
+
+Date: 2026-05-04
 Phase: 12 validation/content-registry patch
 Task: Strengthened RunState save validation domains and formation footprint checks, and made save serialization accept the active card content registry.
 Files changed:

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getMonsterCardDefinitionsById } from "../content/cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import type { CardDefinition, CardInstance } from "../model/card.js";
 import type { CombatResult } from "../model/result.js";
 import { createBattleEnemy } from "../run/nodes/BattleNode.js";
@@ -23,7 +23,7 @@ type Selection =
 const LOCAL_SAVE_KEY = "magic-sanguo:phase-12-run";
 
 export function App() {
-  const cardDefinitionsById = useMemo(() => getMonsterCardDefinitionsById(), []);
+  const cardDefinitionsById = useMemo(() => getActiveCardDefinitionsById(), []);
   const [manager, setManager] = useState(() => RunManager.createNewRun("ui-mvp-run", cardDefinitionsById));
   const [runState, setRunState] = useState<RunState>(() => manager.state);
   const [selection, setSelection] = useState<Selection>();

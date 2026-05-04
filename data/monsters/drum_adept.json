@@ -1,0 +1,21 @@
+{
+  "id": "drum-adept",
+  "name": "Drum Adept",
+  "difficulty": "NORMAL",
+  "slotCount": 4,
+  "maxHp": 30,
+  "startingArmor": 2,
+  "requiredCards": [
+    { "cardId": "war-drum", "slot": 2 },
+    { "cardId": "vanguard-saber", "slot": 1 }
+  ],
+  "optionalCards": [{ "cardId": "battle-standard" }, { "cardId": "patrol-spear" }, { "cardId": "iron-guard" }],
+  "defenseStyle": "MODERATE_HP",
+  "weakness": "Race the engine before the accelerated attacker takes over.",
+  "rewardPool": ["war-drum", "field-drum", "battle-standard", "rallying-beat", "vanguard-saber"],
+  "minDay": 4,
+  "maxDay": 8,
+  "engine": "War Drum reduces adjacent cooldowns.",
+  "payoff": "The adjacent Saber attacks more often than its printed cooldown suggests.",
+  "fixed": false
+}

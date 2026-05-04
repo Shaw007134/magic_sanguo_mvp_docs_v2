@@ -1,0 +1,22 @@
+{
+  "id": "siege-marshal",
+  "name": "Siege Marshal",
+  "difficulty": "BOSS",
+  "slotCount": 4,
+  "maxHp": 54,
+  "startingArmor": 4,
+  "requiredCards": [
+    { "cardId": "burning-trebuchet", "slot": 1 },
+    { "cardId": "war-drum", "slot": 3 },
+    { "cardId": "siege-brazier", "slot": 4 }
+  ],
+  "optionalCards": [],
+  "defenseStyle": "MODERATE_HP",
+  "weakness": "Fast tempo can punish the slow siege setup before the big engines repeat.",
+  "rewardPool": ["burning-trebuchet", "command-gong", "siege-brazier", "flame-ram", "siege-command"],
+  "minDay": 9,
+  "maxDay": 10,
+  "engine": "Siege Fire cards are accelerated by Drum Command support.",
+  "payoff": "Slow, large Burn and damage bursts threaten unprepared builds.",
+  "fixed": true
+}

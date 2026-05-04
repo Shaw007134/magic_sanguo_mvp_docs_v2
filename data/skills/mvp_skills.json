@@ -1,0 +1,114 @@
+[
+  {
+    "id": "weapon-drill",
+    "name": "Weapon Drill",
+    "tier": "BRONZE",
+    "description": "Weapon cards deal +1 damage.",
+    "modifierTemplates": [
+      {
+        "hook": "BeforeDealDamage",
+        "priority": 10,
+        "condition": { "sourceHasTag": "weapon" },
+        "operation": { "type": "ADD_DAMAGE", "value": 1 }
+      }
+    ]
+  },
+  {
+    "id": "fire-study",
+    "name": "Fire Study",
+    "tier": "BRONZE",
+    "description": "Fire damage is multiplied by 1.25.",
+    "modifierTemplates": [
+      {
+        "hook": "BeforeDealDamage",
+        "priority": 20,
+        "condition": { "damageType": "FIRE" },
+        "operation": { "type": "MULTIPLY_DAMAGE", "value": 1.25 }
+      }
+    ]
+  },
+  {
+    "id": "lasting-embers",
+    "name": "Lasting Embers",
+    "tier": "SILVER",
+    "description": "Burn lasts 1 second longer.",
+    "modifierTemplates": [
+      {
+        "hook": "OnStatusApplied",
+        "priority": 10,
+        "condition": { "always": true },
+        "operation": { "type": "ADD_STATUS_DURATION", "value": 60 }
+      }
+    ]
+  },
+  {
+    "id": "quick-hands",
+    "name": "Quick Hands",
+    "tier": "SILVER",
+    "description": "Cooldowns recover 25% faster.",
+    "modifierTemplates": [
+      {
+        "hook": "BeforeCooldownRecover",
+        "priority": 10,
+        "condition": { "always": true },
+        "operation": { "type": "MULTIPLY_COOLDOWN_RECOVERY_RATE", "value": 1.25 }
+      }
+    ]
+  },
+  {
+    "id": "shield-craft",
+    "name": "Shield Craft",
+    "tier": "BRONZE",
+    "description": "Armor cards recover cooldowns 1 point faster.",
+    "modifierTemplates": [
+      {
+        "hook": "BeforeCooldownRecover",
+        "priority": 10,
+        "condition": { "sourceHasTag": "armor" },
+        "operation": { "type": "ADD_COOLDOWN_RECOVERY_RATE", "value": 1 }
+      }
+    ]
+  },
+  {
+    "id": "drumline-training",
+    "name": "Drumline Training",
+    "tier": "SILVER",
+    "description": "Drum cards recover cooldowns 25% faster.",
+    "modifierTemplates": [
+      {
+        "hook": "BeforeCooldownRecover",
+        "priority": 10,
+        "condition": { "sourceHasTag": "drum" },
+        "operation": { "type": "MULTIPLY_COOLDOWN_RECOVERY_RATE", "value": 1.25 }
+      }
+    ]
+  },
+  {
+    "id": "siege-engineering",
+    "name": "Siege Engineering",
+    "tier": "GOLD",
+    "description": "Siege cards deal +2 damage.",
+    "modifierTemplates": [
+      {
+        "hook": "BeforeDealDamage",
+        "priority": 10,
+        "condition": { "sourceHasTag": "siege" },
+        "operation": { "type": "ADD_DAMAGE", "value": 2 }
+      }
+    ]
+  },
+  {
+    "id": "disciplined-formation",
+    "name": "Disciplined Formation",
+    "tier": "GOLD",
+    "description": "Cards in slot 1 deal +1 damage.",
+    "modifierTemplates": [
+      {
+        "hook": "BeforeDealDamage",
+        "priority": 10,
+        "condition": { "cardInSlot": 1 },
+        "operation": { "type": "ADD_DAMAGE", "value": 1 }
+      }
+    ]
+  }
+]

@@ -1,0 +1,95 @@
+[
+  {
+    "id": "fire-arrow-cart",
+    "name": "Fire Arrow Cart",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["fire", "burn", "siege"],
+    "cooldownTicks": 120,
+    "effects": [
+      { "command": "DealDamage", "amount": 1 },
+      { "command": "ApplyBurn", "amount": 2, "durationTicks": 240 }
+    ],
+    "description": "Every 2 seconds, deal 1 damage and apply 2 Burn for 4 seconds."
+  },
+  {
+    "id": "ember-banner",
+    "name": "Ember Banner",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["fire", "banner"],
+    "triggers": [
+      {
+        "hook": "OnStatusApplied",
+        "conditions": { "status": "Burn", "appliedByOwner": true },
+        "internalCooldownTicks": 60,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "DealDamage", "amount": 1 }]
+      }
+    ],
+    "description": "When you apply Burn, deal 1 damage. Can trigger once every 1 second."
+  },
+  {
+    "id": "cinder-seal",
+    "name": "Cinder Seal",
+    "tier": "GOLD",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["fire", "seal"],
+    "triggers": [
+      {
+        "hook": "OnStatusApplied",
+        "conditions": { "status": "Burn", "appliedByOwner": true },
+        "internalCooldownTicks": 120,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ApplyBurn", "amount": 1, "durationTicks": 180 }]
+      }
+    ],
+    "description": "When you apply Burn, apply 1 more Burn for 3 seconds. Can trigger once every 2 seconds."
+  },
+  {
+    "id": "siege-crossbow",
+    "name": "Siege Crossbow",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 2,
+    "tags": ["weapon", "physical", "siege"],
+    "cooldownTicks": 240,
+    "effects": [{ "command": "DealDamage", "amount": 9 }],
+    "description": "Size 2. Every 4 seconds, deal 9 damage."
+  },
+  {
+    "id": "rallying-beat",
+    "name": "Rallying Beat",
+    "tier": "SILVER",
+    "type": "PASSIVE",
+    "size": 1,
+    "tags": ["support", "drum"],
+    "triggers": [
+      {
+        "hook": "OnCardActivated",
+        "conditions": { "cardIsAdjacent": true },
+        "internalCooldownTicks": 90,
+        "maxTriggersPerTick": 1,
+        "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -15 }]
+      }
+    ],
+    "description": "When an adjacent ally activates, ready adjacent allies 0.25 seconds sooner. Can trigger once every 1.5 seconds."
+  },
+  {
+    "id": "burning-shield",
+    "name": "Burning Shield",
+    "tier": "SILVER",
+    "type": "ACTIVE",
+    "size": 1,
+    "tags": ["armor", "fire", "hybrid"],
+    "cooldownTicks": 150,
+    "effects": [
+      { "command": "GainArmor", "amount": 5 },
+      { "command": "ApplyBurn", "amount": 1, "durationTicks": 240 }
+    ],
+    "description": "Every 2.5 seconds, gain 5 Armor and apply 1 Burn for 4 seconds."
+  }
+]

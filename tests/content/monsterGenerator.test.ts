@@ -1,18 +1,27 @@
 import { describe, expect, it } from "vitest";
 
 import monsterCardsJson from "../../data/cards/monster_cards.json" with { type: "json" };
+import banditDuelistJson from "../../data/monsters/bandit_duelist.json" with { type: "json" };
+import bannerGuardJson from "../../data/monsters/banner_guard.json" with { type: "json" };
 import burnApprenticeJson from "../../data/monsters/burn_apprentice.json" with { type: "json" };
+import cinderCaptainJson from "../../data/monsters/cinder_captain.json" with { type: "json" };
+import cinderStrategistJson from "../../data/monsters/cinder_strategist.json" with { type: "json" };
+import drumAdeptJson from "../../data/monsters/drum_adept.json" with { type: "json" };
 import drumTacticianJson from "../../data/monsters/drum_tactician.json" with { type: "json" };
 import fireEchoAdeptJson from "../../data/monsters/fire_echo_adept.json" with { type: "json" };
 import gateCaptainJson from "../../data/monsters/gate_captain.json" with { type: "json" };
+import gateCaptainEliteJson from "../../data/monsters/gate_captain_elite.json" with { type: "json" };
+import ironPatrolJson from "../../data/monsters/iron_patrol.json" with { type: "json" };
+import oilRaiderJson from "../../data/monsters/oil_raider.json" with { type: "json" };
 import rustBanditJson from "../../data/monsters/rust_bandit.json" with { type: "json" };
+import shieldSergeantJson from "../../data/monsters/shield_sergeant.json" with { type: "json" };
 import shieldGuardJson from "../../data/monsters/shield_guard.json" with { type: "json" };
+import siegeMarshalJson from "../../data/monsters/siege_marshal.json" with { type: "json" };
+import siegeTraineeJson from "../../data/monsters/siege_trainee.json" with { type: "json" };
 import trainingDummyJson from "../../data/monsters/training_dummy.json" with { type: "json" };
 import { CombatEngine } from "../../src/combat/CombatEngine.js";
-import {
-  getMonsterCardDefinitionsById,
-  MONSTER_CARD_DEFINITIONS
-} from "../../src/content/cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
+import { MONSTER_CARD_DEFINITIONS } from "../../src/content/cards/monsterCards.js";
 import { MonsterGenerator } from "../../src/content/monsters/MonsterGenerator.js";
 import { getMonsterTemplateById, MONSTER_TEMPLATES } from "../../src/content/monsters/monsterTemplates.js";
 import type { CardDefinition, CardInstance } from "../../src/model/card.js";
@@ -21,7 +30,7 @@ import { validateCardDefinition } from "../../src/validation/cardValidation.js";
 import { validateFormationSnapshot } from "../../src/validation/formationValidation.js";
 
 const generator = new MonsterGenerator();
-const monsterCardsById = getMonsterCardDefinitionsById();
+const activeCardsById = getActiveCardDefinitionsById();
 const monsterTemplatesJson = [
   trainingDummyJson,
   rustBanditJson,
@@ -29,7 +38,18 @@ const monsterTemplatesJson = [
   shieldGuardJson,
   drumTacticianJson,
   fireEchoAdeptJson,
-  gateCaptainJson
+  banditDuelistJson,
+  oilRaiderJson,
+  shieldSergeantJson,
+  drumAdeptJson,
+  siegeTraineeJson,
+  bannerGuardJson,
+  cinderCaptainJson,
+  ironPatrolJson,
+  gateCaptainJson,
+  gateCaptainEliteJson,
+  siegeMarshalJson,
+  cinderStrategistJson
 ];
 
 function requireTemplate(id: string) {
@@ -45,7 +65,7 @@ function generate(templateId: string, seed = "seed-a", day = 3) {
     template: requireTemplate(templateId),
     seed,
     day,
-    cardDefinitionsById: monsterCardsById
+    cardDefinitionsById: activeCardsById
   });
 }
 
@@ -101,7 +121,7 @@ describe("MonsterGenerator", () => {
     for (const template of MONSTER_TEMPLATES) {
       const templateCards = [...template.requiredCards, ...template.optionalCards];
       for (const templateCard of templateCards) {
-        expect(monsterCardsById.has(templateCard.cardId), `${template.id}:${templateCard.cardId}`).toBe(true);
+        expect(activeCardsById.has(templateCard.cardId), `${template.id}:${templateCard.cardId}`).toBe(true);
       }
     }
   });
@@ -109,7 +129,7 @@ describe("MonsterGenerator", () => {
   it("every reward pool card id exists in monster card definitions", () => {
     for (const template of MONSTER_TEMPLATES) {
       for (const cardId of template.rewardPool) {
-        expect(monsterCardsById.has(cardId), `${template.id}:${cardId}`).toBe(true);
+        expect(activeCardsById.has(cardId), `${template.id}:${cardId}`).toBe(true);
       }
     }
   });
@@ -133,15 +153,15 @@ describe("MonsterGenerator", () => {
   });
 
   it("same seed creates the same monster formation", () => {
-    const first = generate("rust-bandit", "same-seed", 3);
-    const second = generate("rust-bandit", "same-seed", 3);
+    const first = generate("bandit-duelist", "same-seed", 3);
+    const second = generate("bandit-duelist", "same-seed", 3);
 
     expect(second).toEqual(first);
   });
 
   it("different seeds can choose deterministic but different optional card layouts", () => {
-    const template = requireTemplate("rust-bandit");
-    const baseline = generator.generate({ template, seed: "seed-0", day: 3, cardDefinitionsById: monsterCardsById });
+    const template = requireTemplate("bandit-duelist");
+    const baseline = generator.generate({ template, seed: "seed-0", day: 3, cardDefinitionsById: activeCardsById });
     let different = false;
 
     for (let index = 1; index <= 20; index += 1) {
@@ -149,7 +169,7 @@ describe("MonsterGenerator", () => {
         template,
         seed: `seed-${index}`,
         day: 3,
-        cardDefinitionsById: monsterCardsById
+        cardDefinitionsById: activeCardsById
       });
       if (JSON.stringify(candidate.formation.slots) !== JSON.stringify(baseline.formation.slots)) {
         different = true;
@@ -165,7 +185,7 @@ describe("MonsterGenerator", () => {
       const result = generator.generate({ template, seed: "known-cards", day: template.minDay });
 
       for (const instance of result.cardInstances) {
-        const card = monsterCardsById.get(instance.definitionId);
+        const card = activeCardsById.get(instance.definitionId);
         expect(card, instance.definitionId).toBeDefined();
         expect(validateCardDefinition(card as CardDefinition).valid).toBe(true);
       }
@@ -173,7 +193,7 @@ describe("MonsterGenerator", () => {
   });
 
   it("required cards are always included", () => {
-    const template = requireTemplate("fire-echo-adept");
+    const template = requireTemplate("cinder-captain");
     const result = generator.generate({ template, seed: "required", day: 6 });
     const definitionIds = result.cardInstances.map((instance) => instance.definitionId);
 
@@ -197,7 +217,7 @@ describe("MonsterGenerator", () => {
     expect(sparkDrumSlot?.slotIndex).toBe(2);
     expect(result.formation.slots.find((slot) => slot.slotIndex === 3)?.locked).toBe(true);
     expect(validateFormationSnapshot(result.formation, {
-      cardDefinitionsById: monsterCardsById,
+      cardDefinitionsById: activeCardsById,
       cardInstancesById: new Map(result.cardInstances.map((instance) => [instance.instanceId, instance]))
     }).valid).toBe(true);
   });
@@ -206,20 +226,20 @@ describe("MonsterGenerator", () => {
     const result = generate("shield-guard", "valid", 4);
 
     expect(validateFormationSnapshot(result.formation, {
-      cardDefinitionsById: monsterCardsById,
+      cardDefinitionsById: activeCardsById,
       cardInstancesById: new Map(result.cardInstances.map((instance) => [instance.instanceId, instance]))
     })).toEqual({ valid: true, errors: [] });
   });
 
   it("boss generation is fixed and deterministic", () => {
-    const first = generate("gate-captain", "boss-seed-a", 9);
-    const second = generate("gate-captain", "boss-seed-b", 9);
+    const first = generate("gate-captain-elite", "boss-seed-a", 10);
+    const second = generate("gate-captain-elite", "boss-seed-b", 10);
 
     expect(second).toEqual(first);
   });
 
   it("generated monster can be used directly in CombatEngine", () => {
-    const monster = generate("rust-bandit", "combat", 3);
+    const monster = generate("bandit-duelist", "combat", 3);
     const playerCard = playerStrikeCard();
     const playerInstance: CardInstance = {
       instanceId: "player-card",
@@ -233,7 +253,7 @@ describe("MonsterGenerator", () => {
         [playerInstance.instanceId, playerInstance],
         ...monster.cardInstances.map((instance) => [instance.instanceId, instance] as const)
       ]),
-      cardDefinitionsById: new Map([[playerCard.id, playerCard], ...monsterCardsById]),
+      cardDefinitionsById: new Map([[playerCard.id, playerCard], ...activeCardsById]),
       maxCombatTicks: 120
     });
 
@@ -256,7 +276,7 @@ describe("MonsterGenerator", () => {
         [playerInstance.instanceId, playerInstance],
         ...monster.cardInstances.map((instance) => [instance.instanceId, instance] as const)
       ]),
-      cardDefinitionsById: new Map([[playerCard.id, playerCard], ...monsterCardsById]),
+      cardDefinitionsById: new Map([[playerCard.id, playerCard], ...activeCardsById]),
       maxCombatTicks: 130
     });
     const replayTypes = result.replayTimeline.events.map((event) => event.type);

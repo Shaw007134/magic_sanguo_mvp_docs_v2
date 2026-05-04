@@ -8,7 +8,7 @@
     "tags": ["weapon", "physical"],
     "cooldownTicks": 90,
     "effects": [{ "command": "DealDamage", "amount": 1 }],
-    "description": "A slow practice strike."
+    "description": "Every 1.5 seconds, deal 1 damage as a practice strike."
   },
   {
     "id": "rusty-blade",
@@ -19,7 +19,7 @@
     "tags": ["weapon", "physical"],
     "cooldownTicks": 45,
     "effects": [{ "command": "DealDamage", "amount": 2 }],
-    "description": "Fast repeated weapon damage."
+    "description": "Every 0.75 seconds, deal 2 damage."
   },
   {
     "id": "flame-spear",
@@ -33,7 +33,7 @@
       { "command": "DealDamage", "amount": 1 },
       { "command": "ApplyBurn", "amount": 2, "durationTicks": 120 }
     ],
-    "description": "A light hit that starts Burn."
+    "description": "Every 1.25 seconds, deal 1 damage and apply 2 Burn for 2 seconds."
   },
   {
     "id": "wooden-shield",
@@ -44,7 +44,7 @@
     "tags": ["armor"],
     "cooldownTicks": 60,
     "effects": [{ "command": "GainArmor", "amount": 3 }],
-    "description": "Basic repeatable armor gain."
+    "description": "Every 1 second, gain 3 Armor."
   },
   {
     "id": "spark-drum",
@@ -55,7 +55,7 @@
     "tags": ["support"],
     "cooldownTicks": 90,
     "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }],
-    "description": "A large support card that speeds adjacent allies."
+    "description": "Size 2. Every 1.5 seconds, ready adjacent allies 0.5 seconds sooner."
   },
   {
     "id": "fire-echo-seal",
@@ -68,11 +68,12 @@
       {
         "hook": "OnStatusApplied",
         "conditions": { "status": "Burn", "appliedByOwner": true },
+        "internalCooldownTicks": 60,
         "maxTriggersPerTick": 1,
         "effects": [{ "command": "DealDamage", "amount": 1 }]
       }
     ],
-    "description": "Echoes a small hit when its owner applies Burn."
+    "description": "When you apply Burn, deal 1 damage. Can trigger once every 1 second."
   },
   {
     "id": "gate-captain-saber",
@@ -83,6 +84,6 @@
     "tags": ["weapon", "physical"],
     "cooldownTicks": 60,
     "effects": [{ "command": "DealDamage", "amount": 3 }],
-    "description": "Steady captain weapon pressure."
+    "description": "Every 1 second, deal 3 damage as steady captain pressure."
   }
 ]
