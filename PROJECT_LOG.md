@@ -1029,3 +1029,35 @@ Known issues:
 - Boss rotation is still not implemented; Gate Captain Elite remains the wired final boss.
 Next recommended task:
 - Playtest Phase 13B curves across several seeds, then tune card/monster numbers before adding any new mechanics.
+
+---
+
+Date: 2026-05-04
+Phase: 13B terminal tuning patch
+Task: Tightened deterministic crit seeding and improved late shop/reward terminal exposure before Phase 14.
+Files changed:
+- src/combat/commands/DealDamageCommand.ts
+- src/content/cards/contentPools.ts
+- src/run/nodes/ShopNode.ts
+- src/run/rewards/RewardGenerator.ts
+- tests/combat/criticalScaling.test.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/run/saveManager.test.ts
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added:
+- Same combat input still produces identical crit sequences.
+- Different opponent formation ids can produce different deterministic crit sequences.
+- Level 8+ rewards include at least one terminal or high-quality build card when valid terminal cards are available.
+- Level 8+ shops include at least one high-quality terminal/payoff/engine/connector card when available.
+- Level 1-2 shops and rewards stay Bronze/Silver and avoid late-game terminal feel.
+- Saved shop and reward choices do not reroll through late-quality curation after save/load.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Crit seeding is still deterministic combat-state hashing, not nondeterministic randomness.
+- Late anchors improve exposure but do not guarantee a perfect build or remove build-vital Bronze/Silver cards.
+Next recommended task:
+- Proceed to Phase 14 after manual playtest confirms late reward/shop surfaces feel stronger without becoming scripted.

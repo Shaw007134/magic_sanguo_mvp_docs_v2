@@ -94,11 +94,15 @@ Phase 13A monster templates include Bandit Duelist, Oil Raider, Shield Sergeant,
 Phase 13A boss templates include Gate Captain Elite, Siege Marshal, and Cinder Strategist. Only Gate Captain Elite is wired as the current final boss.
 docs/BALANCE_NOTES.md documents the content pack, Iron Warlord identity, card roles, skills, monsters, bosses, risky combos, readability risks, and intentionally deferred systems.
 Phase 13B adds deterministic critical hits for direct DealDamage only. Card JSON may use critChancePercent and critMultiplier; replay events include critical hit data and summary includes crit counts/damage.
+Phase 13B crit seeding includes combat timing/card state plus source formation id, target formation id, and combatant sides so identical combat input is stable while unrelated opponents can produce different crit sequences.
 Phase 13B adds limited terminal scaling for direct DealDamage only: OWNER_ARMOR_PERCENT, OWNER_MAX_HP_PERCENT, TARGET_MISSING_HP_PERCENT, plus optional targetHpBelowPercent conditional multiplier.
 Iron Warlord terminal/core cards now include Iron Bastion Strike, Warlord's Mandate, Execution Halberd, and Burning Trebuchet. Their support cards are documented and tested through src/content/cards/contentPools.ts.
 Curated content pools live in src/content/cards/contentPools.ts and cover starter shop/event, early/mid/late shop and reward pools, terminal cards, build-vital support, boss/future rewards, skill rewards, and archetype pools.
 Shop, event, level-up, and battle reward generation now use level-aware curated pools while preserving deterministic choices through save/load.
+Level 8+ shops deterministically anchor at least one high-quality terminal/payoff/engine/connector card when the active registry has one available; starter shops are unchanged.
+Level 7+ battle rewards deterministically anchor at least one terminal or high-quality payoff/engine card unless monster-used or monster rewardPool cards already provide that kind of strong option.
 Battle rewards preserve priority order: monster-used cards, monster rewardPool cards, curated fallback, build-vital support, terminal cards when level-appropriate, then fallback card/skill/gold.
+Saved shop/reward choices are restored exactly and do not reroll through newer quality-anchor logic after load.
 MonsterGenerator now limits optional-card count by difficulty/day so early normal monsters are simpler and elite/boss formations can be more complete.
 Fire support remains tag-based, not damageType-based. Burn tick damage is still not attributed to applying cards, so Burn ticks are not boosted by Fire Study or crit mechanics.
 The browser UI has minimal localStorage controls: Save Run, Load Run, and Clear Save. No cloud save, account system, or migration UI exists.

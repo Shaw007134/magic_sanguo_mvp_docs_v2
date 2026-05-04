@@ -240,6 +240,28 @@ export function getCardQualityScore(cardId: string): number {
   return getCardPoolMetadata(cardId)?.quality ?? 1;
 }
 
+export function isTerminalOrHighQualityBuildCard(cardId: string): boolean {
+  const metadata = getCardPoolMetadata(cardId);
+  if (!metadata) {
+    return false;
+  }
+  if (metadata.role === "terminal") {
+    return true;
+  }
+  return metadata.quality >= 5 && (metadata.role === "engine" || metadata.role === "payoff");
+}
+
+export function isHighQualityShopCard(cardId: string): boolean {
+  const metadata = getCardPoolMetadata(cardId);
+  if (!metadata || metadata.quality < 5) {
+    return false;
+  }
+  return metadata.role === "terminal" ||
+    metadata.role === "payoff" ||
+    metadata.role === "engine" ||
+    metadata.role === "connector";
+}
+
 export function filterKnownCards(
   cardIds: readonly string[],
   cardDefinitionsById: ReadonlyMap<string, CardDefinition>

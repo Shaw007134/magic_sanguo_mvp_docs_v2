@@ -19,14 +19,15 @@ function activeCard(id: string, effects: CardDefinition["effects"], cooldownTick
 }
 
 function formation(
-  id: "player" | "enemy",
+  id: string,
+  kind: FormationSnapshot["kind"],
   maxHp: number,
   cardInstanceIds: readonly (string | undefined)[],
   startingArmor = 0
 ): FormationSnapshot {
   return {
     id,
-    kind: id === "player" ? "PLAYER" : "MONSTER",
+    kind,
     displayName: id,
     level: 1,
     maxHp,
@@ -40,13 +41,18 @@ function formation(
   };
 }
 
-function runtimeState(instanceId: string, definitionId: string, ownerCombatantId: "player" | "enemy"): CardRuntimeState {
+function runtimeState(
+  instanceId: string,
+  definitionId: string,
+  ownerCombatantId: "player" | "enemy",
+  cooldownMaxTicks = 999
+): CardRuntimeState {
   return {
     instanceId,
     definitionId,
     ownerCombatantId,
     slotIndex: 1,
-    cooldownMaxTicks: 999,
+    cooldownMaxTicks,
     cooldownRemainingTicks: 1,
     cooldownRecoveryRate: 1,
     disabled: false,
@@ -62,11 +68,12 @@ function simulate(input: {
   readonly playerArmor?: number;
   readonly enemyMaxHp?: number;
   readonly enemyArmor?: number;
+  readonly enemyFormationId?: string;
 }) {
   const instance: CardInstance = { instanceId: "player-card", definitionId: input.card.id };
   return new CombatEngine().simulate({
-    playerFormation: formation("player", input.playerMaxHp ?? 40, ["player-card"], input.playerArmor ?? 0),
-    enemyFormation: formation("enemy", input.enemyMaxHp ?? 40, [], input.enemyArmor ?? 0),
+    playerFormation: formation("player", "PLAYER", input.playerMaxHp ?? 40, ["player-card"], input.playerArmor ?? 0),
+    enemyFormation: formation(input.enemyFormationId ?? "enemy", "MONSTER", input.enemyMaxHp ?? 40, [], input.enemyArmor ?? 0),
     cardInstancesById: new Map([[instance.instanceId, instance]]),
     cardDefinitionsById: new Map([[input.card.id, input.card]]),
     initialCardRuntimeStates: [runtimeState("player-card", input.card.id, "player")],
@@ -76,6 +83,24 @@ function simulate(input: {
 
 function damageEvents(result: ReturnType<typeof simulate>) {
   return result.replayTimeline.events.filter((event) => event.type === "DamageDealt");
+}
+
+function critSequence(enemyFormationId: string): readonly boolean[] {
+  const card = activeCard("sequence-crit", [
+    { command: "DealDamage", amount: 1, critChancePercent: 35, critMultiplier: 2 }
+  ], 15);
+  const instance: CardInstance = { instanceId: "player-card", definitionId: card.id };
+  const result = new CombatEngine().simulate({
+    playerFormation: formation("player", "PLAYER", 40, ["player-card"]),
+    enemyFormation: formation(enemyFormationId, "MONSTER", 120, []),
+    cardInstancesById: new Map([[instance.instanceId, instance]]),
+    cardDefinitionsById: new Map([[card.id, card]]),
+    initialCardRuntimeStates: [runtimeState("player-card", card.id, "player", 15)],
+    maxCombatTicks: 180
+  });
+  return result.replayTimeline.events
+    .filter((event) => event.type === "DamageDealt" && event.sourceId === "player-card")
+    .map((event) => event.payload?.critical === true);
 }
 
 describe("critical hits and terminal scaling", () => {
@@ -111,6 +136,15 @@ describe("critical hits and terminal scaling", () => {
     });
     expect(first.summary.critCountByCard).toEqual({ "player-card": 1 });
     expect(first.summary.criticalDamageByCard).toEqual({ "player-card": 10 });
+  });
+
+  it("different opponent formation ids can produce a different deterministic crit sequence", () => {
+    const first = critSequence("enemy-alpha");
+    const repeat = critSequence("enemy-alpha");
+    const differentOpponent = critSequence("enemy-beta");
+
+    expect(repeat).toEqual(first);
+    expect(differentOpponent).not.toEqual(first);
   });
 
   it("OWNER_ARMOR_PERCENT scaling works and is deterministic", () => {

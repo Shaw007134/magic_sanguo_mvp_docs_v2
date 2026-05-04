@@ -5,6 +5,7 @@ import {
   filterKnownCards,
   getCardQualityScore,
   getRewardPoolForLevel,
+  isTerminalOrHighQualityBuildCard,
   TERMINAL_POOL
 } from "../../content/cards/contentPools.js";
 import { getMonsterTemplateById } from "../../content/monsters/monsterTemplates.js";
@@ -76,6 +77,14 @@ export function createRewardChoices(input: {
       cardDefinitionId
     });
   }
+  ensureLateBuildCardChoice({
+    choices,
+    level,
+    orderedCards,
+    anchorCards: [...terminalCards, ...curatedFallback],
+    cardDefinitionsById: input.cardDefinitionsById,
+    nodeIndex: input.nodeIndex
+  });
 
   if (choices.length < 3) {
     const skillDefinition = findUnownedSkill(input.ownedSkills ?? []);
@@ -190,6 +199,50 @@ function findUpgradeableCard(
 function findUnownedSkill(ownedSkills: readonly SkillInstance[], seed = "skill-reward") {
   const ownedDefinitionIds = new Set(ownedSkills.map((skill) => skill.definitionId));
   return shuffleDeterministic(SKILL_DEFINITIONS, seed).find((skill) => !ownedDefinitionIds.has(skill.id));
+}
+
+function ensureLateBuildCardChoice(input: {
+  readonly choices: RewardChoice[];
+  readonly level: number;
+  readonly orderedCards: readonly string[];
+  readonly anchorCards: readonly string[];
+  readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
+  readonly nodeIndex: number;
+}): void {
+  if (input.level < 7) {
+    return;
+  }
+  if (
+    input.choices.some((choice) =>
+      choice.type === "REWARD_CARD" &&
+      choice.cardDefinitionId !== undefined &&
+      isTerminalOrHighQualityBuildCard(choice.cardDefinitionId)
+    )
+  ) {
+    return;
+  }
+
+  const existingCardIds = new Set(input.choices.map((choice) => choice.cardDefinitionId).filter(Boolean));
+  const anchor = [...input.anchorCards, ...input.orderedCards].find((cardId) =>
+    !existingCardIds.has(cardId) &&
+    input.cardDefinitionsById.has(cardId) &&
+    isTerminalOrHighQualityBuildCard(cardId)
+  );
+  if (!anchor) {
+    return;
+  }
+
+  const anchorChoice: RewardChoice = {
+    id: `reward-${input.nodeIndex}-card-build-anchor`,
+    type: "REWARD_CARD",
+    label: `Take ${input.cardDefinitionsById.get(anchor)?.name ?? anchor}`,
+    cardDefinitionId: anchor
+  };
+  if (input.choices.length < 2) {
+    input.choices.push(anchorChoice);
+    return;
+  }
+  input.choices[1] = anchorChoice;
 }
 
 function sortRewardCardIdsByLevel(cardIds: readonly string[], level: number): readonly string[] {

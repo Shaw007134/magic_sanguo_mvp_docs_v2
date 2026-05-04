@@ -144,6 +144,28 @@ describe("SaveManager", () => {
     expect(loaded.state.pendingRewardSource).toEqual(beforeRewardSource);
   });
 
+  it("saved shop and reward choices are not rerolled by late-quality curation on load", () => {
+    const shopManager = createNewRun("save-late-shop-no-reroll");
+    const savedStarterChoices = shopManager.state.currentChoices;
+    shopManager.state = { ...shopManager.state, level: 8 };
+    const loadedShop = roundTrip(shopManager);
+
+    expect(loadedShop.state.currentNode.type).toBe("SHOP");
+    expect(loadedShop.state.currentChoices).toEqual(savedStarterChoices);
+
+    const rewardManager = createNewRun("save-late-reward-no-reroll");
+    reachFirstBattle(rewardManager);
+    completeFakeBattleWin(rewardManager);
+    const savedRewardChoices = rewardManager.state.currentChoices;
+    const savedPendingRewards = rewardManager.state.pendingRewardChoices;
+    rewardManager.state = { ...rewardManager.state, level: 8 };
+    const loadedReward = roundTrip(rewardManager);
+
+    expect(loadedReward.state.currentNode.type).toBe("REWARD");
+    expect(loadedReward.state.currentChoices).toEqual(savedRewardChoices);
+    expect(loadedReward.state.pendingRewardChoices).toEqual(savedPendingRewards);
+  });
+
   it("level-up reward choices, owned skills, card tiers, and formation layout survive load", () => {
     const manager = createNewRun("save-level-up");
     manager.addCardToChest("rusty-blade");

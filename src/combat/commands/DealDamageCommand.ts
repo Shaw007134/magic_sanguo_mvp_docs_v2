@@ -128,6 +128,10 @@ function rollDeterministicCrit(options: DealDamageCommandOptions, context: Comba
   const sourceCard = context.sourceCard;
   const rollSeed = [
     context.tick,
+    context.sourceCombatant.formation.id,
+    context.targetCombatant.formation.id,
+    context.sourceCombatant.side,
+    context.targetCombatant.side,
     sourceCard?.ownerCombatantId ?? context.sourceCombatant.formation.id,
     sourceCard?.instanceId ?? "no-card",
     sourceCard?.activationCount ?? 0,

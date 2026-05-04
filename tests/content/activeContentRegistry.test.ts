@@ -27,6 +27,8 @@ import {
   getRewardPoolForLevel,
   getShopPoolForLevel,
   IRON_WARLORD_TERMINALS,
+  isHighQualityShopCard,
+  isTerminalOrHighQualityBuildCard,
   LATE_REWARD_POOL,
   LATE_SHOP_POOL,
   MID_REWARD_POOL,
@@ -383,6 +385,70 @@ describe("active MVP content registry", () => {
 
     expect(averageQuality(lateRewards)).toBeGreaterThan(averageQuality(earlyRewards));
     expect(countRoleQualityOptions(lateRewards)).toBeGreaterThan(countRoleQualityOptions(earlyRewards));
+  });
+
+  it("level 8+ rewards include a terminal or high-quality build card when available", () => {
+    for (let index = 0; index < 20; index += 1) {
+      const choices = createRewardChoices({
+        seed: `late-anchor-reward-${index}`,
+        nodeIndex: index,
+        defeatedMonsterId: "training-dummy",
+        usedCardDefinitionIds: ["training-staff"],
+        cardDefinitionsById: activeCardsById,
+        level: 8
+      });
+      const rewardCardIds = choices
+        .filter((choice) => choice.type === "REWARD_CARD")
+        .map((choice) => choice.cardDefinitionId ?? "");
+      expect(rewardCardIds.some(isTerminalOrHighQualityBuildCard), rewardCardIds.join(",")).toBe(true);
+    }
+  });
+
+  it("level 8+ shops include at least one high-quality build card while starter shop stays unchanged", () => {
+    const starterShopChoices = createShopChoices({
+      seed: "late-shop-starter-unchanged",
+      nodeIndex: 0,
+      starter: true,
+      level: 10,
+      cardDefinitionsById: activeCardsById
+    });
+    expect(starterShopChoices.map((choice) => choice.cardDefinitionId)).toEqual([...STARTER_SHOP_POOL]);
+    expect(starterShopChoices.some((choice) => activeCardsById.get(choice.cardDefinitionId)?.type === "ACTIVE")).toBe(true);
+
+    for (let index = 0; index < 20; index += 1) {
+      const choices = createShopChoices({
+        seed: `late-anchor-shop-${index}`,
+        nodeIndex: index + 10,
+        level: 8,
+        cardDefinitionsById: activeCardsById
+      });
+      expect(choices).toHaveLength(3);
+      expect(choices.map((choice) => choice.cardDefinitionId).some(isHighQualityShopCard)).toBe(true);
+    }
+  });
+
+  it("level 1-2 shops and rewards avoid late-game-only feel", () => {
+    for (let index = 0; index < 20; index += 1) {
+      const shopCards = createShopChoices({
+        seed: `early-shop-${index}`,
+        nodeIndex: index,
+        level: 2,
+        cardDefinitionsById: activeCardsById
+      }).map((choice) => activeCardsById.get(choice.cardDefinitionId));
+      expect(shopCards.every((card) => card && EARLY_ALLOWED_TIERS.has(card.tier))).toBe(true);
+      expect(shopCards.every((card) => card && !isTerminalOrHighQualityBuildCard(card.id))).toBe(true);
+
+      const rewardCards = createRewardChoices({
+        seed: `early-reward-${index}`,
+        nodeIndex: index,
+        cardDefinitionsById: activeCardsById,
+        level: 2
+      })
+        .filter((choice) => choice.type === "REWARD_CARD")
+        .map((choice) => activeCardsById.get(choice.cardDefinitionId ?? ""));
+      expect(rewardCards.every((card) => card && EARLY_ALLOWED_TIERS.has(card.tier))).toBe(true);
+      expect(rewardCards.every((card) => card && !isTerminalOrHighQualityBuildCard(card.id))).toBe(true);
+    }
   });
 
   it("early monsters generate simpler formations than elite and boss monsters", () => {
