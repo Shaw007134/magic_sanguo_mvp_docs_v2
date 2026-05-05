@@ -6,6 +6,7 @@ import {
 } from "../../content/cards/contentPools.js";
 import { shuffleDeterministic } from "../deterministic.js";
 import type { EventChoice } from "../RunState.js";
+import { materializeEventChoices, selectEventTemplate } from "./EventGenerator.js";
 
 export function createEventChoices(input: {
   readonly seed: string;
@@ -24,36 +25,19 @@ export function createEventChoices(input: {
     : shuffleDeterministic(availableCardChoices, `${input.seed}:event:${input.nodeIndex}:level:${level}`);
   const gold = level >= 8 ? 7 : level >= 5 ? 5 : 3;
   const heal = level >= 8 ? 14 : level >= 5 ? 10 : 8;
+  const template = selectEventTemplate({
+    seed: input.seed,
+    nodeIndex: input.nodeIndex,
+    level,
+    starter: input.starter
+  });
 
-  const choices: EventChoice[] = [
-    {
-      id: `event-${input.nodeIndex}-card-0`,
-      type: "EVENT_CARD",
-      label: `Take ${getCardName(cardIds[0] ?? "rusty-blade", input.cardDefinitionsById)}`,
-      cardDefinitionId: cardIds[0] ?? "rusty-blade"
-    },
-    {
-      id: `event-${input.nodeIndex}-card-1`,
-      type: "EVENT_CARD",
-      label: `Take ${getCardName(cardIds[1] ?? "wooden-shield", input.cardDefinitionsById)}`,
-      cardDefinitionId: cardIds[1] ?? "wooden-shield"
-    },
-    {
-      id: `event-${input.nodeIndex}-gold`,
-      type: "EVENT_GOLD",
-      label: `Take ${gold} gold`,
-      gold
-    },
-    {
-      id: `event-${input.nodeIndex}-heal`,
-      type: "EVENT_HEAL",
-      label: `Rest for ${heal} HP`,
-      heal
-    }
-  ];
-  return choices.slice(0, 3);
-}
-
-function getCardName(cardId: string, cardDefinitionsById?: ReadonlyMap<string, CardDefinition>): string {
-  return cardDefinitionsById?.get(cardId)?.name ?? cardId;
+  return materializeEventChoices({
+    template,
+    nodeIndex: input.nodeIndex,
+    cardIds,
+    gold,
+    heal,
+    cardDefinitionsById: input.cardDefinitionsById
+  });
 }

@@ -67,6 +67,28 @@ describe("validateCardDefinition", () => {
     expect(result.errors[0]?.path).toBe("tier");
   });
 
+  it("validates content categories separately from mechanical type", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        type: "ACTIVE",
+        categories: ["WEAPON", "FIRE", "STARTER"]
+      })
+    );
+
+    expect(result.valid).toBe(true);
+  });
+
+  it("rejects invalid content categories", () => {
+    const result = validateCardDefinition(
+      createValidActiveCard({
+        categories: ["SPELL" as never]
+      })
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]?.path).toBe("categories[0]");
+  });
+
   it("accepts supported DealDamage damageType values", () => {
     const result = validateCardDefinition(
       createValidActiveCard({

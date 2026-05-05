@@ -5,10 +5,22 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical"],
+    "tags": [
+      "weapon",
+      "physical"
+    ],
     "cooldownTicks": 90,
-    "effects": [{ "command": "DealDamage", "amount": 1 }],
-    "description": "Every 1.5 seconds, deal 1 damage as a practice strike."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 1
+      }
+    ],
+    "description": "Every 1.5 seconds, deal 1 damage as a practice strike.",
+    "categories": [
+      "WEAPON",
+      "STARTER"
+    ]
   },
   {
     "id": "rusty-blade",
@@ -16,10 +28,22 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical"],
+    "tags": [
+      "weapon",
+      "physical"
+    ],
     "cooldownTicks": 45,
-    "effects": [{ "command": "DealDamage", "amount": 2 }],
-    "description": "Every 0.75 seconds, deal 2 damage."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 2
+      }
+    ],
+    "description": "Every 0.75 seconds, deal 2 damage.",
+    "categories": [
+      "WEAPON",
+      "STARTER"
+    ]
   },
   {
     "id": "flame-spear",
@@ -27,13 +51,28 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "fire"],
+    "tags": [
+      "weapon",
+      "fire"
+    ],
     "cooldownTicks": 75,
     "effects": [
-      { "command": "DealDamage", "amount": 1 },
-      { "command": "ApplyBurn", "amount": 2, "durationTicks": 120 }
+      {
+        "command": "DealDamage",
+        "amount": 1
+      },
+      {
+        "command": "ApplyBurn",
+        "amount": 2,
+        "durationTicks": 120
+      }
     ],
-    "description": "Every 1.25 seconds, deal 1 damage and apply 2 Burn for 2 seconds. Burn loses 1 after each second of damage."
+    "description": "Every 1.25 seconds, deal 1 damage and apply 2 Burn for 2 seconds. Burn loses 1 after each second of damage.",
+    "categories": [
+      "WEAPON",
+      "FIRE",
+      "STARTER"
+    ]
   },
   {
     "id": "wooden-shield",
@@ -41,10 +80,22 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["armor"],
+    "tags": [
+      "armor"
+    ],
     "cooldownTicks": 60,
-    "effects": [{ "command": "GainArmor", "amount": 3 }],
-    "description": "Every 1 second, gain 3 Armor."
+    "effects": [
+      {
+        "command": "GainArmor",
+        "amount": 3
+      }
+    ],
+    "description": "Every 1 second, gain 3 Armor.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "STARTER"
+    ]
   },
   {
     "id": "spark-drum",
@@ -52,10 +103,23 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["support"],
+    "tags": [
+      "support"
+    ],
     "cooldownTicks": 90,
-    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }],
-    "description": "Size 2. Every 1.5 seconds, ready adjacent allies 0.5 seconds sooner."
+    "effects": [
+      {
+        "command": "ModifyCooldown",
+        "target": "ADJACENT_ALLY",
+        "amountTicks": -30
+      }
+    ],
+    "description": "Size 2. Every 1.5 seconds, ready adjacent allies 0.5 seconds sooner.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "fire-echo-seal",
@@ -63,17 +127,34 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["fire", "seal"],
+    "tags": [
+      "fire",
+      "seal"
+    ],
     "triggers": [
       {
         "hook": "OnStatusApplied",
-        "conditions": { "status": "Burn", "appliedByOwner": true },
+        "conditions": {
+          "status": "Burn",
+          "appliedByOwner": true
+        },
         "internalCooldownTicks": 60,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "DealDamage", "amount": 1 }]
+        "effects": [
+          {
+            "command": "DealDamage",
+            "amount": 1
+          }
+        ]
       }
     ],
-    "description": "When you apply Burn, deal 1 damage. Can trigger once every 1 second."
+    "description": "When you apply Burn, deal 1 damage. Can trigger once every 1 second.",
+    "categories": [
+      "TOOL",
+      "FIRE",
+      "ENGINE",
+      "RELIC"
+    ]
   },
   {
     "id": "gate-captain-saber",
@@ -81,9 +162,20 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical"],
+    "tags": [
+      "weapon",
+      "physical"
+    ],
     "cooldownTicks": 60,
-    "effects": [{ "command": "DealDamage", "amount": 3 }],
-    "description": "Every 1 second, deal 3 damage as steady captain pressure."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 3
+      }
+    ],
+    "description": "Every 1 second, deal 3 damage as steady captain pressure.",
+    "categories": [
+      "WEAPON"
+    ]
   }
 ]

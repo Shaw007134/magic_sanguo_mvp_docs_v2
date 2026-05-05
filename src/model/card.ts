@@ -1,10 +1,29 @@
 export const CARD_TIERS = ["BRONZE", "SILVER", "GOLD", "JADE", "CELESTIAL"] as const;
 export const CARD_TYPES = ["ACTIVE", "PASSIVE", "AURA", "TACTIC", "RELIC"] as const;
 export const CARD_SIZES = [1, 2] as const;
+export const CARD_CATEGORIES = [
+  "WEAPON",
+  "ARMOR",
+  "TOOL",
+  "RELIC",
+  "TACTIC",
+  "FIRE",
+  "POISON",
+  "HEAL",
+  "COOLDOWN",
+  "CONTROL",
+  "TERMINAL",
+  "ENGINE",
+  "DEFENSE",
+  "ECONOMY",
+  "STARTER",
+  "BOSS_REWARD"
+] as const;
 
 export type CardTier = (typeof CARD_TIERS)[number];
 export type CardType = (typeof CARD_TYPES)[number];
 export type CardSize = (typeof CARD_SIZES)[number];
+export type CardCategory = (typeof CARD_CATEGORIES)[number];
 
 export type ResourceCost = Readonly<Record<string, unknown>>;
 export type EffectDefinition = Readonly<Record<string, unknown>>;
@@ -34,6 +53,7 @@ export interface CardDefinition {
   readonly type: CardType;
   readonly size: CardSize;
   readonly tags: readonly string[];
+  readonly categories?: readonly CardCategory[];
   readonly cooldownTicks?: number;
   readonly cost?: readonly ResourceCost[];
   readonly effects?: readonly EffectDefinition[];

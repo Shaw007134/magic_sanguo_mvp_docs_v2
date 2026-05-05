@@ -9,6 +9,7 @@ import {
 } from "../content/cards/effectiveCardDefinition.js";
 import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import type { CardDefinition, CardInstance, CardTier } from "../model/card.js";
+import { getEnchantmentDefinitionsById } from "../content/enchantments/enchantments.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
 import type { RewardCardDefinition } from "../model/rewardCard.js";
 import { getRewardCardDefinitionsById } from "../content/rewards/rewardCards.js";
@@ -122,6 +123,7 @@ export class RunManager {
         currentChoices: [],
         pendingRewardChoices: [],
         pendingLevelUpChoices: [],
+        pendingEnchantmentChoices: [],
         shopStates: [],
         completedEncounterCount: 0,
         defeatedBattleCount: 0,
@@ -392,6 +394,26 @@ export class RunManager {
       this.state = {
         ...this.state,
         currentHp: Math.min(this.state.maxHp, this.state.currentHp + (choice.heal ?? 0))
+      };
+    } else if (choice.type === "EVENT_ENCHANTMENT") {
+      const enchantment = choice.enchantmentDefinitionId
+        ? getEnchantmentDefinitionsById().get(choice.enchantmentDefinitionId)
+        : undefined;
+      if (!enchantment || !choice.targetRule) {
+        return this.fail("Enchantment option is missing definition data.");
+      }
+      this.state = {
+        ...this.state,
+        pendingEnchantmentChoices: [
+          ...(this.state.pendingEnchantmentChoices ?? []),
+          {
+            id: `${choice.id}-pending`,
+            enchantmentDefinitionId: enchantment.id,
+            targetRule: choice.targetRule,
+            label: choice.label,
+            description: choice.description ?? enchantment.description
+          }
+        ]
       };
     } else {
       if (!choice.cardDefinitionId) {

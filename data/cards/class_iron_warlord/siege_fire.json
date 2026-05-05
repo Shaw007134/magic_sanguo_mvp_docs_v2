@@ -5,13 +5,29 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "fire", "burn", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "fire",
+      "burn",
+      "iron-warlord"
+    ],
     "cooldownTicks": 120,
     "effects": [
-      { "command": "DealDamage", "amount": 2 },
-      { "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }
+      {
+        "command": "DealDamage",
+        "amount": 2
+      },
+      {
+        "command": "ApplyBurn",
+        "amount": 2,
+        "durationTicks": 180
+      }
     ],
-    "description": "Every 2 seconds, deal 2 damage and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
+    "description": "Every 2 seconds, deal 2 damage and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "categories": [
+      "WEAPON",
+      "FIRE"
+    ]
   },
   {
     "id": "siege-brazier",
@@ -19,17 +35,34 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["fire", "siege", "iron-warlord"],
+    "tags": [
+      "fire",
+      "siege",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnStatusApplied",
-        "conditions": { "status": "Burn", "appliedByOwner": true },
+        "conditions": {
+          "status": "Burn",
+          "appliedByOwner": true
+        },
         "internalCooldownTicks": 180,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "DealDamage", "amount": 3 }]
+        "effects": [
+          {
+            "command": "DealDamage",
+            "amount": 3
+          }
+        ]
       }
     ],
-    "description": "When you apply Burn, deal 3 damage. Can trigger once every 3 seconds."
+    "description": "When you apply Burn, deal 3 damage. Can trigger once every 3 seconds.",
+    "categories": [
+      "TOOL",
+      "FIRE",
+      "ENGINE"
+    ]
   },
   {
     "id": "flame-ram",
@@ -37,7 +70,12 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["fire", "burn", "siege", "iron-warlord"],
+    "tags": [
+      "fire",
+      "burn",
+      "siege",
+      "iron-warlord"
+    ],
     "cooldownTicks": 300,
     "effects": [
       {
@@ -46,9 +84,18 @@
         "critChancePercent": 20,
         "critMultiplier": 2
       },
-      { "command": "ApplyBurn", "amount": 4, "durationTicks": 240 }
+      {
+        "command": "ApplyBurn",
+        "amount": 4,
+        "durationTicks": 240
+      }
     ],
-    "description": "Size 2. Every 5 seconds, deal 5 damage and apply 4 Burn for 4 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage."
+    "description": "Size 2. Every 5 seconds, deal 5 damage and apply 4 Burn for 4 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage.",
+    "categories": [
+      "WEAPON",
+      "FIRE",
+      "TERMINAL"
+    ]
   },
   {
     "id": "burning-trebuchet",
@@ -56,19 +103,37 @@
     "tier": "JADE",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["fire", "burn", "siege", "iron-warlord"],
+    "tags": [
+      "fire",
+      "burn",
+      "siege",
+      "iron-warlord"
+    ],
     "cooldownTicks": 360,
     "effects": [
       {
         "command": "DealDamage",
         "amount": 8,
-        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 20 },
+        "scaling": {
+          "source": "TARGET_MISSING_HP_PERCENT",
+          "percent": 20
+        },
         "critChancePercent": 20,
         "critMultiplier": 2
       },
-      { "command": "ApplyBurn", "amount": 5, "durationTicks": 300 }
+      {
+        "command": "ApplyBurn",
+        "amount": 5,
+        "durationTicks": 300
+      }
     ],
-    "description": "Size 2. Every 6 seconds, deal 8 damage plus 20% of enemy missing HP and apply 5 Burn for 5 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage."
+    "description": "Size 2. Every 6 seconds, deal 8 damage plus 20% of enemy missing HP and apply 5 Burn for 5 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage.",
+    "categories": [
+      "WEAPON",
+      "FIRE",
+      "TERMINAL",
+      "BOSS_REWARD"
+    ]
   },
   {
     "id": "fire-cart-battery",
@@ -76,13 +141,29 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["fire", "burn", "siege", "iron-warlord"],
+    "tags": [
+      "fire",
+      "burn",
+      "siege",
+      "iron-warlord"
+    ],
     "cooldownTicks": 240,
     "effects": [
-      { "command": "ApplyBurn", "amount": 3, "durationTicks": 240 },
-      { "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }
+      {
+        "command": "ApplyBurn",
+        "amount": 3,
+        "durationTicks": 240
+      },
+      {
+        "command": "ApplyBurn",
+        "amount": 2,
+        "durationTicks": 180
+      }
     ],
-    "description": "Size 2. Every 4 seconds, apply 3 Burn for 4 seconds, then 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
+    "description": "Size 2. Every 4 seconds, apply 3 Burn for 4 seconds, then 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "categories": [
+      "FIRE"
+    ]
   },
   {
     "id": "siege-command",
@@ -90,16 +171,34 @@
     "tier": "GOLD",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["support", "siege", "iron-warlord"],
+    "tags": [
+      "support",
+      "siege",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnCardActivated",
-        "conditions": { "sourceHasTag": "siege", "cardIsAdjacent": true },
+        "conditions": {
+          "sourceHasTag": "siege",
+          "cardIsAdjacent": true
+        },
         "internalCooldownTicks": 180,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -60 }]
+        "effects": [
+          {
+            "command": "ModifyCooldown",
+            "target": "ADJACENT_ALLY",
+            "amountTicks": -60
+          }
+        ]
       }
     ],
-    "description": "When an adjacent Siege card activates, ready adjacent allies 1 second sooner. Can trigger once every 3 seconds."
+    "description": "When an adjacent Siege card activates, ready adjacent allies 1 second sooner. Can trigger once every 3 seconds.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   }
 ]

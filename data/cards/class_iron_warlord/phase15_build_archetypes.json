@@ -5,10 +5,25 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical", "iron-warlord", "frequency"],
+    "tags": [
+      "weapon",
+      "physical",
+      "iron-warlord",
+      "frequency"
+    ],
     "cooldownTicks": 45,
-    "effects": [{ "command": "DealDamage", "amount": 1, "critChancePercent": 10, "critMultiplier": 2 }],
-    "description": "Every 0.75 seconds, deal 1 damage. 10% chance to crit for 2x damage."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 1,
+        "critChancePercent": 10,
+        "critMultiplier": 2
+      }
+    ],
+    "description": "Every 0.75 seconds, deal 1 damage. 10% chance to crit for 2x damage.",
+    "categories": [
+      "WEAPON"
+    ]
   },
   {
     "id": "flank-executioner",
@@ -16,18 +31,30 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical", "execution", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "physical",
+      "execution",
+      "iron-warlord"
+    ],
     "cooldownTicks": 120,
     "effects": [
       {
         "command": "DealDamage",
         "amount": 3,
-        "conditionalMultiplier": { "targetHpBelowPercent": 50, "multiplier": 1.5 },
+        "conditionalMultiplier": {
+          "targetHpBelowPercent": 50,
+          "multiplier": 1.5
+        },
         "critChancePercent": 30,
         "critMultiplier": 2
       }
     ],
-    "description": "Every 2 seconds, deal 3 damage. Below 50% enemy HP, deal 1.5x damage. 30% chance to crit for 2x damage."
+    "description": "Every 2 seconds, deal 3 damage. Below 50% enemy HP, deal 1.5x damage. 30% chance to crit for 2x damage.",
+    "categories": [
+      "WEAPON",
+      "TERMINAL"
+    ]
   },
   {
     "id": "command-runner",
@@ -35,13 +62,32 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["support", "haste", "drum", "iron-warlord"],
+    "tags": [
+      "support",
+      "haste",
+      "drum",
+      "iron-warlord"
+    ],
     "cooldownTicks": 120,
     "effects": [
-      { "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -15 },
-      { "command": "ApplyHaste", "target": "SELF", "percent": 20, "durationTicks": 60 }
+      {
+        "command": "ModifyCooldown",
+        "target": "ADJACENT_ALLY",
+        "amountTicks": -15
+      },
+      {
+        "command": "ApplyHaste",
+        "target": "SELF",
+        "percent": 20,
+        "durationTicks": 60
+      }
     ],
-    "description": "Every 2 seconds, ready adjacent allies 0.25 seconds sooner and Haste this card by 20% for 1 second."
+    "description": "Every 2 seconds, ready adjacent allies 0.25 seconds sooner and Haste this card by 20% for 1 second.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "war-kettle",
@@ -49,13 +95,31 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["fire", "burn", "armor", "iron-warlord"],
+    "tags": [
+      "fire",
+      "burn",
+      "armor",
+      "iron-warlord"
+    ],
     "cooldownTicks": 180,
     "effects": [
-      { "command": "GainArmor", "amount": 3 },
-      { "command": "ApplyBurn", "amount": 3, "durationTicks": 180 }
+      {
+        "command": "GainArmor",
+        "amount": 3
+      },
+      {
+        "command": "ApplyBurn",
+        "amount": 3,
+        "durationTicks": 180
+      }
     ],
-    "description": "Every 3 seconds, gain 3 Armor and apply 3 Burn for 3 seconds."
+    "description": "Every 3 seconds, gain 3 Armor and apply 3 Burn for 3 seconds.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "TOOL",
+      "FIRE"
+    ]
   },
   {
     "id": "siege-oil-chain",
@@ -63,13 +127,32 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["fire", "burn", "siege", "control", "iron-warlord"],
+    "tags": [
+      "fire",
+      "burn",
+      "siege",
+      "control",
+      "iron-warlord"
+    ],
     "cooldownTicks": 300,
     "effects": [
-      { "command": "ApplyBurn", "amount": 4, "durationTicks": 240 },
-      { "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 15, "durationTicks": 60 }
+      {
+        "command": "ApplyBurn",
+        "amount": 4,
+        "durationTicks": 240
+      },
+      {
+        "command": "ApplySlow",
+        "target": "ENEMY_LEFTMOST_ACTIVE",
+        "percent": 15,
+        "durationTicks": 60
+      }
     ],
-    "description": "Size 2. Every 5 seconds, apply 4 Burn for 4 seconds and Slow the leftmost enemy active card by 15% for 1 second."
+    "description": "Size 2. Every 5 seconds, apply 4 Burn for 4 seconds and Slow the leftmost enemy active card by 15% for 1 second.",
+    "categories": [
+      "FIRE",
+      "CONTROL"
+    ]
   },
   {
     "id": "drumline-captain",
@@ -77,20 +160,40 @@
     "tier": "GOLD",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["support", "drum", "armor", "iron-warlord"],
+    "tags": [
+      "support",
+      "drum",
+      "armor",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnCooldownModified",
-        "conditions": { "cardIsAdjacent": true },
+        "conditions": {
+          "cardIsAdjacent": true
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
         "effects": [
-          { "command": "GainArmor", "amount": 2 },
-          { "command": "DealDamage", "amount": 1 }
+          {
+            "command": "GainArmor",
+            "amount": 2
+          },
+          {
+            "command": "DealDamage",
+            "amount": 1
+          }
         ]
       }
     ],
-    "description": "When an adjacent ally changes cooldowns, gain 2 Armor and deal 1 damage. Can trigger once every 2 seconds."
+    "description": "When an adjacent ally changes cooldowns, gain 2 Armor and deal 1 damage. Can trigger once every 2 seconds.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "banner-of-cinders",
@@ -98,17 +201,38 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["fire", "banner", "reaction", "iron-warlord"],
+    "tags": [
+      "fire",
+      "banner",
+      "reaction",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnStatusTicked",
-        "conditions": { "status": "Burn", "appliedByOwner": true },
+        "conditions": {
+          "status": "Burn",
+          "appliedByOwner": true
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "ApplyHaste", "target": "ADJACENT_ALLY", "percent": 10, "durationTicks": 60 }]
+        "effects": [
+          {
+            "command": "ApplyHaste",
+            "target": "ADJACENT_ALLY",
+            "percent": 10,
+            "durationTicks": 60
+          }
+        ]
       }
     ],
-    "description": "When your Burn deals damage, Haste adjacent active allies by 10% for 1 second. Can trigger once every 2 seconds."
+    "description": "When your Burn deals damage, Haste adjacent active allies by 10% for 1 second. Can trigger once every 2 seconds.",
+    "categories": [
+      "TOOL",
+      "FIRE",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "venom-quartermaster",
@@ -116,17 +240,36 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["poison", "heal", "iron-warlord", "reaction"],
+    "tags": [
+      "poison",
+      "heal",
+      "iron-warlord",
+      "reaction"
+    ],
     "triggers": [
       {
         "hook": "OnStatusTicked",
-        "conditions": { "status": "Poison", "appliedByOwner": true },
+        "conditions": {
+          "status": "Poison",
+          "appliedByOwner": true
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "HealHP", "amount": 1 }]
+        "effects": [
+          {
+            "command": "HealHP",
+            "amount": 1
+          }
+        ]
       }
     ],
-    "description": "When your Poison deals damage, heal 1 HP. Can trigger once every 2 seconds."
+    "description": "When your Poison deals damage, heal 1 HP. Can trigger once every 2 seconds.",
+    "categories": [
+      "POISON",
+      "HEAL",
+      "DEFENSE",
+      "ENGINE"
+    ]
   },
   {
     "id": "bastion-foundry",
@@ -134,17 +277,35 @@
     "tier": "JADE",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["armor", "physical", "terminal", "iron-warlord"],
+    "tags": [
+      "armor",
+      "physical",
+      "terminal",
+      "iron-warlord"
+    ],
     "cooldownTicks": 360,
     "effects": [
-      { "command": "GainArmor", "amount": 6 },
+      {
+        "command": "GainArmor",
+        "amount": 6
+      },
       {
         "command": "DealDamage",
         "amount": 3,
-        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 55 }
+        "scaling": {
+          "source": "OWNER_ARMOR_PERCENT",
+          "percent": 55
+        }
       }
     ],
-    "description": "Size 2. Every 6 seconds, gain 6 Armor and deal 3 damage plus 55% of your Armor."
+    "description": "Size 2. Every 6 seconds, gain 6 Armor and deal 3 damage plus 55% of your Armor.",
+    "categories": [
+      "WEAPON",
+      "ARMOR",
+      "DEFENSE",
+      "TERMINAL",
+      "BOSS_REWARD"
+    ]
   },
   {
     "id": "last-order-halberd",
@@ -152,18 +313,35 @@
     "tier": "JADE",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["weapon", "physical", "execution", "terminal", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "physical",
+      "execution",
+      "terminal",
+      "iron-warlord"
+    ],
     "cooldownTicks": 360,
     "effects": [
       {
         "command": "DealDamage",
         "amount": 6,
-        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 24 },
-        "conditionalMultiplier": { "targetHpBelowPercent": 35, "multiplier": 1.5 },
+        "scaling": {
+          "source": "TARGET_MISSING_HP_PERCENT",
+          "percent": 24
+        },
+        "conditionalMultiplier": {
+          "targetHpBelowPercent": 35,
+          "multiplier": 1.5
+        },
         "critChancePercent": 20,
         "critMultiplier": 2
       }
     ],
-    "description": "Size 2. Every 6 seconds, deal 6 damage plus 24% of enemy missing HP. Below 35% enemy HP, deal 1.5x damage. 20% chance to crit for 2x damage."
+    "description": "Size 2. Every 6 seconds, deal 6 damage plus 24% of enemy missing HP. Below 35% enemy HP, deal 1.5x damage. 20% chance to crit for 2x damage.",
+    "categories": [
+      "WEAPON",
+      "TERMINAL",
+      "BOSS_REWARD"
+    ]
   }
 ]

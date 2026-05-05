@@ -5,13 +5,25 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical"],
+    "tags": [
+      "weapon",
+      "physical"
+    ],
     "cooldownTicks": 60,
     "effects": [
-      { "command": "DealDamage", "amount": 2 },
-      { "command": "DealDamage", "amount": 1 }
+      {
+        "command": "DealDamage",
+        "amount": 2
+      },
+      {
+        "command": "DealDamage",
+        "amount": 1
+      }
     ],
-    "description": "Every 1 second, deal 2 damage, then 1 more damage."
+    "description": "Every 1 second, deal 2 damage, then 1 more damage.",
+    "categories": [
+      "WEAPON"
+    ]
   },
   {
     "id": "shield-wall",
@@ -19,10 +31,22 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["armor", "formation"],
+    "tags": [
+      "armor",
+      "formation"
+    ],
     "cooldownTicks": 180,
-    "effects": [{ "command": "GainArmor", "amount": 10 }],
-    "description": "Size 2. Every 3 seconds, gain 10 Armor as a large defensive anchor."
+    "effects": [
+      {
+        "command": "GainArmor",
+        "amount": 10
+      }
+    ],
+    "description": "Size 2. Every 3 seconds, gain 10 Armor as a large defensive anchor.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE"
+    ]
   },
   {
     "id": "counter-stance",
@@ -30,17 +54,33 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["armor", "counter"],
+    "tags": [
+      "armor",
+      "counter"
+    ],
     "triggers": [
       {
         "hook": "OnCardActivated",
-        "conditions": { "sourceHasTag": "armor", "cardIsAdjacent": true },
+        "conditions": {
+          "sourceHasTag": "armor",
+          "cardIsAdjacent": true
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "DealDamage", "amount": 2 }]
+        "effects": [
+          {
+            "command": "DealDamage",
+            "amount": 2
+          }
+        ]
       }
     ],
-    "description": "When an adjacent Armor card activates, deal 2 damage. Can trigger once every 2 seconds."
+    "description": "When an adjacent Armor card activates, deal 2 damage. Can trigger once every 2 seconds.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "ENGINE"
+    ]
   },
   {
     "id": "veteran-plate",
@@ -48,10 +88,21 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["armor"],
+    "tags": [
+      "armor"
+    ],
     "cooldownTicks": 150,
-    "effects": [{ "command": "GainArmor", "amount": 8 }],
-    "description": "Every 2.5 seconds, gain 8 Armor."
+    "effects": [
+      {
+        "command": "GainArmor",
+        "amount": 8
+      }
+    ],
+    "description": "Every 2.5 seconds, gain 8 Armor.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE"
+    ]
   },
   {
     "id": "duelists-dao",
@@ -59,10 +110,22 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical"],
+    "tags": [
+      "weapon",
+      "physical"
+    ],
     "cooldownTicks": 45,
-    "effects": [{ "command": "DealDamage", "amount": 3 }],
-    "description": "Every 0.75 seconds, deal 3 damage."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 3
+      }
+    ],
+    "description": "Every 0.75 seconds, deal 3 damage.",
+    "categories": [
+      "WEAPON",
+      "TERMINAL"
+    ]
   },
   {
     "id": "frontline-bulwark",
@@ -70,15 +133,28 @@
     "tier": "GOLD",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["armor", "formation"],
+    "tags": [
+      "armor",
+      "formation"
+    ],
     "triggers": [
       {
         "hook": "OnCombatStart",
         "internalCooldownTicks": 9999,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "GainArmor", "amount": 8 }]
+        "effects": [
+          {
+            "command": "GainArmor",
+            "amount": 8
+          }
+        ]
       }
     ],
-    "description": "At combat start, gain 8 Armor."
+    "description": "At combat start, gain 8 Armor.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "ENGINE"
+    ]
   }
 ]

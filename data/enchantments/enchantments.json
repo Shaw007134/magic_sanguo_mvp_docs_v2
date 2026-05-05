@@ -1,0 +1,82 @@
+[
+  {
+    "id": "bronze-iron-edge",
+    "name": "Iron Edge",
+    "type": "IRON",
+    "tier": "BRONZE",
+    "rarity": "COMMON",
+    "minLevel": 4,
+    "targetRule": "WEAPON_CARD",
+    "description": "A planned weapon enchantment for steadier physical pressure."
+  },
+  {
+    "id": "bronze-vital-thread",
+    "name": "Vital Thread",
+    "type": "VITAL",
+    "tier": "BRONZE",
+    "rarity": "COMMON",
+    "minLevel": 4,
+    "targetRule": "ANY_ACTIVE_CARD",
+    "description": "A planned survival enchantment for keeping a chosen card relevant longer."
+  },
+  {
+    "id": "bronze-flame-spark",
+    "name": "Flame Spark",
+    "type": "FLAME",
+    "tier": "BRONZE",
+    "rarity": "COMMON",
+    "minLevel": 7,
+    "targetRule": "FIRE_CARD",
+    "description": "A planned fire enchantment for Burn-focused builds."
+  },
+  {
+    "id": "bronze-venom-drop",
+    "name": "Venom Drop",
+    "type": "VENOM",
+    "tier": "BRONZE",
+    "rarity": "COMMON",
+    "minLevel": 7,
+    "targetRule": "POISON_CARD",
+    "description": "A planned poison enchantment for persistent pressure builds."
+  },
+  {
+    "id": "bronze-swift-rhythm",
+    "name": "Swift Rhythm",
+    "type": "SWIFT",
+    "tier": "BRONZE",
+    "rarity": "COMMON",
+    "minLevel": 4,
+    "targetRule": "COOLDOWN_CARD",
+    "description": "A planned tempo enchantment for cards that shape cooldown flow."
+  },
+  {
+    "id": "bronze-binding-knot",
+    "name": "Binding Knot",
+    "type": "BINDING",
+    "tier": "BRONZE",
+    "rarity": "COMMON",
+    "minLevel": 7,
+    "targetRule": "CONTROL_CARD",
+    "description": "A planned control enchantment for Slow and Freeze support cards."
+  },
+  {
+    "id": "silver-frost-sigil",
+    "name": "Frost Sigil",
+    "type": "FROST",
+    "tier": "SILVER",
+    "rarity": "UNCOMMON",
+    "minLevel": 7,
+    "targetRule": "CONTROL_CARD",
+    "description": "A planned frost enchantment for late control payoffs."
+  },
+  {
+    "id": "gold-obsidian-oath",
+    "name": "Obsidian Oath",
+    "type": "OBSIDIAN",
+    "tier": "GOLD",
+    "rarity": "RARE",
+    "minLevel": 9,
+    "targetRule": "TERMINAL_CARD",
+    "description": "A planned high-risk terminal enchantment for future payoff tuning."
+  }
+]

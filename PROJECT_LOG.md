@@ -1580,3 +1580,60 @@ Known issues:
 - High-frequency cards plus flat damage/status enhancements and cooldown enhancement plus Haste/Drum need manual balance review.
 Next recommended task:
 - Phase 15E: manual playtest reward-card selling, leftmost targeting, enhanced builds, and boss pacing before adding new combat mechanics.
+
+---
+
+Date: 2026-05-05
+Phase: 15E-A
+Task: Implemented card categories and enchantment/event foundation without adding combat enchantment effects.
+Files changed:
+- data/cards/**/*.json
+- data/enchantments/enchantments.json
+- src/model/card.ts
+- src/model/enchantment.ts
+- src/model/index.ts
+- src/content/enchantments/enchantments.ts
+- src/run/RunState.ts
+- src/run/RunManager.ts
+- src/run/nodes/EventGenerator.ts
+- src/run/nodes/EventNode.ts
+- src/run/save/SaveManager.ts
+- src/ui/presentation/choiceDisplay.ts
+- src/validation/cardValidation.ts
+- src/validation/enchantmentValidation.ts
+- src/index.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/run/eventGenerator.test.ts
+- tests/validation/cardValidation.test.ts
+- tests/validation/enchantmentValidation.test.ts
+- docs/ENCHANTMENT_DESIGN_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Card definitions validate with optional content categories, invalid categories fail, and mechanical `type` remains separate from categories.
+- All active content cards now include validated categories.
+- Enchantment definitions load from data, validate, reject invalid type/tier/targetRule values, and stay out of the combat card registry.
+- Event generation is deterministic for the same seed/node/level.
+- Starter events and level 1-3 random event pools exclude enchantment events.
+- Level 7+ event pools can include enchantment-tagged templates.
+- The third non-starter major event forces the Bronze Enchantment Intro when level-eligible.
+- Enchantment event choices and pending planned choice data survive save/load without rerolling.
+- Choosing an enchantment event stores planned choice data but grants no combat card and applies no combat effect.
+Implementation notes:
+- `CardDefinition.type` remains mechanical and unchanged.
+- `CardDefinition.categories` is a separate content/shop/build-control field.
+- Added `EnchantmentDefinition` and `EnchantmentChoice` stubs plus eight planned enchantment types: IRON, VITAL, FLAME, VENOM, SWIFT, BINDING, FROST, and OBSIDIAN.
+- Added deterministic `EventTemplate` selection with min/max level, weight, tags, and scripted choices.
+- Bronze Enchantment Intro currently offers planned Iron, Vital, and Swift study choices only.
+- No enchantment is attached to `CardInstance`, no CombatEngine behavior changed, and no enchantment combat mechanics were added.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+- pnpm balance:report
+Known issues:
+- Enchantment choices are stored only as pending planned data; no targeting UI or card attachment exists yet.
+- Enchantment definitions are balance placeholders and should not be tuned as live combat effects.
+- Obsidian, Freeze/Slow/Haste enchantment effects, and any damage-doubling behavior remain deferred.
+Next recommended task:
+- Phase 15E-B: add an enchantment targeting/attachment UI and persistence only, or manually playtest reward-card/enchantment pacing before any combat effect implementation.

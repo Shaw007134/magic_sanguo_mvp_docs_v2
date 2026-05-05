@@ -4,6 +4,7 @@ import classBladeTempoJson from "../../data/cards/class_iron_warlord/blade_tempo
 import classCommandArmorJson from "../../data/cards/class_iron_warlord/command_armor.json" with { type: "json" };
 import classPhase15BuildArchetypesJson from "../../data/cards/class_iron_warlord/phase15_build_archetypes.json" with { type: "json" };
 import classSiegeFireJson from "../../data/cards/class_iron_warlord/siege_fire.json" with { type: "json" };
+import enchantmentsJson from "../../data/enchantments/enchantments.json" with { type: "json" };
 import generalBasicKitJson from "../../data/cards/general/basic_kit.json" with { type: "json" };
 import generalBladeArmorJson from "../../data/cards/general/blade_armor.json" with { type: "json" };
 import generalControlJson from "../../data/cards/general/control.json" with { type: "json" };
@@ -44,6 +45,7 @@ import {
   TERMINAL_POOL
 } from "../../src/content/cards/contentPools.js";
 import { MonsterGenerator } from "../../src/content/monsters/MonsterGenerator.js";
+import { ENCHANTMENT_DEFINITIONS, getEnchantmentDefinitionsById } from "../../src/content/enchantments/enchantments.js";
 import { getMonsterTemplateById, MONSTER_TEMPLATES } from "../../src/content/monsters/monsterTemplates.js";
 import { getRewardCardDefinitionsById, REWARD_CARD_DEFINITIONS } from "../../src/content/rewards/rewardCards.js";
 import type { CardDefinition, CardInstance } from "../../src/model/card.js";
@@ -56,6 +58,7 @@ import { deserializeRunState, serializeRunState } from "../../src/run/save/SaveM
 import { SKILL_DEFINITIONS } from "../../src/run/skills/skillDefinitions.js";
 import { getCardDisplayInfo } from "../../src/ui/presentation/cardDisplay.js";
 import { validateCardDefinition } from "../../src/validation/cardValidation.js";
+import { validateEnchantmentDefinition } from "../../src/validation/enchantmentValidation.js";
 import { validateFormationSnapshot } from "../../src/validation/formationValidation.js";
 import { validateRewardCardDefinition } from "../../src/validation/rewardCardValidation.js";
 
@@ -75,6 +78,7 @@ const ironWarlordJsonCards = [
   ...classPhase15BuildArchetypesJson
 ] as readonly CardDefinition[];
 const activeCardsById = getActiveCardDefinitionsById();
+const enchantmentsById = getEnchantmentDefinitionsById();
 const rewardCardsById = getRewardCardDefinitionsById();
 const PHASE_13A_CARD_IDS = new Set([...generalJsonCards, ...ironWarlordJsonCards].map((card) => card.id));
 const EARLY_REWARD_TIERS = new Set(["BRONZE", "SILVER"]);
@@ -120,6 +124,7 @@ describe("active MVP content registry", () => {
   it("all active cards validate and use only MVP grammar", () => {
     for (const card of ACTIVE_CARD_DEFINITIONS) {
       expect(validateCardDefinition(card), card.id).toEqual({ valid: true, errors: [] });
+      expect(card.categories?.length, card.id).toBeGreaterThan(0);
       expect(card.description, card.id).not.toMatch(/On[A-Z]|hook|ticks?/);
       expect(card.description, card.id).not.toMatch(/Barrier|Ward|Energy Shield|absorb|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
       expect(card.tags.some((tag) => /barrier|ward|energy|absorb|vulnerable|silence|mana|spirit|fate|heat|morale|rage/i.test(tag)), card.id).toBe(false);
@@ -130,6 +135,17 @@ describe("active MVP content registry", () => {
         validateTrigger(trigger, card.id);
       }
     }
+  });
+
+  it("card categories are content controls and do not replace mechanical type", () => {
+    const flameSpear = activeCardsById.get("flame-spear");
+    expect(flameSpear?.type).toBe("ACTIVE");
+    expect(flameSpear?.categories).toEqual(expect.arrayContaining(["WEAPON", "FIRE", "STARTER"]));
+    expect(flameSpear?.categories).not.toContain("ACTIVE");
+
+    const fireEchoSeal = activeCardsById.get("fire-echo-seal");
+    expect(fireEchoSeal?.type).toBe("PASSIVE");
+    expect(fireEchoSeal?.categories).toEqual(expect.arrayContaining(["FIRE", "ENGINE"]));
   });
 
   it("active runtime content uses OnStatusTicked instead of legacy OnBurnTick", () => {
@@ -215,6 +231,18 @@ describe("active MVP content registry", () => {
         expect(rewardCard.targetRule, rewardCard.id).toBe("LEFTMOST_FORMATION_ACTIVE_CARD");
         expect((rewardCard.amount ?? rewardCard.percent)!, rewardCard.id).toBeGreaterThan(0);
       }
+    }
+  });
+
+  it("Phase 15E-A enchantments load, validate, and stay out of the combat card registry", () => {
+    expect(ENCHANTMENT_DEFINITIONS).toEqual(enchantmentsJson);
+    expect(enchantmentsById.size).toBe(ENCHANTMENT_DEFINITIONS.length);
+
+    for (const enchantment of ENCHANTMENT_DEFINITIONS) {
+      expect(validateEnchantmentDefinition(enchantment), enchantment.id).toEqual({ valid: true, errors: [] });
+      expect(activeCardsById.has(enchantment.id), enchantment.id).toBe(false);
+      expect(validateCardDefinition(enchantment as never).valid, enchantment.id).toBe(false);
+      expect(enchantment.description, enchantment.id).not.toMatch(/On[A-Z]|hook|ticks?/);
     }
   });
 

@@ -5,10 +5,23 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical", "starter"],
+    "tags": [
+      "weapon",
+      "physical",
+      "starter"
+    ],
     "cooldownTicks": 60,
-    "effects": [{ "command": "DealDamage", "amount": 2 }],
-    "description": "Every 1 second, deal 2 damage. A simple starter weapon."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 2
+      }
+    ],
+    "description": "Every 1 second, deal 2 damage. A simple starter weapon.",
+    "categories": [
+      "WEAPON",
+      "STARTER"
+    ]
   },
   {
     "id": "oil-flask",
@@ -16,10 +29,25 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["fire", "burn", "starter"],
+    "tags": [
+      "fire",
+      "burn",
+      "starter"
+    ],
     "cooldownTicks": 90,
-    "effects": [{ "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }],
-    "description": "Every 1.5 seconds, apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
+    "effects": [
+      {
+        "command": "ApplyBurn",
+        "amount": 2,
+        "durationTicks": 180
+      }
+    ],
+    "description": "Every 1.5 seconds, apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "categories": [
+      "TOOL",
+      "FIRE",
+      "STARTER"
+    ]
   },
   {
     "id": "iron-guard",
@@ -27,10 +55,23 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["armor", "starter"],
+    "tags": [
+      "armor",
+      "starter"
+    ],
     "cooldownTicks": 60,
-    "effects": [{ "command": "GainArmor", "amount": 4 }],
-    "description": "Every 1 second, gain 4 Armor."
+    "effects": [
+      {
+        "command": "GainArmor",
+        "amount": 4
+      }
+    ],
+    "description": "Every 1 second, gain 4 Armor.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "STARTER"
+    ]
   },
   {
     "id": "patrol-spear",
@@ -38,10 +79,21 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical"],
+    "tags": [
+      "weapon",
+      "physical"
+    ],
     "cooldownTicks": 90,
-    "effects": [{ "command": "DealDamage", "amount": 3 }],
-    "description": "Every 1.5 seconds, deal 3 damage."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 3
+      }
+    ],
+    "description": "Every 1.5 seconds, deal 3 damage.",
+    "categories": [
+      "WEAPON"
+    ]
   },
   {
     "id": "field-drum",
@@ -49,10 +101,24 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["support", "drum"],
+    "tags": [
+      "support",
+      "drum"
+    ],
     "cooldownTicks": 120,
-    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }],
-    "description": "Every 2 seconds, ready adjacent allies 0.5 seconds sooner."
+    "effects": [
+      {
+        "command": "ModifyCooldown",
+        "target": "ADJACENT_ALLY",
+        "amountTicks": -30
+      }
+    ],
+    "description": "Every 2 seconds, ready adjacent allies 0.5 seconds sooner.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "guarded-torch",
@@ -60,12 +126,28 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["fire", "armor", "hybrid"],
+    "tags": [
+      "fire",
+      "armor",
+      "hybrid"
+    ],
     "cooldownTicks": 120,
     "effects": [
-      { "command": "GainArmor", "amount": 2 },
-      { "command": "ApplyBurn", "amount": 2, "durationTicks": 180 }
+      {
+        "command": "GainArmor",
+        "amount": 2
+      },
+      {
+        "command": "ApplyBurn",
+        "amount": 2,
+        "durationTicks": 180
+      }
     ],
-    "description": "Every 2 seconds, gain 2 Armor and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage."
+    "description": "Every 2 seconds, gain 2 Armor and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "FIRE"
+    ]
   }
 ]

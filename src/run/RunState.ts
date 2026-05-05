@@ -1,4 +1,5 @@
 import type { CardInstance, CardTier } from "../model/card.js";
+import type { EnchantmentChoice, EnchantmentTargetRule } from "../model/enchantment.js";
 import type { FormationSnapshot } from "../model/formation.js";
 import type { RewardCardInstance } from "../model/rewardCard.js";
 import type { CombatResult } from "../model/result.js";
@@ -33,11 +34,15 @@ export interface ShopChoice {
 
 export interface EventChoice {
   readonly id: string;
-  readonly type: "EVENT_CARD" | "EVENT_GOLD" | "EVENT_HEAL";
+  readonly type: "EVENT_CARD" | "EVENT_GOLD" | "EVENT_HEAL" | "EVENT_ENCHANTMENT";
   readonly label: string;
+  readonly eventTemplateId?: string;
   readonly cardDefinitionId?: string;
   readonly gold?: number;
   readonly heal?: number;
+  readonly enchantmentDefinitionId?: string;
+  readonly targetRule?: EnchantmentTargetRule;
+  readonly description?: string;
 }
 
 export interface RewardChoice {
@@ -107,6 +112,7 @@ export interface RunState {
   readonly pendingBattleResult?: CombatResult;
   readonly pendingRewardChoices: readonly RewardChoice[];
   readonly pendingLevelUpChoices: readonly LevelUpRewardChoice[];
+  readonly pendingEnchantmentChoices?: readonly EnchantmentChoice[];
   readonly pendingRewardSource?: PendingRewardSource;
   readonly shopStates: readonly RunShopState[];
   readonly completedEncounterCount: number;

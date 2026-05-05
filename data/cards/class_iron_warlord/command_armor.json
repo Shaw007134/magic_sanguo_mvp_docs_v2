@@ -5,10 +5,25 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["support", "drum", "iron-warlord"],
+    "tags": [
+      "support",
+      "drum",
+      "iron-warlord"
+    ],
     "cooldownTicks": 120,
-    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }],
-    "description": "Every 2 seconds, ready adjacent allies 0.5 seconds sooner."
+    "effects": [
+      {
+        "command": "ModifyCooldown",
+        "target": "ADJACENT_ALLY",
+        "amountTicks": -30
+      }
+    ],
+    "description": "Every 2 seconds, ready adjacent allies 0.5 seconds sooner.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "command-gong",
@@ -16,10 +31,25 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["support", "drum", "iron-warlord"],
+    "tags": [
+      "support",
+      "drum",
+      "iron-warlord"
+    ],
     "cooldownTicks": 240,
-    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -90 }],
-    "description": "Size 2. Every 4 seconds, ready adjacent allies 1.5 seconds sooner."
+    "effects": [
+      {
+        "command": "ModifyCooldown",
+        "target": "ADJACENT_ALLY",
+        "amountTicks": -90
+      }
+    ],
+    "description": "Size 2. Every 4 seconds, ready adjacent allies 1.5 seconds sooner.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "battle-standard",
@@ -27,17 +57,34 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["support", "banner", "iron-warlord"],
+    "tags": [
+      "support",
+      "banner",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnCooldownModified",
-        "conditions": { "cardIsAdjacent": true },
+        "conditions": {
+          "cardIsAdjacent": true
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "GainArmor", "amount": 3 }]
+        "effects": [
+          {
+            "command": "GainArmor",
+            "amount": 3
+          }
+        ]
       }
     ],
-    "description": "When an adjacent ally changes cooldowns, gain 3 Armor. Can trigger once every 2 seconds."
+    "description": "When an adjacent ally changes cooldowns, gain 3 Armor. Can trigger once every 2 seconds.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "TOOL",
+      "ENGINE"
+    ]
   },
   {
     "id": "frontline-banner",
@@ -45,13 +92,29 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["armor", "banner", "iron-warlord"],
+    "tags": [
+      "armor",
+      "banner",
+      "iron-warlord"
+    ],
     "cooldownTicks": 120,
     "effects": [
-      { "command": "GainArmor", "amount": 4 },
-      { "command": "DealDamage", "amount": 1 }
+      {
+        "command": "GainArmor",
+        "amount": 4
+      },
+      {
+        "command": "DealDamage",
+        "amount": 1
+      }
     ],
-    "description": "Every 2 seconds, gain 4 Armor and deal 1 damage."
+    "description": "Every 2 seconds, gain 4 Armor and deal 1 damage.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "TOOL",
+      "ENGINE"
+    ]
   },
   {
     "id": "guard-captain",
@@ -59,13 +122,29 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "armor", "physical", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "armor",
+      "physical",
+      "iron-warlord"
+    ],
     "cooldownTicks": 150,
     "effects": [
-      { "command": "GainArmor", "amount": 5 },
-      { "command": "DealDamage", "amount": 4 }
+      {
+        "command": "GainArmor",
+        "amount": 5
+      },
+      {
+        "command": "DealDamage",
+        "amount": 4
+      }
     ],
-    "description": "Every 2.5 seconds, gain 5 Armor and deal 4 damage."
+    "description": "Every 2.5 seconds, gain 5 Armor and deal 4 damage.",
+    "categories": [
+      "WEAPON",
+      "ARMOR",
+      "DEFENSE"
+    ]
   },
   {
     "id": "signal-tower",
@@ -73,17 +152,34 @@
     "tier": "GOLD",
     "type": "PASSIVE",
     "size": 2,
-    "tags": ["support", "formation", "iron-warlord"],
+    "tags": [
+      "support",
+      "formation",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnCardActivated",
-        "conditions": { "cardIsAdjacent": true },
+        "conditions": {
+          "cardIsAdjacent": true
+        },
         "internalCooldownTicks": 180,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -60 }]
+        "effects": [
+          {
+            "command": "ModifyCooldown",
+            "target": "ADJACENT_ALLY",
+            "amountTicks": -60
+          }
+        ]
       }
     ],
-    "description": "Size 2. When an adjacent ally activates, ready adjacent allies 1 second sooner. Can trigger once every 3 seconds."
+    "description": "Size 2. When an adjacent ally activates, ready adjacent allies 1 second sooner. Can trigger once every 3 seconds.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "iron-bastion-strike",
@@ -91,16 +187,31 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["weapon", "armor", "physical", "terminal", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "armor",
+      "physical",
+      "terminal",
+      "iron-warlord"
+    ],
     "cooldownTicks": 300,
     "effects": [
       {
         "command": "DealDamage",
         "amount": 2,
-        "scaling": { "source": "OWNER_ARMOR_PERCENT", "percent": 75 }
+        "scaling": {
+          "source": "OWNER_ARMOR_PERCENT",
+          "percent": 75
+        }
       }
     ],
-    "description": "Size 2. Every 5 seconds, deal 2 damage plus damage equal to 75% of your Armor."
+    "description": "Size 2. Every 5 seconds, deal 2 damage plus damage equal to 75% of your Armor.",
+    "categories": [
+      "WEAPON",
+      "ARMOR",
+      "DEFENSE",
+      "TERMINAL"
+    ]
   },
   {
     "id": "warlords-mandate",
@@ -108,17 +219,29 @@
     "tier": "JADE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical", "terminal", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "physical",
+      "terminal",
+      "iron-warlord"
+    ],
     "cooldownTicks": 360,
     "effects": [
       {
         "command": "DealDamage",
         "amount": 0,
-        "scaling": { "source": "OWNER_MAX_HP_PERCENT", "percent": 20 },
+        "scaling": {
+          "source": "OWNER_MAX_HP_PERCENT",
+          "percent": 20
+        },
         "critChancePercent": 15,
         "critMultiplier": 2
       }
     ],
-    "description": "Every 6 seconds, deal damage equal to 20% of your max HP. 15% chance to crit for 2x damage."
+    "description": "Every 6 seconds, deal damage equal to 20% of your max HP. 15% chance to crit for 2x damage.",
+    "categories": [
+      "WEAPON",
+      "TERMINAL"
+    ]
   }
 ]

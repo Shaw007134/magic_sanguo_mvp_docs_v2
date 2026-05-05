@@ -1,4 +1,4 @@
-import { CARD_SIZES, CARD_TIERS, CARD_TYPES, type CardDefinition } from "../model/card.js";
+import { CARD_CATEGORIES, CARD_SIZES, CARD_TIERS, CARD_TYPES, type CardDefinition } from "../model/card.js";
 import { createValidationResult, type ValidationIssue, type ValidationResult } from "./validationResult.js";
 
 export function validateCardDefinition(card: CardDefinition): ValidationResult {
@@ -18,6 +18,21 @@ export function validateCardDefinition(card: CardDefinition): ValidationResult {
 
   if (!CARD_SIZES.includes(card.size)) {
     errors.push({ path: "size", message: "Card size must be 1 or 2." });
+  }
+
+  if (card.categories !== undefined) {
+    if (!Array.isArray(card.categories)) {
+      errors.push({ path: "categories", message: "Card categories must be an array when present." });
+    } else {
+      for (const [index, category] of card.categories.entries()) {
+        if (!CARD_CATEGORIES.includes(category)) {
+          errors.push({
+            path: `categories[${index}]`,
+            message: `Card category must be one of: ${CARD_CATEGORIES.join(", ")}.`
+          });
+        }
+      }
+    }
   }
 
   if (card.type === "ACTIVE" && (card.cooldownTicks === undefined || card.cooldownTicks <= 0)) {

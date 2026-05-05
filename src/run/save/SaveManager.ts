@@ -3,10 +3,12 @@ import {
   type CardDefinition,
   type CardInstance
 } from "../../model/card.js";
+import { ENCHANTMENT_TARGET_RULES, type EnchantmentChoice } from "../../model/enchantment.js";
 import type { FormationSnapshot } from "../../model/formation.js";
 import type { RewardCardInstance } from "../../model/rewardCard.js";
 import type { CombatResult } from "../../model/result.js";
 import { getActiveCardDefinitionsById } from "../../content/cards/activeCards.js";
+import { getEnchantmentDefinitionsById } from "../../content/enchantments/enchantments.js";
 import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
 import { validateFormationSnapshot } from "../../validation/formationValidation.js";
 import { FIXED_CHEST_CAPACITY, RunManager } from "../RunManager.js";
@@ -249,6 +251,11 @@ export function validateRunState(
 
   const pendingLevelUpChoicesResult = validateLevelUpChoices(state["pendingLevelUpChoices"], cardDefinitionsById, ownedCardIds, "pendingLevelUpChoices");
   if (!pendingLevelUpChoicesResult.ok) return pendingLevelUpChoicesResult;
+
+  if (state["pendingEnchantmentChoices"] !== undefined) {
+    const pendingEnchantmentChoicesResult = validateEnchantmentChoices(state["pendingEnchantmentChoices"], "pendingEnchantmentChoices");
+    if (!pendingEnchantmentChoicesResult.ok) return pendingEnchantmentChoicesResult;
+  }
 
   if (nodeResult.value.type === "SHOP" && !shopStatesResult.value.some((shopState) => shopState.nodeId === nodeResult.value.id)) {
     return { ok: false, error: "Current shop node is missing serialized shop state." };
@@ -598,14 +605,45 @@ function validateEventChoice(
   path: string
 ): SaveLoadResult<EventChoice> {
   if (!isNonEmptyString(choice["id"])) return { ok: false, error: `${path}.id is required.` };
-  if (!["EVENT_CARD", "EVENT_GOLD", "EVENT_HEAL"].includes(String(choice["type"]))) return { ok: false, error: `${path}.type is invalid.` };
+  if (!["EVENT_CARD", "EVENT_GOLD", "EVENT_HEAL", "EVENT_ENCHANTMENT"].includes(String(choice["type"]))) return { ok: false, error: `${path}.type is invalid.` };
   if (!isNonEmptyString(choice["label"])) return { ok: false, error: `${path}.label is required.` };
+  if (choice["eventTemplateId"] !== undefined && !isNonEmptyString(choice["eventTemplateId"])) {
+    return { ok: false, error: `${path}.eventTemplateId must be a non-empty string when present.` };
+  }
   if (choice["type"] === "EVENT_CARD" && !isKnownCardDefinition(choice["cardDefinitionId"], cardDefinitionsById)) {
     return { ok: false, error: `${path}.cardDefinitionId is invalid.` };
+  }
+  if (choice["type"] === "EVENT_ENCHANTMENT") {
+    if (!isNonEmptyString(choice["enchantmentDefinitionId"]) || !getEnchantmentDefinitionsById().has(choice["enchantmentDefinitionId"])) {
+      return { ok: false, error: `${path}.enchantmentDefinitionId is invalid.` };
+    }
+    if (!isOneOf(choice["targetRule"], ENCHANTMENT_TARGET_RULES)) {
+      return { ok: false, error: `${path}.targetRule is invalid.` };
+    }
+    if (choice["description"] !== undefined && typeof choice["description"] !== "string") {
+      return { ok: false, error: `${path}.description must be a string.` };
+    }
   }
   if (choice["gold"] !== undefined && !isNumber(choice["gold"])) return { ok: false, error: `${path}.gold must be a number.` };
   if (choice["heal"] !== undefined && !isNumber(choice["heal"])) return { ok: false, error: `${path}.heal must be a number.` };
   return { ok: true, value: choice as unknown as EventChoice };
+}
+
+function validateEnchantmentChoices(choices: unknown, path: string): SaveLoadResult<readonly EnchantmentChoice[]> {
+  if (!Array.isArray(choices)) return { ok: false, error: `${path} must be an array.` };
+  for (const [index, choice] of choices.entries()) {
+    if (!isRecord(choice)) return { ok: false, error: `${path}[${index}] must be an object.` };
+    if (!isNonEmptyString(choice["id"])) return { ok: false, error: `${path}[${index}].id is required.` };
+    if (!isNonEmptyString(choice["label"])) return { ok: false, error: `${path}[${index}].label is required.` };
+    if (!isNonEmptyString(choice["description"])) return { ok: false, error: `${path}[${index}].description is required.` };
+    if (!isNonEmptyString(choice["enchantmentDefinitionId"]) || !getEnchantmentDefinitionsById().has(choice["enchantmentDefinitionId"])) {
+      return { ok: false, error: `${path}[${index}].enchantmentDefinitionId is invalid.` };
+    }
+    if (!isOneOf(choice["targetRule"], ENCHANTMENT_TARGET_RULES)) {
+      return { ok: false, error: `${path}[${index}].targetRule is invalid.` };
+    }
+  }
+  return { ok: true, value: choices as readonly EnchantmentChoice[] };
 }
 
 function validateRewardChoices(

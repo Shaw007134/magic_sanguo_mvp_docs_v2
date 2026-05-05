@@ -5,10 +5,22 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["poison", "starter"],
+    "tags": [
+      "poison",
+      "starter"
+    ],
     "cooldownTicks": 120,
-    "effects": [{ "command": "ApplyPoison", "amount": 1 }],
-    "description": "Every 2 seconds, apply 1 persistent Poison."
+    "effects": [
+      {
+        "command": "ApplyPoison",
+        "amount": 1
+      }
+    ],
+    "description": "Every 2 seconds, apply 1 persistent Poison.",
+    "categories": [
+      "POISON",
+      "STARTER"
+    ]
   },
   {
     "id": "field-medic",
@@ -16,10 +28,23 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["heal", "support"],
+    "tags": [
+      "heal",
+      "support"
+    ],
     "cooldownTicks": 300,
-    "effects": [{ "command": "HealHP", "amount": 5 }],
-    "description": "Every 5 seconds, heal 5 HP."
+    "effects": [
+      {
+        "command": "HealHP",
+        "amount": 5
+      }
+    ],
+    "description": "Every 5 seconds, heal 5 HP.",
+    "categories": [
+      "TOOL",
+      "HEAL",
+      "DEFENSE"
+    ]
   },
   {
     "id": "toxic-lance",
@@ -27,13 +52,28 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical", "poison"],
+    "tags": [
+      "weapon",
+      "physical",
+      "poison"
+    ],
     "cooldownTicks": 180,
     "effects": [
-      { "command": "DealDamage", "amount": 2, "damageType": "PHYSICAL" },
-      { "command": "ApplyPoison", "amount": 1 }
+      {
+        "command": "DealDamage",
+        "amount": 2,
+        "damageType": "PHYSICAL"
+      },
+      {
+        "command": "ApplyPoison",
+        "amount": 1
+      }
     ],
-    "description": "Every 3 seconds, deal 2 Physical damage and apply 1 persistent Poison."
+    "description": "Every 3 seconds, deal 2 Physical damage and apply 1 persistent Poison.",
+    "categories": [
+      "WEAPON",
+      "POISON"
+    ]
   },
   {
     "id": "venom-jar",
@@ -41,10 +81,21 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["poison"],
+    "tags": [
+      "poison"
+    ],
     "cooldownTicks": 240,
-    "effects": [{ "command": "ApplyPoison", "amount": 2 }],
-    "description": "Every 4 seconds, apply 2 persistent Poison."
+    "effects": [
+      {
+        "command": "ApplyPoison",
+        "amount": 2
+      }
+    ],
+    "description": "Every 4 seconds, apply 2 persistent Poison.",
+    "categories": [
+      "TOOL",
+      "POISON"
+    ]
   },
   {
     "id": "herbal-poultice",
@@ -52,13 +103,29 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["heal", "armor", "support"],
+    "tags": [
+      "heal",
+      "armor",
+      "support"
+    ],
     "cooldownTicks": 300,
     "effects": [
-      { "command": "HealHP", "amount": 6 },
-      { "command": "GainArmor", "amount": 2 }
+      {
+        "command": "HealHP",
+        "amount": 6
+      },
+      {
+        "command": "GainArmor",
+        "amount": 2
+      }
     ],
-    "description": "Every 5 seconds, heal 6 HP and gain 2 Armor."
+    "description": "Every 5 seconds, heal 6 HP and gain 2 Armor.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "TOOL",
+      "HEAL"
+    ]
   },
   {
     "id": "rotting-wine",
@@ -66,9 +133,20 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["poison"],
+    "tags": [
+      "poison"
+    ],
     "cooldownTicks": 360,
-    "effects": [{ "command": "ApplyPoison", "amount": 3 }],
-    "description": "Every 6 seconds, apply 3 persistent Poison."
+    "effects": [
+      {
+        "command": "ApplyPoison",
+        "amount": 3
+      }
+    ],
+    "description": "Every 6 seconds, apply 3 persistent Poison.",
+    "categories": [
+      "TOOL",
+      "POISON"
+    ]
   }
 ]

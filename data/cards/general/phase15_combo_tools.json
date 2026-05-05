@@ -5,10 +5,22 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical", "frequency"],
+    "tags": [
+      "weapon",
+      "physical",
+      "frequency"
+    ],
     "cooldownTicks": 45,
-    "effects": [{ "command": "DealDamage", "amount": 1 }],
-    "description": "Every 0.75 seconds, deal 1 damage."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 1
+      }
+    ],
+    "description": "Every 0.75 seconds, deal 1 damage.",
+    "categories": [
+      "WEAPON"
+    ]
   },
   {
     "id": "ember-needle",
@@ -16,13 +28,28 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["fire", "burn", "frequency"],
+    "tags": [
+      "fire",
+      "burn",
+      "frequency"
+    ],
     "cooldownTicks": 90,
     "effects": [
-      { "command": "DealDamage", "amount": 1, "damageType": "FIRE" },
-      { "command": "ApplyBurn", "amount": 1, "durationTicks": 120 }
+      {
+        "command": "DealDamage",
+        "amount": 1,
+        "damageType": "FIRE"
+      },
+      {
+        "command": "ApplyBurn",
+        "amount": 1,
+        "durationTicks": 120
+      }
     ],
-    "description": "Every 1.5 seconds, deal 1 Fire damage and apply 1 Burn for 2 seconds."
+    "description": "Every 1.5 seconds, deal 1 Fire damage and apply 1 Burn for 2 seconds.",
+    "categories": [
+      "FIRE"
+    ]
   },
   {
     "id": "venom-prick",
@@ -30,10 +57,21 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["poison", "frequency"],
+    "tags": [
+      "poison",
+      "frequency"
+    ],
     "cooldownTicks": 90,
-    "effects": [{ "command": "ApplyPoison", "amount": 1 }],
-    "description": "Every 1.5 seconds, apply 1 Poison."
+    "effects": [
+      {
+        "command": "ApplyPoison",
+        "amount": 1
+      }
+    ],
+    "description": "Every 1.5 seconds, apply 1 Poison.",
+    "categories": [
+      "POISON"
+    ]
   },
   {
     "id": "self-starting-chant",
@@ -41,10 +79,27 @@
     "tier": "BRONZE",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["support", "haste", "starter"],
+    "tags": [
+      "support",
+      "haste",
+      "starter"
+    ],
     "cooldownTicks": 180,
-    "effects": [{ "command": "ApplyHaste", "target": "SELF", "percent": 20, "durationTicks": 120 }],
-    "description": "Every 3 seconds, Haste this card by 20% for 2 seconds."
+    "effects": [
+      {
+        "command": "ApplyHaste",
+        "target": "SELF",
+        "percent": 20,
+        "durationTicks": 120
+      }
+    ],
+    "description": "Every 3 seconds, Haste this card by 20% for 2 seconds.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE",
+      "STARTER"
+    ]
   },
   {
     "id": "cooling-fan",
@@ -52,10 +107,24 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["support", "tempo"],
+    "tags": [
+      "support",
+      "tempo"
+    ],
     "cooldownTicks": 150,
-    "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -15 }],
-    "description": "Every 2.5 seconds, ready adjacent allies 0.25 seconds sooner."
+    "effects": [
+      {
+        "command": "ModifyCooldown",
+        "target": "ADJACENT_ALLY",
+        "amountTicks": -15
+      }
+    ],
+    "description": "Every 2.5 seconds, ready adjacent allies 0.25 seconds sooner.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "battlefield-metronome",
@@ -63,10 +132,26 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["support", "haste", "drum"],
+    "tags": [
+      "support",
+      "haste",
+      "drum"
+    ],
     "cooldownTicks": 360,
-    "effects": [{ "command": "ApplyHaste", "target": "OWNER_ALL_CARDS", "percent": 10, "durationTicks": 120 }],
-    "description": "Every 6 seconds, Haste all your active cards by 10% for 2 seconds."
+    "effects": [
+      {
+        "command": "ApplyHaste",
+        "target": "OWNER_ALL_CARDS",
+        "percent": 10,
+        "durationTicks": 120
+      }
+    ],
+    "description": "Every 6 seconds, Haste all your active cards by 10% for 2 seconds.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "ash-and-venom-seal",
@@ -74,17 +159,38 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["fire", "poison", "reaction"],
+    "tags": [
+      "fire",
+      "poison",
+      "reaction"
+    ],
     "triggers": [
       {
         "hook": "OnStatusTicked",
-        "conditions": { "status": "Burn", "appliedByOwner": true, "targetHasStatus": "Poison" },
+        "conditions": {
+          "status": "Burn",
+          "appliedByOwner": true,
+          "targetHasStatus": "Poison"
+        },
         "internalCooldownTicks": 60,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "DealDamage", "amount": 1, "damageType": "FIRE" }]
+        "effects": [
+          {
+            "command": "DealDamage",
+            "amount": 1,
+            "damageType": "FIRE"
+          }
+        ]
       }
     ],
-    "description": "When your Burn damages a Poisoned enemy, deal 1 Fire damage once per second."
+    "description": "When your Burn damages a Poisoned enemy, deal 1 Fire damage once per second.",
+    "categories": [
+      "TOOL",
+      "FIRE",
+      "POISON",
+      "ENGINE",
+      "RELIC"
+    ]
   },
   {
     "id": "green-smoke-lantern",
@@ -92,17 +198,37 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["poison", "control", "reaction"],
+    "tags": [
+      "poison",
+      "control",
+      "reaction"
+    ],
     "triggers": [
       {
         "hook": "OnStatusTicked",
-        "conditions": { "status": "Poison", "appliedByOwner": true },
+        "conditions": {
+          "status": "Poison",
+          "appliedByOwner": true
+        },
         "internalCooldownTicks": 180,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "ApplySlow", "target": "ENEMY_LEFTMOST_ACTIVE", "percent": 10, "durationTicks": 60 }]
+        "effects": [
+          {
+            "command": "ApplySlow",
+            "target": "ENEMY_LEFTMOST_ACTIVE",
+            "percent": 10,
+            "durationTicks": 60
+          }
+        ]
       }
     ],
-    "description": "When your Poison deals damage, Slow the leftmost enemy active card by 10% for 1 second. Can trigger once every 3 seconds."
+    "description": "When your Poison deals damage, Slow the leftmost enemy active card by 10% for 1 second. Can trigger once every 3 seconds.",
+    "categories": [
+      "TOOL",
+      "POISON",
+      "CONTROL",
+      "ENGINE"
+    ]
   },
   {
     "id": "menders-sash",
@@ -110,17 +236,37 @@
     "tier": "BRONZE",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["heal", "armor", "reaction"],
+    "tags": [
+      "heal",
+      "armor",
+      "reaction"
+    ],
     "triggers": [
       {
         "hook": "OnHealReceived",
-        "conditions": { "appliedByOwner": true, "healedAmountAtLeast": 1 },
+        "conditions": {
+          "appliedByOwner": true,
+          "healedAmountAtLeast": 1
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "GainArmor", "amount": 2 }]
+        "effects": [
+          {
+            "command": "GainArmor",
+            "amount": 2
+          }
+        ]
       }
     ],
-    "description": "When you heal, gain 2 Armor. Can trigger once every 2 seconds."
+    "description": "When you heal, gain 2 Armor. Can trigger once every 2 seconds.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "TOOL",
+      "FIRE",
+      "HEAL",
+      "ENGINE"
+    ]
   },
   {
     "id": "toxin-brewer",
@@ -128,17 +274,35 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["poison", "heal", "reaction"],
+    "tags": [
+      "poison",
+      "heal",
+      "reaction"
+    ],
     "triggers": [
       {
         "hook": "OnStatusApplied",
-        "conditions": { "status": "Poison", "appliedByOwner": true },
+        "conditions": {
+          "status": "Poison",
+          "appliedByOwner": true
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "HealHP", "amount": 1 }]
+        "effects": [
+          {
+            "command": "HealHP",
+            "amount": 1
+          }
+        ]
       }
     ],
-    "description": "When you apply Poison, heal 1 HP. Can trigger once every 2 seconds."
+    "description": "When you apply Poison, heal 1 HP. Can trigger once every 2 seconds.",
+    "categories": [
+      "POISON",
+      "HEAL",
+      "DEFENSE",
+      "ENGINE"
+    ]
   },
   {
     "id": "scalding-medic",
@@ -146,13 +310,29 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["heal", "fire", "hybrid"],
+    "tags": [
+      "heal",
+      "fire",
+      "hybrid"
+    ],
     "cooldownTicks": 240,
     "effects": [
-      { "command": "HealHP", "amount": 4 },
-      { "command": "ApplyBurn", "amount": 1, "durationTicks": 120 }
+      {
+        "command": "HealHP",
+        "amount": 4
+      },
+      {
+        "command": "ApplyBurn",
+        "amount": 1,
+        "durationTicks": 120
+      }
     ],
-    "description": "Every 4 seconds, heal 4 HP and apply 1 Burn for 2 seconds."
+    "description": "Every 4 seconds, heal 4 HP and apply 1 Burn for 2 seconds.",
+    "categories": [
+      "FIRE",
+      "HEAL",
+      "DEFENSE"
+    ]
   },
   {
     "id": "venom-pressure-cask",
@@ -160,10 +340,23 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["poison", "terminal"],
+    "tags": [
+      "poison",
+      "terminal"
+    ],
     "cooldownTicks": 300,
-    "effects": [{ "command": "ApplyPoison", "amount": 3 }],
-    "description": "Size 2. Every 5 seconds, apply 3 Poison."
+    "effects": [
+      {
+        "command": "ApplyPoison",
+        "amount": 3
+      }
+    ],
+    "description": "Size 2. Every 5 seconds, apply 3 Poison.",
+    "categories": [
+      "TOOL",
+      "POISON",
+      "TERMINAL"
+    ]
   },
   {
     "id": "redline-finisher",
@@ -171,19 +364,34 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["weapon", "physical", "execution", "terminal"],
+    "tags": [
+      "weapon",
+      "physical",
+      "execution",
+      "terminal"
+    ],
     "cooldownTicks": 300,
     "effects": [
       {
         "command": "DealDamage",
         "amount": 4,
-        "scaling": { "source": "TARGET_MISSING_HP_PERCENT", "percent": 20 },
-        "conditionalMultiplier": { "targetHpBelowPercent": 40, "multiplier": 1.5 },
+        "scaling": {
+          "source": "TARGET_MISSING_HP_PERCENT",
+          "percent": 20
+        },
+        "conditionalMultiplier": {
+          "targetHpBelowPercent": 40,
+          "multiplier": 1.5
+        },
         "critChancePercent": 20,
         "critMultiplier": 2
       }
     ],
-    "description": "Size 2. Every 5 seconds, deal 4 damage plus 20% of enemy missing HP. Below 40% enemy HP, deal 1.5x damage. 20% chance to crit for 2x damage."
+    "description": "Size 2. Every 5 seconds, deal 4 damage plus 20% of enemy missing HP. Below 40% enemy HP, deal 1.5x damage. 20% chance to crit for 2x damage.",
+    "categories": [
+      "WEAPON",
+      "TERMINAL"
+    ]
   },
   {
     "id": "steady-wall-engine",
@@ -191,12 +399,31 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["armor", "support", "terminal"],
+    "tags": [
+      "armor",
+      "support",
+      "terminal"
+    ],
     "cooldownTicks": 300,
     "effects": [
-      { "command": "GainArmor", "amount": 8 },
-      { "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -30 }
+      {
+        "command": "GainArmor",
+        "amount": 8
+      },
+      {
+        "command": "ModifyCooldown",
+        "target": "ADJACENT_ALLY",
+        "amountTicks": -30
+      }
     ],
-    "description": "Size 2. Every 5 seconds, gain 8 Armor and ready adjacent allies 0.5 seconds sooner."
+    "description": "Size 2. Every 5 seconds, gain 8 Armor and ready adjacent allies 0.5 seconds sooner.",
+    "categories": [
+      "ARMOR",
+      "DEFENSE",
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE",
+      "TERMINAL"
+    ]
   }
 ]

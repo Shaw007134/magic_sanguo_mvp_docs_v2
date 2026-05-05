@@ -5,10 +5,24 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "physical", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "physical",
+      "iron-warlord"
+    ],
     "cooldownTicks": 60,
-    "effects": [{ "command": "DealDamage", "amount": 3 }],
-    "description": "Every 1 second, deal 3 damage."
+    "effects": [
+      {
+        "command": "DealDamage",
+        "amount": 3
+      }
+    ],
+    "description": "Every 1 second, deal 3 damage.",
+    "categories": [
+      "WEAPON",
+      "ARMOR",
+      "DEFENSE"
+    ]
   },
   {
     "id": "execution-halberd",
@@ -16,7 +30,11 @@
     "tier": "GOLD",
     "type": "ACTIVE",
     "size": 2,
-    "tags": ["weapon", "physical", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "physical",
+      "iron-warlord"
+    ],
     "cooldownTicks": 240,
     "effects": [
       {
@@ -24,10 +42,17 @@
         "amount": 8,
         "critChancePercent": 25,
         "critMultiplier": 2,
-        "conditionalMultiplier": { "targetHpBelowPercent": 35, "multiplier": 2 }
+        "conditionalMultiplier": {
+          "targetHpBelowPercent": 35,
+          "multiplier": 2
+        }
       }
     ],
-    "description": "Size 2. Every 4 seconds, deal 8 damage. 25% chance to crit for 2x damage. If the enemy is below 35% HP, this hit deals double damage."
+    "description": "Size 2. Every 4 seconds, deal 8 damage. 25% chance to crit for 2x damage. If the enemy is below 35% HP, this hit deals double damage.",
+    "categories": [
+      "WEAPON",
+      "TERMINAL"
+    ]
   },
   {
     "id": "left-flank-blade",
@@ -35,17 +60,33 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["weapon", "formation", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "formation",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnCardActivated",
-        "conditions": { "sourceHasTag": "weapon", "cardIsAdjacent": true },
+        "conditions": {
+          "sourceHasTag": "weapon",
+          "cardIsAdjacent": true
+        },
         "internalCooldownTicks": 90,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "DealDamage", "amount": 2 }]
+        "effects": [
+          {
+            "command": "DealDamage",
+            "amount": 2
+          }
+        ]
       }
     ],
-    "description": "When an adjacent Weapon activates, deal 2 damage. Can trigger once every 1.5 seconds."
+    "description": "When an adjacent Weapon activates, deal 2 damage. Can trigger once every 1.5 seconds.",
+    "categories": [
+      "WEAPON",
+      "ENGINE"
+    ]
   },
   {
     "id": "discipline-drill",
@@ -53,17 +94,34 @@
     "tier": "SILVER",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["support", "formation", "iron-warlord"],
+    "tags": [
+      "support",
+      "formation",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnCardActivated",
-        "conditions": { "cardIsAdjacent": true },
+        "conditions": {
+          "cardIsAdjacent": true
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "ModifyCooldown", "target": "ADJACENT_ALLY", "amountTicks": -15 }]
+        "effects": [
+          {
+            "command": "ModifyCooldown",
+            "target": "ADJACENT_ALLY",
+            "amountTicks": -15
+          }
+        ]
       }
     ],
-    "description": "When an adjacent ally activates, ready adjacent allies 0.25 seconds sooner. Can trigger once every 2 seconds."
+    "description": "When an adjacent ally activates, ready adjacent allies 0.25 seconds sooner. Can trigger once every 2 seconds.",
+    "categories": [
+      "TOOL",
+      "COOLDOWN",
+      "ENGINE"
+    ]
   },
   {
     "id": "spear-and-shield-line",
@@ -71,13 +129,29 @@
     "tier": "SILVER",
     "type": "ACTIVE",
     "size": 1,
-    "tags": ["weapon", "armor", "physical", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "armor",
+      "physical",
+      "iron-warlord"
+    ],
     "cooldownTicks": 120,
     "effects": [
-      { "command": "DealDamage", "amount": 3 },
-      { "command": "GainArmor", "amount": 3 }
+      {
+        "command": "DealDamage",
+        "amount": 3
+      },
+      {
+        "command": "GainArmor",
+        "amount": 3
+      }
     ],
-    "description": "Every 2 seconds, deal 3 damage and gain 3 Armor."
+    "description": "Every 2 seconds, deal 3 damage and gain 3 Armor.",
+    "categories": [
+      "WEAPON",
+      "ARMOR",
+      "DEFENSE"
+    ]
   },
   {
     "id": "captains-finisher",
@@ -85,16 +159,34 @@
     "tier": "GOLD",
     "type": "PASSIVE",
     "size": 1,
-    "tags": ["weapon", "payoff", "iron-warlord"],
+    "tags": [
+      "weapon",
+      "payoff",
+      "iron-warlord"
+    ],
     "triggers": [
       {
         "hook": "OnDamageDealt",
-        "conditions": { "sourceHasTag": "weapon", "cardIsAdjacent": true, "targetHpBelowPercent": 35 },
+        "conditions": {
+          "sourceHasTag": "weapon",
+          "cardIsAdjacent": true,
+          "targetHpBelowPercent": 35
+        },
         "internalCooldownTicks": 120,
         "maxTriggersPerTick": 1,
-        "effects": [{ "command": "DealDamage", "amount": 4 }]
+        "effects": [
+          {
+            "command": "DealDamage",
+            "amount": 4
+          }
+        ]
       }
     ],
-    "description": "When an adjacent Weapon hits an enemy below 35% HP, deal 4 damage. Can trigger once every 2 seconds."
+    "description": "When an adjacent Weapon hits an enemy below 35% HP, deal 4 damage. Can trigger once every 2 seconds.",
+    "categories": [
+      "WEAPON",
+      "ENGINE",
+      "TERMINAL"
+    ]
   }
 ]

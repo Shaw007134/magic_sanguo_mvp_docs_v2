@@ -2,6 +2,7 @@ import type { CardDefinition } from "../../model/card.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
 import type { RunChoice } from "../../run/RunState.js";
 import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
+import { getEnchantmentDefinitionsById } from "../../content/enchantments/enchantments.js";
 import { formatEnhancementEffect } from "./rewardCardDisplay.js";
 import { getSkillDefinitionsById } from "../../run/skills/skillDefinitions.js";
 import { getCardDisplayInfo } from "./cardDisplay.js";
@@ -77,6 +78,18 @@ export function getChoiceDisplayInfo(
       title: choice.label,
       subtitle: "Event",
       meta: [`Heal: ${choice.heal ?? 0} HP`]
+    };
+  }
+
+  if (choice.type === "EVENT_ENCHANTMENT") {
+    const enchantment = choice.enchantmentDefinitionId
+      ? getEnchantmentDefinitionsById().get(choice.enchantmentDefinitionId)
+      : undefined;
+    return {
+      title: enchantment?.name ?? choice.label,
+      subtitle: "Enchantment study",
+      meta: enchantment ? [enchantment.tier, enchantment.type, formatTargetRule(enchantment.targetRule)] : [],
+      summary: choice.description ?? enchantment?.description
     };
   }
 
@@ -160,4 +173,12 @@ export function getChoiceDisplayInfo(
     subtitle: "Reward",
     meta: []
   };
+}
+
+function formatTargetRule(targetRule: string): string {
+  return targetRule
+    .toLowerCase()
+    .split("_")
+    .map((word) => word[0]?.toUpperCase() + word.slice(1))
+    .join(" ");
 }
