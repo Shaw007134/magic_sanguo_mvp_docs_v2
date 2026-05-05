@@ -252,7 +252,7 @@ function formatControlEffect(kind: "Haste" | "Slow" | "Freeze", effect: EffectDe
     return `Freeze ${target}${duration}`;
   }
   if (kind === "Haste") {
-    return `Haste ${target} (50% faster cooldown)${duration}`;
+    return `Haste ${target} (50% faster tick speed)${duration}`;
   }
   return `Slow ${target}${duration}`;
 }

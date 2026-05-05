@@ -78,4 +78,26 @@ describe("formation presentation", () => {
     expect(html).toContain("Slot 16");
     expect(html).toContain("Rusty Blade");
   });
+
+  it("placed formation cards expose drag handles for reorder by activation slot", () => {
+    const state: UiInventoryState = {
+      gold: 10,
+      ownedCards: [{ instanceId: "blade", definitionId: "rusty-blade" }],
+      formationSlots: createEmptyFormationSlots()
+    };
+    const placed = moveCardFromChestToFormation(state, "blade", 1, cardDefinitionsById);
+    const html = renderToStaticMarkup(
+      <FormationEditor
+        slots={placed.formationSlots}
+        cardInstancesById={new Map(placed.ownedCards.map((card) => [card.instanceId, card]))}
+        cardDefinitionsById={cardDefinitionsById}
+        onSlotClick={() => undefined}
+        onSlotDrop={() => undefined}
+        onRemove={() => undefined}
+      />
+    );
+
+    expect(html).toContain('draggable="true"');
+    expect(html).toContain("Rusty Blade");
+  });
 });

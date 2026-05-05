@@ -8,15 +8,19 @@ export interface SkillPanelProps {
 export function SkillPanel({ skills }: SkillPanelProps) {
   const skillDefinitionsById = getSkillDefinitionsById();
   return (
-    <section className="panel skill-panel">
+    <section className="panel skill-panel" aria-label="Run status and learned skills">
       <div className="panel-heading">
-        <h2>Skills</h2>
-        <span>{skills.length}</span>
+        <h2>Run Status</h2>
+        <span>{skills.length} learned</span>
       </div>
       {skills.length === 0 ? (
-        <p className="empty-slot-label">No skills yet</p>
+        <p className="empty-slot-label">No learned skills yet.</p>
       ) : (
-        <div className="skill-list">
+        <div className="skill-list" aria-label="Learned skills">
+          <div className="panel-subheading">
+            <h3>Learned Skills</h3>
+            <span>Always-on run effects</span>
+          </div>
           {skills.map((skill) => {
             const definition = skillDefinitionsById.get(skill.definitionId);
             return definition ? (

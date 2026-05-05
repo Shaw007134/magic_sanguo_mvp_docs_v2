@@ -176,16 +176,26 @@ export function getChoiceDisplayInfo(
 }
 
 function formatTargetRule(targetRule: string): string {
-  return formatLabel(targetRule)
-    .replace("Any Card", "Any card")
-    .replace("Any Active Card", "Any active card")
-    .replace("Weapon Card", "Weapon card")
-    .replace("Armor Card", "Armor card")
-    .replace("Fire Card", "Fire card")
-    .replace("Poison Card", "Poison card")
-    .replace("Cooldown Card", "Cooldown card")
-    .replace("Control Card", "Control card")
-    .replace("Terminal Card", "Terminal card");
+  switch (targetRule) {
+    case "ANY_CARD":
+      return "Any card";
+    case "ANY_ACTIVE_CARD":
+      return "Any active card";
+    case "WEAPON_CARD":
+      return "Weapon card";
+    case "ARMOR_CARD":
+      return "Armor card";
+    case "FIRE_CARD":
+      return "Fire card";
+    case "POISON_CARD":
+      return "Poison card";
+    case "COOLDOWN_CARD":
+    case "CONTROL_CARD":
+    case "TERMINAL_CARD":
+      return "Eligible card";
+    default:
+      return "Eligible card";
+  }
 }
 
 function formatLabel(value: string): string {

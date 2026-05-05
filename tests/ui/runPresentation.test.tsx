@@ -12,6 +12,7 @@ import { CardView } from "../../src/ui/components/CardView.js";
 import { ChestPanel } from "../../src/ui/components/ChestPanel.js";
 import { FormationEditor } from "../../src/ui/components/FormationEditor.js";
 import { RunStatusBar } from "../../src/ui/components/RunStatusBar.js";
+import { SkillPanel } from "../../src/ui/components/SkillPanel.js";
 import { getChoiceDisplayInfo } from "../../src/ui/presentation/choiceDisplay.js";
 
 const cardDefinitionsById = getMonsterCardDefinitionsById();
@@ -231,7 +232,6 @@ describe("run presentation", () => {
         onChoice={() => undefined}
         onStartBattle={() => undefined}
         onCompleteBattle={() => undefined}
-        onAcknowledgeBattleSummary={() => undefined}
         onLeaveShop={() => undefined}
         onContinue={() => undefined}
       />
@@ -243,17 +243,29 @@ describe("run presentation", () => {
         onChoice={() => undefined}
         onStartBattle={() => undefined}
         onCompleteBattle={() => undefined}
-        onAcknowledgeBattleSummary={() => undefined}
         onLeaveShop={() => undefined}
         onContinue={() => undefined}
       />
     );
 
     expect(withSummary).toContain("Victory");
-    expect(withSummary).toContain("Continue to Level Up");
+    expect(withSummary).toContain("Continue");
     expect(withSummary).not.toContain("Level Up!");
     expect(afterSummary).toContain("Level Up!");
     expect(afterSummary).toContain("Choose one reward");
+  });
+
+  it("learned skills render in a run status panel, not as chest or loot cards", () => {
+    const html = renderToStaticMarkup(
+      <SkillPanel skills={[{ instanceId: "skill-1", definitionId: "quick-hands" }]} />
+    );
+
+    expect(html).toContain("Run Status");
+    expect(html).toContain("Learned Skills");
+    expect(html).toContain("Quick Hands");
+    expect(html).toContain("All your cards recharge twice as fast.");
+    expect(html).not.toContain("Reward / Loot");
+    expect(html).not.toContain("Chest");
   });
 
   it("chest panel consolidates loot cards and omits an empty reward section", () => {
@@ -303,6 +315,23 @@ describe("run presentation", () => {
     expect(display.subtitle).toBe("Loot reward");
     expect(display.meta).toContain("Sell: 1 gold");
     expect(display.summary).toContain("+1 Burn");
+  });
+
+  it("enchantment choice display hides internal target categories", () => {
+    const display = getChoiceDisplayInfo(
+      {
+        id: "swift",
+        type: "EVENT_ENCHANTMENT",
+        label: "Study Swift",
+        enchantmentDefinitionId: "bronze-swift-rhythm",
+        targetRule: "COOLDOWN_CARD",
+        description: "Choose a tempo enchantment."
+      },
+      activeCardsById
+    );
+
+    expect(display.meta).toContain("Eligible card");
+    expect(display.meta.join(" ")).not.toMatch(/COOLDOWN|Cooldown|ENGINE|TERMINAL|CONTROL/);
   });
 
   it("reward upgrade display shows tier transition clearly", () => {

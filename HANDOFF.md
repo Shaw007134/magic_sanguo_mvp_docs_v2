@@ -207,12 +207,14 @@ Enchantment target validation now uses the shared src/content/enchantments/encha
 Attached Bronze effects are applied before combat through getEffectiveCardDefinition, alongside tier scaling and Phase 15D reward-card enhancements. CombatEngine behavior and FormationSnapshot structure are unchanged.
 Phase 15D reward-card enhancements remain separate in CardInstance.enhancements and compatible effects are additive with Bronze enchantments.
 UI highlights cards eligible for any visible enchantment event choice and CardView shows attached enchantment plus a concise effect preview.
-Phase 15E-D/E UI polish keeps completed battle summaries visible until the player acknowledges them; reward and level-up choices are generated deterministically but hidden behind the victory summary in the UI.
+Phase 15E-D/E follow-up collapsed the post-battle flow to one Continue click: the battle result/replay/summary displays first, then the same click completes the battle and reveals reward or level-up choices.
 Chest is now the single inventory panel for normal cards and Phase 15D sellable loot cards. Normal reward cards still enter ownedCards/chest automatically when space permits.
 Standalone Reward / Loot UI was removed. Loot cards render only as a Chest subsection when owned.
-Player-facing card summaries now use concise Burn/Poison per-second text, fixed Haste wording as 50% faster cooldown, and readable cooldown readiness text instead of raw point/tick phrasing.
+Learned skills render in the Run Status panel as always-on run effects, not in Chest or loot inventory.
+Player-facing card summaries now use concise Burn/Poison per-second text, fixed Haste wording as 50% faster tick speed, and readable cooldown readiness text instead of raw point/tick phrasing.
 Internal-use categories COOLDOWN, CONTROL, TERMINAL, ENGINE, DEFENSE, ECONOMY, STARTER, and BOSS_REWARD must remain data-only and not appear in player-facing card/skill display.
 Cards with attached enchantments receive a persistent `enchanted` CardView highlight in formation and chest while still showing the concise enchantment effect preview.
+Placed formation cards are draggable between formation slots for activation-order adjustment; click-to-select movement still works.
 Venom, Swift, Binding, Frost, Obsidian, Obsidian damage doubling, and Freeze/Slow/Haste enchantment effects remain deferred.
 Phase 15C Markdown reports now include Executive Summary, Build Summary, Boss Summary, Boss Challenge Summary, Build Legitimacy Notes, Warning Hotspots with likely design causes, Outcome Attribution Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
 Phase 15D balance reports include Enhanced Build Summary and two enhanced sample builds: Enhanced Burn Terminal and Enhanced Cooldown Tempo.
@@ -236,7 +238,7 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 Phase 15E-F:
 
 ```text
-Manual playtest battle-summary acknowledgment, Chest/Loot readability, Bronze Iron/Flame/Vital enchantment pacing, and reward-card enhancement stacking. Next implementation should add per-choice target preview or separate enchantment attribution if readability needs it.
+Manual playtest single-click battle-summary flow, formation drag/drop, Chest/Loot readability, Bronze Iron/Flame/Vital enchantment pacing, and reward-card enhancement stacking. Next implementation should add per-choice target preview or separate enchantment attribution if readability needs it.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -249,7 +251,7 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 3. Confirm the run starts at level 1, 0 EXP, 10 gold, 40/40 HP, 0 owned cards, 4 formation slots, chest capacity 16, and a starter shop.
 4. Buy one or more starter shop cards, confirm the shop stays open, then click Leave Shop and confirm shop EXP is granted once.
 5. Select a chest card, click a formation slot, and confirm the card moves out of chest view.
-6. Start battle, confirm Replay and Summary populate, then click Claim Victory / Continue and confirm the victory summary is shown before rewards or level-up choices.
+6. Start battle, confirm Replay and Summary populate, then click Continue once and confirm rewards or level-up choices appear afterward.
 7. Choose reward and continue through repeated shop/event, battle, and reward nodes.
 8. Confirm level-up choices appear after acknowledging any pending battle victory summary; max HP increases by 10% rounded up, and current HP heals to max.
 9. Continue until level 10, then confirm the next battle is the final boss and boss completion shows Victory or Defeat.
@@ -263,7 +265,7 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 17. Build at least one Armor/Blade run.
 18. Build at least one Drum/Siege run.
 19. Confirm rewards sometimes show cards related to defeated monsters.
-20. Confirm card summaries are readable, show seconds, use concise Burn/Poison per-second text, and display Haste as 50% faster cooldown.
+20. Confirm card summaries are readable, show seconds, use concise Burn/Poison per-second text, and display Haste as 50% faster tick speed.
 21. Confirm passive trigger summaries do not expose internal hook names.
 22. Confirm no skills appear in chest.
 23. Confirm save/load still works after obtaining new cards, upgraded duplicates, skills, and pending rewards.

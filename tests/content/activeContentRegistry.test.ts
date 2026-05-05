@@ -649,7 +649,7 @@ describe("active MVP content registry", () => {
   it("card summaries are readable seconds-only and hide internal hook names", () => {
     for (const card of ACTIVE_CARD_DEFINITIONS) {
       const summary = getCardDisplayInfo(card).summary;
-      expect(summary, card.id).not.toMatch(/\d+t\b|tick|\bOn[A-Z]|hook/);
+      expect(summary, card.id).not.toMatch(/\d+t\b|ticks?\b(?! speed)|\bOn[A-Z]|hook/);
     }
   });
 });

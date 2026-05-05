@@ -63,13 +63,13 @@ describe("cardDisplay", () => {
   });
 
   it("summarizes Haste, Slow, and Freeze cards without raw tick labels", () => {
-    expect(display("war-chant").summary).toBe("Haste adjacent active allies (50% faster cooldown) for 3s");
-    expect(display("command-banner").summary).toBe("Haste all your active cards (50% faster cooldown) for 3s");
+    expect(display("war-chant").summary).toBe("Haste adjacent active allies (50% faster tick speed) for 3s");
+    expect(display("command-banner").summary).toBe("Haste all your active cards (50% faster tick speed) for 3s");
     expect(display("mud-trap").summary).toBe("Slow the opposite enemy active card for 2s");
     expect(display("frost-chain").summary).toBe("Freeze the opposite enemy active card for 1s");
     expect(display("cold-spear").summary).toBe("Physical damage: 2 · Freeze the opposite enemy active card for 1s");
     expect(display("heavy-net").summary).toBe("Slow the leftmost enemy active card for 2s");
-    expect(display("war-chant").summary).not.toMatch(/\d+t\b|tick|\bOn[A-Z]|hook|by \d+%/);
+    expect(display("war-chant").summary).not.toMatch(/\d+t\b|ticks?\b(?! speed)|\bOn[A-Z]|hook|by \d+%/);
   });
 
   it("summarizes reaction cards with readable hooks and seconds", () => {

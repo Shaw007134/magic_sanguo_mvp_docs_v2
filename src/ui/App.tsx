@@ -165,10 +165,6 @@ export function App() {
     sync(manager.completeBattle(), "Battle completed.");
   }
 
-  function handleAcknowledgeBattleSummary(): void {
-    sync(manager.acknowledgeBattleSummary(), "Choose your next reward.");
-  }
-
   function handleContinue(): void {
     sync(manager.advanceToNextNode(), "Advanced.");
   }
@@ -215,7 +211,6 @@ export function App() {
             onChoice={handleChoice}
             onStartBattle={handleStartBattle}
             onCompleteBattle={handleCompleteBattle}
-            onAcknowledgeBattleSummary={handleAcknowledgeBattleSummary}
             onLeaveShop={() => sync(manager.leaveShop(), "Left shop.")}
             onContinue={handleContinue}
           />
@@ -228,6 +223,10 @@ export function App() {
           cardInstancesById={toCardInstanceMap(runState.ownedCards)}
           cardDefinitionsById={cardDefinitionsById}
           onSlotClick={handleFormationSlotClick}
+          onSlotDrop={(cardInstanceId, slotIndex) => {
+            sync(manager.moveCardBetweenFormationSlots(cardInstanceId, slotIndex), "Card moved.");
+            setSelection(undefined);
+          }}
           onRemove={handleRemoveFromFormation}
         />
         <SkillPanel skills={runState.ownedSkills} />
@@ -296,7 +295,6 @@ export function NodeActions(props: {
   readonly onChoice: (choice: RunChoice) => void;
   readonly onStartBattle: () => void;
   readonly onCompleteBattle: () => void;
-  readonly onAcknowledgeBattleSummary: () => void;
   readonly onLeaveShop: () => void;
   readonly onContinue: () => void;
 }) {
@@ -305,23 +303,14 @@ export function NodeActions(props: {
   }
   if (props.combatResult) {
     const won = props.combatResult.winner === "PLAYER";
-    const buttonLabel = props.state.currentNode.type === "BATTLE"
-      ? won ? "Claim Victory" : "Continue"
-      : props.state.currentNode.type === "LEVEL_UP_REWARD"
-        ? "Continue to Level Up"
-        : "Continue to Rewards";
     return (
       <div className="choice-area">
         <div className="reward-reveal">
           <strong>{won ? "Victory" : "Defeat"}</strong>
           <span>{won ? "Review the battle summary before choosing your next reward." : "Review the battle summary."}</span>
         </div>
-        <button
-          className="primary-action"
-          type="button"
-          onClick={props.state.currentNode.type === "BATTLE" ? props.onCompleteBattle : props.onAcknowledgeBattleSummary}
-        >
-          {buttonLabel}
+        <button className="primary-action" type="button" onClick={props.onCompleteBattle}>
+          Continue
         </button>
       </div>
     );

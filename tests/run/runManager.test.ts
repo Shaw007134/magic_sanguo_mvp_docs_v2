@@ -212,7 +212,7 @@ describe("RunManager", () => {
     expect(manager.getCurrentNode().type).toBe("REWARD");
   });
 
-  it("battle win keeps victory summary reviewable before reward or level-up choices", () => {
+  it("battle win advances to reward choices after one post-summary continue", () => {
     const manager = createNewRun("battle-summary-before-choice");
     reachFirstBattle(manager);
 
@@ -220,10 +220,7 @@ describe("RunManager", () => {
 
     expect(manager.getCurrentNode().type).toBe("REWARD");
     expect(manager.state.currentChoices.some((choice) => choice.type.startsWith("REWARD"))).toBe(true);
-    expect(manager.state.pendingBattleResult?.winner).toBe("PLAYER");
-    expect(manager.acknowledgeBattleSummary().ok).toBe(true);
     expect(manager.state.pendingBattleResult).toBeUndefined();
-    expect(manager.state.currentChoices.some((choice) => choice.type.startsWith("REWARD"))).toBe(true);
   });
 
   it("10 exp triggers one level-up, increases HP by 10 percent rounded up, heals, and caps at 10", () => {

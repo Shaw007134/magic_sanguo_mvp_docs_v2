@@ -591,7 +591,7 @@ export class RunManager {
         ? this.state.completedNodes
         : [...this.state.completedNodes, this.state.currentNode.id],
       pendingCombatResult: undefined,
-      pendingBattleResult: pendingResult
+      pendingBattleResult: undefined
     };
     this.state = nextState;
 
@@ -608,20 +608,6 @@ export class RunManager {
 
     this.gainExp(4, "BATTLE_WIN");
     return this.continueAfterEncounter(false);
-  }
-
-  acknowledgeBattleSummary(): RunActionResult {
-    if (!this.state.pendingBattleResult || this.state.currentNode.type === "BATTLE") {
-      return this.fail("No completed battle summary is waiting.");
-    }
-    this.state = {
-      ...this.state,
-      pendingCombatResult: undefined,
-      pendingBattleResult: undefined,
-      currentEnemySnapshot: undefined,
-      currentEnemyCardInstances: undefined
-    };
-    return this.ok("Battle summary acknowledged.");
   }
 
   gainExp(amount: number, _reason: string): RunActionResult {
@@ -683,17 +669,16 @@ export class RunManager {
     const nextIndex = this.state.currentNode.type === "RUN_RESULT" ? this.state.currentNodeIndex : this.state.currentNodeIndex + 1;
     const nextNode = getNodeForIndex(nextIndex, this.state.level, this.state.status);
     const leavingReward = this.state.currentNode.type === "REWARD";
-    const preserveBattleSummary = this.state.currentNode.type === "BATTLE" && this.state.pendingBattleResult !== undefined;
     this.state = withNodeDerivedState(
       {
         ...this.state,
         currentNodeIndex: nextIndex,
         currentNode: nextNode,
         currentChoices: [],
-        currentEnemySnapshot: preserveBattleSummary ? this.state.currentEnemySnapshot : undefined,
-        currentEnemyCardInstances: preserveBattleSummary ? this.state.currentEnemyCardInstances : undefined,
+        currentEnemySnapshot: undefined,
+        currentEnemyCardInstances: undefined,
         pendingCombatResult: undefined,
-        pendingBattleResult: preserveBattleSummary ? this.state.pendingBattleResult : undefined,
+        pendingBattleResult: undefined,
         pendingRewardSource: leavingReward ? undefined : this.state.pendingRewardSource,
         completedNodes: this.state.completedNodes.includes(this.state.currentNode.id)
           ? this.state.completedNodes

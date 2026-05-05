@@ -9,6 +9,7 @@ export interface FormationSlotProps {
   readonly cardInstancesById: ReadonlyMap<string, CardInstance>;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly onSlotClick: (slotIndex: number, cardInstanceId?: string) => void;
+  readonly onSlotDrop?: (cardInstanceId: string, slotIndex: number) => void;
   readonly onRemove: (cardInstanceId: string) => void;
 }
 
@@ -26,6 +27,26 @@ export function FormationSlot(props: FormationSlotProps) {
       <button
         type="button"
         className="slot-button"
+        draggable={card !== undefined}
+        onDragStart={(event) => {
+          if (card) {
+            event.dataTransfer.setData("text/plain", card.instanceId);
+            event.dataTransfer.effectAllowed = "move";
+          }
+        }}
+        onDragOver={(event) => {
+          if (props.onSlotDrop) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = "move";
+          }
+        }}
+        onDrop={(event) => {
+          const draggedCardId = event.dataTransfer.getData("text/plain");
+          if (draggedCardId && props.onSlotDrop) {
+            event.preventDefault();
+            props.onSlotDrop(draggedCardId, props.slot.slotIndex);
+          }
+        }}
         onClick={() => props.onSlotClick(props.slot.slotIndex, card?.instanceId)}
       >
         <span className="slot-label">Slot {props.slot.slotIndex}</span>

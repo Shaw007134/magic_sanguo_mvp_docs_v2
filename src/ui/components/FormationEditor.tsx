@@ -9,6 +9,7 @@ export interface FormationEditorProps {
   readonly cardInstancesById: ReadonlyMap<string, CardInstance>;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly onSlotClick: (slotIndex: number, cardInstanceId?: string) => void;
+  readonly onSlotDrop?: (cardInstanceId: string, slotIndex: number) => void;
   readonly onRemove: (cardInstanceId: string) => void;
 }
 
@@ -29,6 +30,7 @@ export function FormationEditor(props: FormationEditorProps) {
             cardInstancesById={props.cardInstancesById}
             cardDefinitionsById={props.cardDefinitionsById}
             onSlotClick={props.onSlotClick}
+            onSlotDrop={props.onSlotDrop}
             onRemove={props.onRemove}
           />
         ))}
