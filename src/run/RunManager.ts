@@ -10,6 +10,7 @@ import {
 import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import type { CardDefinition, CardInstance, CardTier } from "../model/card.js";
 import { getEnchantmentDefinitionsById } from "../content/enchantments/enchantments.js";
+import { isEligibleForEnchantment } from "../content/enchantments/enchantmentTargets.js";
 import type { EnchantmentDefinition, EnchantmentTargetRule } from "../model/enchantment.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
 import type { RewardCardDefinition } from "../model/rewardCard.js";
@@ -442,7 +443,7 @@ export class RunManager {
     if (card.enchantment) {
       return this.fail(`${definition.name} already has an enchantment.`);
     }
-    if (!isValidEnchantmentTarget(definition, input.targetRule)) {
+    if (input.enchantment.targetRule !== input.targetRule || !isEligibleForEnchantment(definition, input.enchantment)) {
       return this.fail(`${definition.name} is not a valid target for ${input.enchantment.name}.`);
     }
 
@@ -1184,35 +1185,6 @@ function createPlayerFormationSnapshot(state: RunState): FormationSnapshot {
     skills: state.ownedSkills.map((skill) => ({ id: skill.instanceId, definitionId: skill.definitionId })),
     relics: []
   };
-}
-
-function isValidEnchantmentTarget(
-  definition: CardDefinition,
-  targetRule: EnchantmentTargetRule
-): boolean {
-  const categories = new Set(definition.categories ?? []);
-  switch (targetRule) {
-    case "ANY_CARD":
-      return true;
-    case "ANY_ACTIVE_CARD":
-      return definition.type === "ACTIVE";
-    case "WEAPON_CARD":
-      return categories.has("WEAPON");
-    case "ARMOR_CARD":
-      return categories.has("ARMOR");
-    case "FIRE_CARD":
-      return categories.has("FIRE");
-    case "POISON_CARD":
-      return categories.has("POISON");
-    case "COOLDOWN_CARD":
-      return categories.has("COOLDOWN");
-    case "CONTROL_CARD":
-      return categories.has("CONTROL");
-    case "TERMINAL_CARD":
-      return categories.has("TERMINAL");
-    default:
-      return false;
-  }
 }
 
 function toFormationSlot(slot: RunFormationSlot): FormationSlotSnapshot {

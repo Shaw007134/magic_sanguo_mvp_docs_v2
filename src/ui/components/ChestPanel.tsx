@@ -5,6 +5,7 @@ import { CardView } from "./CardView.js";
 export interface ChestPanelProps {
   readonly cards: readonly CardInstance[];
   readonly selectedCardId?: string;
+  readonly enchantmentEligibleCardIds?: ReadonlySet<string>;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly formationSlotCount: number;
   readonly chestCapacity?: number;
@@ -33,6 +34,7 @@ export function ChestPanel(props: ChestPanelProps) {
                 card={card}
                 definition={definition}
                 selected={selected}
+                enchantmentEligible={props.enchantmentEligibleCardIds?.has(card.instanceId) ?? false}
                 onClick={() => props.onCardClick(card.instanceId)}
               />
               {selected ? (

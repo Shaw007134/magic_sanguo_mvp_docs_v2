@@ -1,5 +1,10 @@
 import type { CardDefinition, EffectDefinition, TriggerDefinition } from "../../model/card.js";
 import type { CardInstance } from "../../model/card.js";
+import {
+  BRONZE_FLAME_BURN_BONUS,
+  BRONZE_IRON_ARMOR_BONUS,
+  BRONZE_VITAL_HEAL_BONUS
+} from "../../content/cards/effectiveCardDefinition.js";
 import { getEnchantmentDefinitionsById } from "../../content/enchantments/enchantments.js";
 import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
@@ -59,11 +64,24 @@ export function getCardEnchantmentSummary(card: CardInstance): string | undefine
   if (!enchantment) {
     return "Enchanted";
   }
-  return `Enchanted: ${enchantment.name} (${formatTier(enchantment.tier)} ${formatEnchantmentType(enchantment.type)})`;
+  return `Enchanted: ${enchantment.name} (${formatTier(enchantment.tier)} ${formatEnchantmentType(enchantment.type)})${formatEnchantmentEffect(enchantment.type)}`;
 }
 
 function formatEnchantmentType(value: string): string {
   return value[0] + value.slice(1).toLowerCase();
+}
+
+function formatEnchantmentEffect(value: string): string {
+  switch (value) {
+    case "IRON":
+      return ` · +${BRONZE_IRON_ARMOR_BONUS} Armor`;
+    case "FLAME":
+      return ` · +${BRONZE_FLAME_BURN_BONUS} Burn`;
+    case "VITAL":
+      return ` · +${BRONZE_VITAL_HEAL_BONUS} Heal`;
+    default:
+      return "";
+  }
 }
 
 function formatTrigger(trigger: TriggerDefinition): string {

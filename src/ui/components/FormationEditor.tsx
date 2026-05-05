@@ -5,6 +5,7 @@ import { FormationSlot } from "./FormationSlot.js";
 export interface FormationEditorProps {
   readonly slots: readonly UiFormationSlot[];
   readonly selectedCardId?: string;
+  readonly enchantmentEligibleCardIds?: ReadonlySet<string>;
   readonly cardInstancesById: ReadonlyMap<string, CardInstance>;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly onSlotClick: (slotIndex: number, cardInstanceId?: string) => void;
@@ -24,6 +25,7 @@ export function FormationEditor(props: FormationEditorProps) {
             key={slot.slotIndex}
             slot={slot}
             selectedCardId={props.selectedCardId}
+            enchantmentEligibleCardIds={props.enchantmentEligibleCardIds}
             cardInstancesById={props.cardInstancesById}
             cardDefinitionsById={props.cardDefinitionsById}
             onSlotClick={props.onSlotClick}

@@ -51,8 +51,8 @@ export const BRONZE_ENCHANTMENT_INTRO_TEMPLATE: EventTemplate = {
   tags: ["enchantment", "bronze", "intro"],
   choices: [
     { type: "ENCHANTMENT", enchantmentDefinitionId: "bronze-iron-edge" },
-    { type: "ENCHANTMENT", enchantmentDefinitionId: "bronze-vital-thread" },
-    { type: "ENCHANTMENT", enchantmentDefinitionId: "bronze-swift-rhythm" }
+    { type: "ENCHANTMENT", enchantmentDefinitionId: "bronze-flame-spark" },
+    { type: "ENCHANTMENT", enchantmentDefinitionId: "bronze-vital-thread" }
   ]
 };
 

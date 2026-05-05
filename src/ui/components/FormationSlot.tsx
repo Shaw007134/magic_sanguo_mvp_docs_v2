@@ -5,6 +5,7 @@ import { CardView } from "./CardView.js";
 export interface FormationSlotProps {
   readonly slot: UiFormationSlot;
   readonly selectedCardId?: string;
+  readonly enchantmentEligibleCardIds?: ReadonlySet<string>;
   readonly cardInstancesById: ReadonlyMap<string, CardInstance>;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly onSlotClick: (slotIndex: number, cardInstanceId?: string) => void;
@@ -34,6 +35,7 @@ export function FormationSlot(props: FormationSlotProps) {
               card={card}
               definition={definition}
               selected={props.selectedCardId === card.instanceId}
+              enchantmentEligible={props.enchantmentEligibleCardIds?.has(card.instanceId) ?? false}
               compact
             />
             {isWide ? <span className="footprint-label">Size 2</span> : null}

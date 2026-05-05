@@ -1,9 +1,14 @@
 import type { CardDefinition, CardInstance, CardTier, EffectDefinition } from "../../model/card.js";
+import { getEnchantmentDefinitionsById } from "../enchantments/enchantments.js";
+import { isEligibleForEnchantment } from "../enchantments/enchantmentTargets.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
 
 export const CARD_TIER_ORDER = ["BRONZE", "SILVER", "GOLD", "JADE", "CELESTIAL"] as const satisfies readonly CardTier[];
 export const REWARD_ENHANCEMENT_MIN_COOLDOWN_TICKS = 30;
 export const REWARD_ENHANCEMENT_COOLDOWN_REDUCTION_CAP_PERCENT = 40;
+export const BRONZE_IRON_ARMOR_BONUS = 1;
+export const BRONZE_FLAME_BURN_BONUS = 1;
+export const BRONZE_VITAL_HEAL_BONUS = 1;
 
 const TIER_SCALING = {
   BRONZE: { valueMultiplier: 1, cooldownMultiplier: 1 },
@@ -16,7 +21,8 @@ const TIER_SCALING = {
 export function getEffectiveCardDefinition(card: CardInstance, baseDefinition: CardDefinition): CardDefinition {
   const effectiveTier = card.tierOverride ?? baseDefinition.tier;
   const hasEnhancements = (card.enhancements?.length ?? 0) > 0;
-  if (effectiveTier === baseDefinition.tier && !hasEnhancements) {
+  const hasEnchantment = card.enchantment !== undefined;
+  if (effectiveTier === baseDefinition.tier && !hasEnhancements && !hasEnchantment) {
     return baseDefinition;
   }
   const scaling = TIER_SCALING[effectiveTier];
@@ -32,13 +38,14 @@ export function getEffectiveCardDefinition(card: CardInstance, baseDefinition: C
     effects: baseDefinition.effects?.map((effect) => scaleEffect(effect, baseDefinition.tier, effectiveTier)),
     triggers: baseDefinition.triggers?.map((trigger) => scaleTrigger(trigger, baseDefinition.tier, effectiveTier))
   };
-  return applyCardInstanceEnhancements(tierScaledDefinition, card);
+  return applyCardInstanceEnchantment(applyCardInstanceEnhancements(tierScaledDefinition, card), card);
 }
 
 export function getEffectiveCardDefinitionId(card: CardInstance): string {
   const hasEnhancements = (card.enhancements?.length ?? 0) > 0;
-  return card.tierOverride || hasEnhancements
-    ? `${card.definitionId}__${card.instanceId}__${card.tierOverride ?? "BASE"}__enh${card.enhancements?.length ?? 0}`
+  const hasEnchantment = card.enchantment !== undefined;
+  return card.tierOverride || hasEnhancements || hasEnchantment
+    ? `${card.definitionId}__${card.instanceId}__${card.tierOverride ?? "BASE"}__enh${card.enhancements?.length ?? 0}__ench${card.enchantment?.enchantmentDefinitionId ?? "none"}`
     : card.definitionId;
 }
 
@@ -49,7 +56,7 @@ export function createEffectiveCardDefinitionMap(input: {
   const definitions = new Map(input.baseDefinitionsById);
   for (const card of input.cardInstances) {
     const baseDefinition = input.baseDefinitionsById.get(card.definitionId);
-    if (!baseDefinition || (!card.tierOverride && (card.enhancements?.length ?? 0) === 0)) {
+    if (!baseDefinition || (!card.tierOverride && (card.enhancements?.length ?? 0) === 0 && !card.enchantment)) {
       continue;
     }
     const effectiveDefinition = getEffectiveCardDefinition(card, baseDefinition);
@@ -60,7 +67,7 @@ export function createEffectiveCardDefinitionMap(input: {
 
 export function createEffectiveCardInstances(cards: readonly CardInstance[]): readonly CardInstance[] {
   return cards.map((card) =>
-    card.tierOverride || (card.enhancements?.length ?? 0) > 0 ? { ...card, definitionId: getEffectiveCardDefinitionId(card) } : card
+    card.tierOverride || (card.enhancements?.length ?? 0) > 0 || card.enchantment ? { ...card, definitionId: getEffectiveCardDefinitionId(card) } : card
   );
 }
 
@@ -155,6 +162,46 @@ function applyCardInstanceEnhancements(card: CardDefinition, instance: CardInsta
       return effect;
     })
   };
+}
+
+function applyCardInstanceEnchantment(card: CardDefinition, instance: CardInstance): CardDefinition {
+  if (!instance.enchantment || card.type !== "ACTIVE") {
+    return card;
+  }
+  const enchantment = getEnchantmentDefinitionsById().get(instance.enchantment.enchantmentDefinitionId);
+  if (!enchantment || !isEligibleForEnchantment(card, enchantment)) {
+    return card;
+  }
+  switch (enchantment.type) {
+    case "IRON":
+      return {
+        ...card,
+        effects: [
+          ...(card.effects ?? []),
+          { command: "GainArmor", amount: BRONZE_IRON_ARMOR_BONUS }
+        ]
+      };
+    case "FLAME":
+      return {
+        ...card,
+        effects: card.effects?.map((effect) =>
+          effect["command"] === "ApplyBurn" && typeof effect["amount"] === "number"
+            ? { ...effect, amount: effect["amount"] + BRONZE_FLAME_BURN_BONUS }
+            : effect
+        )
+      };
+    case "VITAL":
+      return {
+        ...card,
+        effects: card.effects?.map((effect) =>
+          effect["command"] === "HealHP" && typeof effect["amount"] === "number"
+            ? { ...effect, amount: effect["amount"] + BRONZE_VITAL_HEAL_BONUS }
+            : effect
+        )
+      };
+    default:
+      return card;
+  }
 }
 
 function scaleTrigger(trigger: Readonly<Record<string, unknown>>, baseTier: CardTier, effectiveTier: CardTier) {

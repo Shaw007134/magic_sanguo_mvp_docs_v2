@@ -7,11 +7,12 @@ export interface CardViewProps {
   readonly card: CardInstance;
   readonly definition: CardDefinition;
   readonly selected?: boolean;
+  readonly enchantmentEligible?: boolean;
   readonly compact?: boolean;
   readonly onClick?: () => void;
 }
 
-export function CardView({ card, definition, selected = false, compact = false, onClick }: CardViewProps) {
+export function CardView({ card, definition, selected = false, enchantmentEligible = false, compact = false, onClick }: CardViewProps) {
   const effectiveDefinition = getEffectiveCardDefinition(card, definition);
   const display = getCardDisplayInfo(effectiveDefinition);
   const enhancementSummaries = getCardEnhancementSummaries(card);
@@ -28,6 +29,7 @@ export function CardView({ card, definition, selected = false, compact = false, 
         <div className="card-enhancements">{enhancementSummaries.join(" · ")}</div>
       ) : null}
       {enchantmentSummary ? <div className="card-enhancements">{enchantmentSummary}</div> : null}
+      {enchantmentEligible && !enchantmentSummary ? <div className="card-enchantment-eligible">Eligible enchantment target</div> : null}
       {!compact ? <p>{effectiveDefinition.description}</p> : null}
     </>
   );
@@ -35,7 +37,7 @@ export function CardView({ card, definition, selected = false, compact = false, 
   if (onClick) {
     return (
       <button
-        className={`card-view${selected ? " selected" : ""}`}
+        className={`card-view${selected ? " selected" : ""}${enchantmentEligible ? " enchantment-eligible" : ""}`}
         type="button"
         onClick={onClick}
         aria-pressed={selected}
@@ -45,5 +47,5 @@ export function CardView({ card, definition, selected = false, compact = false, 
     );
   }
 
-  return <div className={`card-view${selected ? " selected" : ""}`}>{content}</div>;
+  return <div className={`card-view${selected ? " selected" : ""}${enchantmentEligible ? " enchantment-eligible" : ""}`}>{content}</div>;
 }

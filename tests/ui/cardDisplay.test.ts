@@ -140,7 +140,7 @@ describe("cardDisplay", () => {
     };
 
     expect(display("rusty-blade").summary).toBe("Damage: 2");
-    expect(getCardEnchantmentSummary(card)).toBe("Enchanted: Iron Edge (Bronze Iron)");
+    expect(getCardEnchantmentSummary(card)).toBe("Enchanted: Iron Edge (Bronze Iron) · +1 Armor");
     expect(getCardEnchantmentSummary(card)).not.toMatch(/\d+t\b|tick|hook/i);
   });
 

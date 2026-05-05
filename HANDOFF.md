@@ -170,7 +170,7 @@ The root debug/ folder is gitignored; browser UI does not write to the local fil
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
 Known limitation: Burn/Poison tick source attribution is summary/replay-only; fire-tagged skills affect direct damage from fire-tagged card effects but not DOT ticks.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
-Known limitation: Enchantment definitions and CardInstance attachments are data-only; no replay output or combat effect application exists yet.
+Known limitation: only Bronze Iron, Flame, and Vital enchantments have combat effects; other enchantments are still data/display only and enchantment-specific replay attribution is not implemented yet.
 Known limitation: save format version is 3 with fail-fast validation; old version 1 local saves are intentionally unsupported after the Phase 15A fixed chest-capacity change, and version 2 saves are intentionally unsupported after Phase 15D because reward cards and card enhancements are persisted.
 Smoke, model export, validation, enchantment validation, event generation, basic combat, ResolutionStack, Armor/Burn decay, Poison/Heal, Haste/Slow/Freeze, status reactions, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
 Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, control-status payoff conditions, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
@@ -201,7 +201,13 @@ Phase 15E-B added one optional CardInstance.enchantment attachment with id, ench
 Choosing an enchantment event requires selecting an eligible owned card first. Target validation uses enchantment targetRule against card type/categories, and invalid targets fail before event EXP or node advancement.
 Only one enchantment is allowed per CardInstance. Phase 15D reward-card enhancements remain separate in CardInstance.enhancements and can coexist with one enchantment.
 Save/load preserves serialized enchantment event choices and attached CardInstance enchantments without rerolling event generation.
-Attached enchantments are visible in card UI but do not affect effective card definitions, FormationSnapshot rules, CombatEngine behavior, combat commands, cooldowns, statuses, replay, or summaries.
+Phase 15E-C added bounded Bronze enchantment effects through effective card definitions: Iron adds +1 Armor to eligible active damage/heal cards, Flame adds +1 Burn to eligible active Burn cards, and Vital adds +1 Heal to eligible active Heal cards.
+Bronze Enchantment Intro now offers Iron Edge, Flame Spark, and Vital Thread.
+Enchantment target validation now uses the shared src/content/enchantments/enchantmentTargets.ts helper, combining targetRule checks with Bronze effect eligibility.
+Attached Bronze effects are applied before combat through getEffectiveCardDefinition, alongside tier scaling and Phase 15D reward-card enhancements. CombatEngine behavior and FormationSnapshot structure are unchanged.
+Phase 15D reward-card enhancements remain separate in CardInstance.enhancements and compatible effects are additive with Bronze enchantments.
+UI highlights cards eligible for any visible enchantment event choice and CardView shows attached enchantment plus a concise effect preview.
+Venom, Swift, Binding, Frost, Obsidian, Obsidian damage doubling, and Freeze/Slow/Haste enchantment effects remain deferred.
 Phase 15C Markdown reports now include Executive Summary, Build Summary, Boss Summary, Boss Challenge Summary, Build Legitimacy Notes, Warning Hotspots with likely design causes, Outcome Attribution Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
 Phase 15D balance reports include Enhanced Build Summary and two enhanced sample builds: Enhanced Burn Terminal and Enhanced Cooldown Tempo.
 Outcome Attribution Snapshot separates Player Top Contributor from Enemy Top Contributor and resolves known source ids to readable card names.
@@ -221,10 +227,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 15E-C:
+Phase 15E-D:
 
 ```text
-Manual playtest Bronze Enchantment Intro targeting and reward-card selling. Next implementation should polish eligible-target highlighting/preview or add one carefully bounded low-risk enchantment effect only after balance risks are accepted.
+Manual playtest Bronze Iron/Flame/Vital enchantment pacing and reward-card enhancement stacking. Next implementation should add per-choice target preview or separate enchantment attribution if readability needs it.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -284,7 +290,10 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 50. Try selecting an invalid target and confirm the event does not advance or grant EXP.
 51. Try enchanting the same card twice and confirm the second attachment is rejected.
 52. Save/load after attaching an enchantment and confirm the attachment remains visible.
-53. Confirm attached enchantments do not change combat output yet.
+53. Confirm Iron Edge adds a small Armor gain when an eligible active damage/heal card activates.
+54. Confirm Flame Spark adds a small Burn bonus to an eligible active Burn card.
+55. Confirm Vital Thread adds a small Heal bonus to an eligible active Heal card.
+56. Confirm Phase 15D reward-card enhancements still display and stack separately from attached enchantments.
 ```
 
 ## Rules For Next Agent
@@ -305,4 +314,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use a Phase 15E-C prompt focused on manual reward/enchantment pacing and eligible-target highlighting/preview. Do not add combat enchantment effects until attachment UX and current balance risks are reviewed.
+Use a Phase 15E-D prompt focused on manual Bronze enchantment pacing, per-choice target previews, or enchantment attribution readability. Keep Obsidian and control/cooldown enchantment effects deferred.

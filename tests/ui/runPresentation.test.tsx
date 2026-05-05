@@ -2,14 +2,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { getMonsterCardDefinitionsById } from "../../src/content/cards/monsterCards.js";
+import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
 import { createNewRun } from "../../src/run/RunManager.js";
 import type { RunChoice } from "../../src/run/RunState.js";
+import { createEventChoices } from "../../src/run/nodes/EventNode.js";
+import { getEnchantmentEligibleCardIds } from "../../src/ui/App.js";
 import { CardView } from "../../src/ui/components/CardView.js";
 import { FormationEditor } from "../../src/ui/components/FormationEditor.js";
 import { RunStatusBar } from "../../src/ui/components/RunStatusBar.js";
 import { getChoiceDisplayInfo } from "../../src/ui/presentation/choiceDisplay.js";
 
 const cardDefinitionsById = getMonsterCardDefinitionsById();
+const activeCardsById = getActiveCardDefinitionsById();
 
 describe("run presentation", () => {
   it("new run status displays clear labels and values", () => {
@@ -126,6 +130,65 @@ describe("run presentation", () => {
 
     expect(html).toContain("+1 Burn from Ember Powder");
     expect(html).not.toMatch(/tick|OnStatus|OnBurn|hook/i);
+  });
+
+  it("enchantment event targeting highlights eligible cards and shows attached enchantments", () => {
+    const choices = createEventChoices({
+      seed: "ui-enchantment-highlight",
+      nodeIndex: 25,
+      level: 7,
+      cardDefinitionsById: activeCardsById
+    });
+    const ownedCards = [
+      { instanceId: "blade", definitionId: "rusty-blade" },
+      { instanceId: "oil", definitionId: "oil-flask" },
+      { instanceId: "medic", definitionId: "field-medic" },
+      { instanceId: "shield", definitionId: "wooden-shield" }
+    ];
+    const eligible = getEnchantmentEligibleCardIds({ currentChoices: choices, ownedCards }, activeCardsById);
+
+    expect([...eligible].sort()).toEqual(["blade", "medic", "oil"]);
+
+    const html = renderToStaticMarkup(
+      <FormationEditor
+        slots={[
+          { slotIndex: 1, cardInstanceId: "blade" },
+          { slotIndex: 2, cardInstanceId: "shield" }
+        ]}
+        cardInstancesById={new Map(ownedCards.map((card) => [card.instanceId, card]))}
+        cardDefinitionsById={activeCardsById}
+        enchantmentEligibleCardIds={eligible}
+        onSlotClick={() => undefined}
+        onRemove={() => undefined}
+      />
+    );
+
+    expect(html).toContain("enchantment-eligible");
+    expect(html).toContain("Eligible enchantment target");
+    expect(html).toContain("Rusty Blade");
+    expect(html).toContain("Wooden Shield");
+  });
+
+  it("attached enchantment card display is readable", () => {
+    const definition = activeCardsById.get("rusty-blade")!;
+    const html = renderToStaticMarkup(
+      <CardView
+        card={{
+          instanceId: "blade",
+          definitionId: "rusty-blade",
+          enchantment: {
+            id: "iron",
+            enchantmentDefinitionId: "bronze-iron-edge",
+            sourceEventChoiceId: "event-25-enchantment-0",
+            attachedAtNodeIndex: 25
+          }
+        }}
+        definition={definition}
+      />
+    );
+
+    expect(html).toContain("Enchanted: Iron Edge");
+    expect(html).toContain("+1 Armor");
   });
 
   it("reward loot choice display uses loot name and sell effect", () => {

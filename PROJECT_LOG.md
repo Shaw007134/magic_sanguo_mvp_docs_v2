@@ -1679,3 +1679,56 @@ Known issues:
 - Obsidian, Freeze/Slow/Haste enchantment effects, and damage-doubling behavior remain deferred.
 Next recommended task:
 - Phase 15E-C: improve enchantment targeting UX and preview/readability, or implement one carefully bounded low-risk enchantment effect only after balance risks are accepted.
+
+---
+
+Date: 2026-05-05
+Phase: 15E-C
+Task: Implemented bounded Bronze Iron, Flame, and Vital enchantment combat effects with eligible-target UI highlighting.
+Files changed:
+- data/enchantments/enchantments.json
+- src/content/cards/effectiveCardDefinition.ts
+- src/content/enchantments/enchantmentTargets.ts
+- src/index.ts
+- src/run/RunManager.ts
+- src/run/nodes/EventGenerator.ts
+- src/run/save/SaveManager.ts
+- src/ui/App.tsx
+- src/ui/components/CardView.tsx
+- src/ui/components/ChestPanel.tsx
+- src/ui/components/FormationEditor.tsx
+- src/ui/components/FormationSlot.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/ui/styles.css
+- tests/content/effectiveCardDefinition.test.ts
+- tests/run/eventGenerator.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/ui/runPresentation.test.tsx
+- docs/ENCHANTMENT_DESIGN_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Bronze Iron adds +1 Armor to eligible active damage/heal cards.
+- Bronze Flame adds +1 Burn to eligible active Burn cards and coexists with Phase 15D Burn reward enhancements.
+- Bronze Vital adds +1 Heal to eligible active Heal cards.
+- Bronze enchantments reject effect-ineligible targets and already-enchanted cards.
+- Enchantment combat effects apply deterministically through effective card definitions.
+- Save/load preserves attachments and deterministic applied effects.
+- Event generation remains deterministic.
+- UI helpers highlight eligible enchantment targets and CardView shows attached enchantments clearly.
+Implementation notes:
+- Bronze Enchantment Intro now offers Iron Edge, Flame Spark, and Vital Thread.
+- Enchantment effects are applied before combat through `getEffectiveCardDefinition`; CombatEngine behavior and FormationSnapshot structure are unchanged.
+- Phase 15D reward-card enhancements remain separate in `CardInstance.enhancements` and additive with compatible Bronze enchantments.
+- Higher-tier effects and all Venom/Swift/Binding/Frost/Obsidian effects remain deferred.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+- Optional: pnpm balance:report
+Known issues:
+- UI highlights cards eligible for any visible enchantment, but does not yet show per-choice target mapping.
+- Enchantment-derived effects appear as normal card effects in replay/summary, without separate enchantment attribution rows.
+- Obsidian damage doubling and Freeze/Slow/Haste enchantment effects remain deferred.
+Next recommended task:
+- Phase 15E-D: run balance/playtest review for Bronze enchantments, then add per-choice target preview or separate enchantment attribution if readability needs it.

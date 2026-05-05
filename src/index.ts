@@ -36,6 +36,7 @@ export * from "./content/cards/activeCards.js";
 export * from "./content/cards/contentPools.js";
 export * from "./content/cards/monsterCards.js";
 export * from "./content/enchantments/enchantments.js";
+export * from "./content/enchantments/enchantmentTargets.js";
 export * from "./content/monsters/MonsterGenerator.js";
 export * from "./content/monsters/MonsterTemplate.js";
 export * from "./content/monsters/monsterTemplates.js";

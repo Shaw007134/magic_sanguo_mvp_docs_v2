@@ -1,6 +1,6 @@
 # Enchantment Design Notes
 
-Phase 15E adds the content, event, targeting, and persistence foundation for enchantments. It intentionally does not add enchantment combat effects.
+Phase 15E adds the content, event, targeting, persistence, and first bounded Bronze combat effects for enchantments. Higher-tier enchantment effects remain deferred.
 
 ## Card Categories
 
@@ -38,8 +38,6 @@ Current rules:
 
 ## Planned Enchantment Types
 
-Current definitions are data stubs only:
-
 - `IRON`: weapon or physical-pressure support.
 - `VITAL`: broad survival support.
 - `FLAME`: fire and Burn build support.
@@ -50,6 +48,31 @@ Current definitions are data stubs only:
 - `OBSIDIAN`: high-risk terminal payoff support.
 
 Each `EnchantmentDefinition` has `id`, `name`, `type`, `tier`, `rarity`, `minLevel`, `targetRule`, and `description`.
+
+## Bronze Combat Effects
+
+Phase 15E-C implements only three Bronze effects through effective card definitions, before combat starts:
+
+- Bronze `IRON`: eligible active damage or heal cards gain a small Armor command on activation.
+- Bronze `FLAME`: eligible active Burn cards gain a small Burn amount bonus.
+- Bronze `VITAL`: eligible active Heal cards gain a small Heal amount bonus.
+
+Current magnitude is intentionally small:
+
+```text
+Iron: +1 Armor
+Flame: +1 Burn
+Vital: +1 Heal
+```
+
+These effects are deterministic, persisted through the attachment, and applied in the same pre-combat effective-definition layer as card tiers and Phase 15D reward-card enhancements. Reward-card enhancements remain separate and additive. For example, a Burn reward enhancement and Bronze Flame can both increase the same active Burn effect.
+
+Not implemented yet:
+
+- `VENOM`, `SWIFT`, `BINDING`, `FROST`, and `OBSIDIAN` combat effects.
+- Obsidian damage doubling.
+- Freeze, Slow, or Haste enchantment effects.
+- Any new resource, absorb layer, or mid-combat choice.
 
 ## Attachment Rules
 
@@ -70,18 +93,22 @@ Target rules are validated from the selected card definition:
 
 Only one enchantment can be attached to a card. Phase 15D reward-card enhancements remain separate in `CardInstance.enhancements`, so a card may have reward-card enhancements and one enchantment at the same time.
 
-Attachments are persisted by save/load and displayed on card views. They do not alter effective card definitions, combat commands, cooldowns, statuses, targeting, replay, or balance report mechanics yet.
+Attachments are persisted by save/load and displayed on card views. Bronze Iron, Flame, and Vital may alter effective card definitions as described above. Other enchantments remain display/persistence only.
+
+## UI Display
+
+When an enchantment event is available, cards eligible for any shown enchantment are highlighted as eligible targets. Card views show attached enchantments with a concise effect preview, such as `Enchanted: Iron Edge (Bronze Iron) · +1 Armor`.
 
 ## Balance Risks
 
-- Enchantments can multiply already-strong terminal and Armor-terminal builds if future effects are additive with Phase 15D enhancements.
+- Enchantments can multiply already-strong terminal and Armor-terminal builds if future effects are larger than the current +1 Bronze bonuses.
 - Cooldown enchantments can become invisible power if activation counts rise without readable replay summaries.
 - Control enchantments risk making enemy formations feel inert if Freeze/Slow values stack too easily.
 - Obsidian-style terminal payoffs should be introduced only after boss pacing and late-run burst warnings are under control.
 
 ## Future Phases
 
-1. Improve targeting UX with eligible-card highlighting and clearer invalid-target messaging.
-2. Add replay and summary text for applied enchantments once effects exist.
-3. Implement one low-risk enchantment family at a time with balance reports before adding the next family.
+1. Add richer per-choice target previews so the player sees which exact enchantment each highlighted card can receive.
+2. Add replay and summary attribution text for enchantment-derived effects if readability needs it.
+3. Implement one additional low-risk enchantment family at a time with balance reports before adding the next family.
 4. Keep Obsidian, Freeze, Slow, and Haste enchantment effects deferred until boss and control pacing are stable.

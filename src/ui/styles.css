@@ -243,6 +243,11 @@ small {
   box-shadow: inset 0 0 0 1px #2d6cdf;
 }
 
+.card-view.enchantment-eligible {
+  border-color: #b07f12;
+  box-shadow: inset 0 0 0 1px #d8a329;
+}
+
 .card-title {
   font-weight: 800;
 }
@@ -256,6 +261,12 @@ small {
 .card-enhancements {
   color: #5d3f09;
   font-size: 13px;
+  font-weight: 800;
+}
+
+.card-enchantment-eligible {
+  color: #6c4a08;
+  font-size: 12px;
   font-weight: 800;
 }
 

@@ -1,11 +1,13 @@
 import { useMemo, useState } from "react";
 import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
+import { getEnchantmentDefinitionsById } from "../content/enchantments/enchantments.js";
+import { isEligibleForEnchantment } from "../content/enchantments/enchantmentTargets.js";
 import type { CardDefinition, CardInstance } from "../model/card.js";
 import type { CombatResult } from "../model/result.js";
 import { createBattleEnemy } from "../run/nodes/BattleNode.js";
 import { RunManager } from "../run/RunManager.js";
 import { loadRunManagerFromSaveString, serializeRunState } from "../run/save/SaveManager.js";
-import type { RunActionResult, RunChoice, RunState } from "../run/RunState.js";
+import type { EventChoice, RunActionResult, RunChoice, RunState } from "../run/RunState.js";
 import { ChestPanel } from "./components/ChestPanel.js";
 import { ChoiceCard } from "./components/ChoiceCard.js";
 import { CombatReplay } from "./components/CombatReplay.js";
@@ -34,6 +36,10 @@ export function App() {
   const chestCards = manager.getChestCards();
   const selectedHint = getSelectedHint(selection, runState.ownedCards);
   const combatResult = runState.pendingCombatResult ?? runState.pendingBattleResult;
+  const enchantmentEligibleCardIds = useMemo(
+    () => getEnchantmentEligibleCardIds(runState, cardDefinitionsById),
+    [cardDefinitionsById, runState]
+  );
   const battlePreview = useMemo(() => {
     if (runState.currentNode.type !== "BATTLE") {
       return undefined;
@@ -214,6 +220,7 @@ export function App() {
         <FormationEditor
           slots={runState.formationSlots}
           selectedCardId={selection?.kind === "FORMATION" ? selection.cardInstanceId : undefined}
+          enchantmentEligibleCardIds={enchantmentEligibleCardIds}
           cardInstancesById={toCardInstanceMap(runState.ownedCards)}
           cardDefinitionsById={cardDefinitionsById}
           onSlotClick={handleFormationSlotClick}
@@ -230,6 +237,7 @@ export function App() {
         <ChestPanel
           cards={chestCards}
           selectedCardId={selection?.kind === "CHEST" ? selection.cardInstanceId : undefined}
+          enchantmentEligibleCardIds={enchantmentEligibleCardIds}
           cardDefinitionsById={cardDefinitionsById}
           formationSlotCount={runState.formationSlotCount}
           chestCapacity={runState.chestCapacity}
@@ -361,4 +369,34 @@ function getSelectedHint(selection: Selection, ownedCards: readonly CardInstance
   return selection.kind === "CHEST"
     ? `Selected ${card.definitionId} in chest`
     : `Selected ${card.definitionId} in formation`;
+}
+
+export function getEnchantmentEligibleCardIds(
+  state: Pick<RunState, "currentChoices" | "ownedCards">,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): ReadonlySet<string> {
+  const enchantmentsById = getEnchantmentDefinitionsById();
+  const enchantmentChoices = state.currentChoices.filter(
+    (choice): choice is EventChoice => choice.type === "EVENT_ENCHANTMENT"
+  );
+  if (enchantmentChoices.length === 0) {
+    return new Set();
+  }
+  return new Set(state.ownedCards.flatMap((card) => {
+    if (card.enchantment) {
+      return [];
+    }
+    const definition = cardDefinitionsById.get(card.definitionId);
+    if (!definition) {
+      return [];
+    }
+    return enchantmentChoices.some((choice) => {
+      const enchantment = choice.enchantmentDefinitionId
+        ? enchantmentsById.get(choice.enchantmentDefinitionId)
+        : undefined;
+      return enchantment !== undefined && isEligibleForEnchantment(definition, enchantment);
+    })
+      ? [card.instanceId]
+      : [];
+  }));
 }

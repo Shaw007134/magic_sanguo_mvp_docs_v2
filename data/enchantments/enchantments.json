@@ -6,8 +6,8 @@
     "tier": "BRONZE",
     "rarity": "COMMON",
     "minLevel": 4,
-    "targetRule": "WEAPON_CARD",
-    "description": "A planned weapon enchantment for steadier physical pressure."
+    "targetRule": "ANY_ACTIVE_CARD",
+    "description": "A planned Bronze weapon enchantment that now grants a small Armor bonus to active damage or heal cards."
   },
   {
     "id": "bronze-vital-thread",
@@ -17,7 +17,7 @@
     "rarity": "COMMON",
     "minLevel": 4,
     "targetRule": "ANY_ACTIVE_CARD",
-    "description": "A planned survival enchantment for keeping a chosen card relevant longer."
+    "description": "A Bronze survival enchantment that grants a small Heal bonus to active Heal cards."
   },
   {
     "id": "bronze-flame-spark",
@@ -27,7 +27,7 @@
     "rarity": "COMMON",
     "minLevel": 7,
     "targetRule": "FIRE_CARD",
-    "description": "A planned fire enchantment for Burn-focused builds."
+    "description": "A Bronze fire enchantment that grants a small Burn bonus to active Burn cards."
   },
   {
     "id": "bronze-venom-drop",

@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { CombatEngine } from "../../src/combat/CombatEngine.js";
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
+import {
+  createEffectiveCardDefinitionMap,
+  createEffectiveCardInstances
+} from "../../src/content/cards/effectiveCardDefinition.js";
 import type { CardInstance } from "../../src/model/card.js";
 import type { FormationSnapshot } from "../../src/model/formation.js";
 import {
@@ -170,6 +174,40 @@ describe("event generation", () => {
       .toBe("bronze-iron-edge");
   });
 
+  it("Bronze enchantments apply only to effect-eligible cards", () => {
+    const manager = RunManager.createNewRun("effect-eligible-enchantment-target");
+    expect(manager.addCardToChest("oil-flask").ok).toBe(true);
+    expect(manager.addCardToChest("field-medic").ok).toBe(true);
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    const oil = manager.state.ownedCards.find((card) => card.definitionId === "oil-flask")!;
+    const medic = manager.state.ownedCards.find((card) => card.definitionId === "field-medic")!;
+    const blade = manager.state.ownedCards.find((card) => card.definitionId === "rusty-blade")!;
+    const choices = createEventChoices({
+      seed: manager.state.seed,
+      nodeIndex: 25,
+      level: 7,
+      cardDefinitionsById: activeCardsById
+    });
+    manager.state = {
+      ...manager.state,
+      currentNodeIndex: 25,
+      level: 7,
+      currentNode: { id: "cycle-event-15", type: "EVENT", day: 11, label: "Event" },
+      currentChoices: choices
+    };
+
+    expect(manager.chooseEventOption(choices[1]!.id, blade.instanceId).ok).toBe(false);
+    expect(manager.chooseEventOption(choices[1]!.id, oil.instanceId).ok).toBe(true);
+
+    manager.state = {
+      ...manager.state,
+      currentNode: { id: "cycle-event-15b", type: "EVENT", day: 11, label: "Event" },
+      currentChoices: choices
+    };
+    expect(manager.chooseEventOption(choices[2]!.id, blade.instanceId).ok).toBe(false);
+    expect(manager.chooseEventOption(choices[2]!.id, medic.instanceId).ok).toBe(true);
+  });
+
   it("save/load round trip preserves attached enchantments", () => {
     const manager = RunManager.createNewRun("save-attached-enchantment");
     expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
@@ -197,10 +235,18 @@ describe("event generation", () => {
     if (loaded.ok) {
       expect(loaded.value.ownedCards).toEqual(manager.state.ownedCards);
       expect(loaded.value.ownedCards[0]?.enchantment?.enchantmentDefinitionId).toBe("bronze-iron-edge");
+      const effective = createEffectiveCardDefinitionMap({
+        cardInstances: loaded.value.ownedCards,
+        baseDefinitionsById: activeCardsById
+      }).get(createEffectiveCardInstances(loaded.value.ownedCards)[0]!.definitionId);
+      expect(effective?.effects).toEqual([
+        { command: "DealDamage", amount: 2 },
+        { command: "GainArmor", amount: 1 }
+      ]);
     }
   });
 
-  it("attached enchantments do not change combat results", () => {
+  it("attached Bronze enchantment combat effects apply deterministically", () => {
     const baseCard: CardInstance = { instanceId: "blade", definitionId: "rusty-blade" };
     const enchantedCard: CardInstance = {
       ...baseCard,
@@ -215,6 +261,12 @@ describe("event generation", () => {
     const playerEnchanted = formationWith(enchantedCard);
     const enemy = enemyFormation();
     const engine = new CombatEngine();
+    const enemyCard = { instanceId: "enemy-card", definitionId: "training-staff" };
+    const effectiveCards = createEffectiveCardInstances([enchantedCard]);
+    const effectiveDefinitionsById = createEffectiveCardDefinitionMap({
+      cardInstances: [enchantedCard],
+      baseDefinitionsById: activeCardsById
+    });
 
     const base = engine.simulate({
       playerFormation: playerBase,
@@ -223,21 +275,37 @@ describe("event generation", () => {
       cardDefinitionsById: activeCardsById,
       cardInstancesById: new Map([
         [baseCard.instanceId, baseCard],
-        ["enemy-card", { instanceId: "enemy-card", definitionId: "training-staff" }]
+        [enemyCard.instanceId, enemyCard]
       ])
     });
-    const enchanted = engine.simulate({
+    const firstEnchanted = engine.simulate({
       playerFormation: playerEnchanted,
       enemyFormation: enemy,
       maxCombatTicks: 240,
-      cardDefinitionsById: activeCardsById,
+      cardDefinitionsById: effectiveDefinitionsById,
       cardInstancesById: new Map([
-        [enchantedCard.instanceId, enchantedCard],
-        ["enemy-card", { instanceId: "enemy-card", definitionId: "training-staff" }]
+        [effectiveCards[0]!.instanceId, effectiveCards[0]!],
+        [enemyCard.instanceId, enemyCard]
+      ])
+    });
+    const secondEnchanted = engine.simulate({
+      playerFormation: playerEnchanted,
+      enemyFormation: enemy,
+      maxCombatTicks: 240,
+      cardDefinitionsById: effectiveDefinitionsById,
+      cardInstancesById: new Map([
+        [effectiveCards[0]!.instanceId, effectiveCards[0]!],
+        [enemyCard.instanceId, enemyCard]
       ])
     });
 
-    expect(enchanted).toEqual(base);
+    expect(firstEnchanted).toEqual(secondEnchanted);
+    expect(firstEnchanted.replayTimeline.events).toContainEqual(expect.objectContaining({
+      type: "ArmorGained",
+      sourceId: "blade",
+      payload: expect.objectContaining({ amount: 1 })
+    }));
+    expect(firstEnchanted.replayTimeline.events).not.toEqual(base.replayTimeline.events);
   });
 });
 

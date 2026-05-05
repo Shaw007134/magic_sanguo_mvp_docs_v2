@@ -3,12 +3,13 @@ import {
   type CardDefinition,
   type CardInstance
 } from "../../model/card.js";
-import { ENCHANTMENT_TARGET_RULES, type EnchantmentChoice, type EnchantmentTargetRule } from "../../model/enchantment.js";
+import { ENCHANTMENT_TARGET_RULES, type EnchantmentChoice } from "../../model/enchantment.js";
 import type { FormationSnapshot } from "../../model/formation.js";
 import type { RewardCardInstance } from "../../model/rewardCard.js";
 import type { CombatResult } from "../../model/result.js";
 import { getActiveCardDefinitionsById } from "../../content/cards/activeCards.js";
 import { getEnchantmentDefinitionsById } from "../../content/enchantments/enchantments.js";
+import { isEligibleForEnchantment } from "../../content/enchantments/enchantmentTargets.js";
 import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
 import { validateFormationSnapshot } from "../../validation/formationValidation.js";
 import { FIXED_CHEST_CAPACITY, RunManager } from "../RunManager.js";
@@ -375,7 +376,7 @@ function validateCardEnchantment(
   if (!enchantmentDefinition) {
     return { ok: false, error: `${path}.enchantmentDefinitionId is invalid.` };
   }
-  if (!isValidEnchantmentTarget(cardDefinition, enchantmentDefinition.targetRule)) {
+  if (!isEligibleForEnchantment(cardDefinition, enchantmentDefinition)) {
     return { ok: false, error: `${path}.enchantmentDefinitionId is not valid for this card.` };
   }
   return { ok: true, value: true };
@@ -808,35 +809,6 @@ function requireFields(record: Readonly<Record<string, unknown>>, fields: readon
 
 function isKnownCardDefinition(value: unknown, cardDefinitionsById: ReadonlyMap<string, CardDefinition>): value is string {
   return typeof value === "string" && cardDefinitionsById.has(value);
-}
-
-function isValidEnchantmentTarget(
-  definition: CardDefinition,
-  targetRule: EnchantmentTargetRule
-): boolean {
-  const categories = new Set(definition.categories ?? []);
-  switch (targetRule) {
-    case "ANY_CARD":
-      return true;
-    case "ANY_ACTIVE_CARD":
-      return definition.type === "ACTIVE";
-    case "WEAPON_CARD":
-      return categories.has("WEAPON");
-    case "ARMOR_CARD":
-      return categories.has("ARMOR");
-    case "FIRE_CARD":
-      return categories.has("FIRE");
-    case "POISON_CARD":
-      return categories.has("POISON");
-    case "COOLDOWN_CARD":
-      return categories.has("COOLDOWN");
-    case "CONTROL_CARD":
-      return categories.has("CONTROL");
-    case "TERMINAL_CARD":
-      return categories.has("TERMINAL");
-    default:
-      return false;
-  }
 }
 
 function failMissing(field: string): SaveLoadResult<never> {
