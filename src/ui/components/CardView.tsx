@@ -17,6 +17,7 @@ export function CardView({ card, definition, selected = false, enchantmentEligib
   const display = getCardDisplayInfo(effectiveDefinition);
   const enhancementSummaries = getCardEnhancementSummaries(card);
   const enchantmentSummary = getCardEnchantmentSummary(card);
+  const stateClassName = `${selected ? " selected" : ""}${enchantmentEligible ? " enchantment-eligible" : ""}${enchantmentSummary ? " enchanted" : ""}`;
   const content = (
     <>
       <div className="card-title">{display.name}</div>
@@ -37,7 +38,7 @@ export function CardView({ card, definition, selected = false, enchantmentEligib
   if (onClick) {
     return (
       <button
-        className={`card-view${selected ? " selected" : ""}${enchantmentEligible ? " enchantment-eligible" : ""}`}
+        className={`card-view${stateClassName}`}
         type="button"
         onClick={onClick}
         aria-pressed={selected}
@@ -47,5 +48,5 @@ export function CardView({ card, definition, selected = false, enchantmentEligib
     );
   }
 
-  return <div className={`card-view${selected ? " selected" : ""}${enchantmentEligible ? " enchantment-eligible" : ""}`}>{content}</div>;
+  return <div className={`card-view${stateClassName}`}>{content}</div>;
 }

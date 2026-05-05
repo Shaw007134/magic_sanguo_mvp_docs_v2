@@ -1732,3 +1732,58 @@ Known issues:
 - Obsidian damage doubling and Freeze/Slow/Haste enchantment effects remain deferred.
 Next recommended task:
 - Phase 15E-D: run balance/playtest review for Bronze enchantments, then add per-choice target preview or separate enchantment attribution if readability needs it.
+
+---
+
+Date: 2026-05-05
+Phase: 15E-D/E UI polish
+Task: Polished battle victory flow, card/skill text, chest/loot display, Haste/Burn/Poison summaries, and enchantment highlighting.
+Files changed:
+- data/cards/monster_cards.json
+- data/cards/general/basic_kit.json
+- data/cards/general/control.json
+- data/cards/general/fire_support.json
+- data/cards/general/phase15_combo_tools.json
+- data/cards/general/poison_heal.json
+- data/cards/general/reactions.json
+- data/cards/class_iron_warlord/phase15_build_archetypes.json
+- data/cards/class_iron_warlord/siege_fire.json
+- data/skills/mvp_skills.json
+- src/run/RunManager.ts
+- src/ui/App.tsx
+- src/ui/components/CardView.tsx
+- src/ui/components/ChestPanel.tsx
+- src/ui/components/RewardLootPanel.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/ui/presentation/choiceDisplay.ts
+- src/ui/styles.css
+- tests/content/activeContentRegistry.test.ts
+- tests/run/runManager.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/ui/runPresentation.test.tsx
+- docs/ENCHANTMENT_DESIGN_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Battle victory summary is displayed before level-up choices.
+- RunManager preserves a completed battle summary until acknowledged, without rerolling generated reward/level-up choices.
+- Chest panel consolidates sellable loot cards and removes the redundant empty Reward / Loot section.
+- Card summaries show concise Burn/Poison per-second text, fixed Haste wording, and readable cooldown readiness text.
+- Skill descriptions avoid ambiguous "recover 1 point" wording.
+- Player-facing card summaries avoid internal-use categories and raw hook/tick labels.
+- Attached enchantments receive a visual card highlight and retain concise effect previews.
+Implementation notes:
+- `RunManager.acknowledgeBattleSummary()` clears a completed pending battle summary after the UI has shown it.
+- Normal reward cards still go to ownedCards/chest through existing reward logic; Phase 15D loot cards remain non-combat reward cards but render inside Chest when owned.
+- Haste display text is standardized as `50% faster cooldown`; this is display-only and does not change combat calculations.
+- Burn/Poison mechanism detail was removed from individual card descriptions and centralized in concise summaries.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- Per-choice enchantment target mapping is still not shown; eligible highlights remain broad across visible enchantment choices.
+- Enchantment-derived effects still appear as normal card effects in replay/summary without separate enchantment attribution rows.
+- Haste combat data still carries per-card percent values; this phase only standardizes player-facing display text.
+Next recommended task:
+- Phase 15E-F: manual UI playtest for battle-summary acknowledgment, Chest/Loot readability, and enchantment highlight clarity before adding per-choice target previews.

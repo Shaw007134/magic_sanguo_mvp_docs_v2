@@ -82,7 +82,7 @@
         "durationTicks": 60
       }
     ],
-    "description": "Every 2 seconds, ready adjacent allies 0.25 seconds sooner and Haste this card by 20% for 1 second.",
+    "description": "Every 2 seconds, ready adjacent allies 0.25 seconds sooner and Haste this card for 1 second.",
     "categories": [
       "TOOL",
       "COOLDOWN",
@@ -148,7 +148,7 @@
         "durationTicks": 60
       }
     ],
-    "description": "Size 2. Every 5 seconds, apply 4 Burn for 4 seconds and Slow the leftmost enemy active card by 15% for 1 second.",
+    "description": "Size 2. Every 5 seconds, apply 4 Burn for 4 seconds and Slow the leftmost enemy active card for 1 second.",
     "categories": [
       "FIRE",
       "CONTROL"
@@ -226,7 +226,7 @@
         ]
       }
     ],
-    "description": "When your Burn deals damage, Haste adjacent active allies by 10% for 1 second. Can trigger once every 2 seconds.",
+    "description": "When your Burn deals damage, Haste adjacent active allies for 1 second. Can trigger once every 2 seconds.",
     "categories": [
       "TOOL",
       "FIRE",

@@ -23,7 +23,7 @@
         "durationTicks": 180
       }
     ],
-    "description": "Every 2 seconds, deal 2 damage and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "description": "Every 2 seconds, deal 2 damage and apply 2 Burn for 3 seconds.",
     "categories": [
       "WEAPON",
       "FIRE"
@@ -90,7 +90,7 @@
         "durationTicks": 240
       }
     ],
-    "description": "Size 2. Every 5 seconds, deal 5 damage and apply 4 Burn for 4 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage.",
+    "description": "Size 2. Every 5 seconds, deal 5 damage and apply 4 Burn for 4 seconds. 20% chance to crit for 2x damage.",
     "categories": [
       "WEAPON",
       "FIRE",
@@ -127,7 +127,7 @@
         "durationTicks": 300
       }
     ],
-    "description": "Size 2. Every 6 seconds, deal 8 damage plus 20% of enemy missing HP and apply 5 Burn for 5 seconds. Burn loses 1 after each second of damage. 20% chance to crit for 2x damage.",
+    "description": "Size 2. Every 6 seconds, deal 8 damage plus 20% of enemy missing HP and apply 5 Burn for 5 seconds. 20% chance to crit for 2x damage.",
     "categories": [
       "WEAPON",
       "FIRE",
@@ -160,7 +160,7 @@
         "durationTicks": 180
       }
     ],
-    "description": "Size 2. Every 4 seconds, apply 3 Burn for 4 seconds, then 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "description": "Size 2. Every 4 seconds, apply 3 Burn for 4 seconds, then 2 Burn for 3 seconds.",
     "categories": [
       "FIRE"
     ]

@@ -14,7 +14,6 @@ import { CombatReplay } from "./components/CombatReplay.js";
 import { EnemyPreview } from "./components/EnemyPreview.js";
 import { FormationEditor } from "./components/FormationEditor.js";
 import { ResultSummary } from "./components/ResultSummary.js";
-import { RewardLootPanel } from "./components/RewardLootPanel.js";
 import { RunStatusBar } from "./components/RunStatusBar.js";
 import { SkillPanel } from "./components/SkillPanel.js";
 
@@ -166,6 +165,10 @@ export function App() {
     sync(manager.completeBattle(), "Battle completed.");
   }
 
+  function handleAcknowledgeBattleSummary(): void {
+    sync(manager.acknowledgeBattleSummary(), "Choose your next reward.");
+  }
+
   function handleContinue(): void {
     sync(manager.advanceToNextNode(), "Advanced.");
   }
@@ -212,6 +215,7 @@ export function App() {
             onChoice={handleChoice}
             onStartBattle={handleStartBattle}
             onCompleteBattle={handleCompleteBattle}
+            onAcknowledgeBattleSummary={handleAcknowledgeBattleSummary}
             onLeaveShop={() => sync(manager.leaveShop(), "Left shop.")}
             onContinue={handleContinue}
           />
@@ -227,15 +231,11 @@ export function App() {
           onRemove={handleRemoveFromFormation}
         />
         <SkillPanel skills={runState.ownedSkills} />
-        <RewardLootPanel
+        <ChestPanel
+          cards={chestCards}
           rewardCards={runState.ownedRewardCards}
           ownedCards={runState.ownedCards}
           formationSlots={runState.formationSlots}
-          cardDefinitionsById={cardDefinitionsById}
-          onSell={handleSellRewardCard}
-        />
-        <ChestPanel
-          cards={chestCards}
           selectedCardId={selection?.kind === "CHEST" ? selection.cardInstanceId : undefined}
           enchantmentEligibleCardIds={enchantmentEligibleCardIds}
           cardDefinitionsById={cardDefinitionsById}
@@ -244,6 +244,7 @@ export function App() {
           ownedCardCount={runState.ownedCards.length}
           onCardClick={handleChestCardClick}
           onSell={handleSell}
+          onSellRewardCard={handleSellRewardCard}
         />
       </section>
 
@@ -288,18 +289,42 @@ export function App() {
   );
 }
 
-function NodeActions(props: {
+export function NodeActions(props: {
   readonly state: RunState;
   readonly combatResult?: CombatResult;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly onChoice: (choice: RunChoice) => void;
   readonly onStartBattle: () => void;
   readonly onCompleteBattle: () => void;
+  readonly onAcknowledgeBattleSummary: () => void;
   readonly onLeaveShop: () => void;
   readonly onContinue: () => void;
 }) {
   if (props.state.status !== "IN_PROGRESS") {
     return <div className="run-result">{props.state.status === "VICTORY" ? "Victory" : "Defeat"}</div>;
+  }
+  if (props.combatResult) {
+    const won = props.combatResult.winner === "PLAYER";
+    const buttonLabel = props.state.currentNode.type === "BATTLE"
+      ? won ? "Claim Victory" : "Continue"
+      : props.state.currentNode.type === "LEVEL_UP_REWARD"
+        ? "Continue to Level Up"
+        : "Continue to Rewards";
+    return (
+      <div className="choice-area">
+        <div className="reward-reveal">
+          <strong>{won ? "Victory" : "Defeat"}</strong>
+          <span>{won ? "Review the battle summary before choosing your next reward." : "Review the battle summary."}</span>
+        </div>
+        <button
+          className="primary-action"
+          type="button"
+          onClick={props.state.currentNode.type === "BATTLE" ? props.onCompleteBattle : props.onAcknowledgeBattleSummary}
+        >
+          {buttonLabel}
+        </button>
+      </div>
+    );
   }
   if (props.state.currentChoices.length > 0) {
     return (
@@ -337,11 +362,7 @@ function NodeActions(props: {
     );
   }
   if (props.state.currentNode.type === "BATTLE") {
-    return props.combatResult ? (
-      <button className="primary-action" type="button" onClick={props.onCompleteBattle}>
-        Continue
-      </button>
-    ) : (
+    return (
       <button className="primary-action" type="button" onClick={props.onStartBattle}>
         Start Battle
       </button>

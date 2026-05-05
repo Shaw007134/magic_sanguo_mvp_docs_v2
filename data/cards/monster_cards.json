@@ -67,7 +67,7 @@
         "durationTicks": 120
       }
     ],
-    "description": "Every 1.25 seconds, deal 1 damage and apply 2 Burn for 2 seconds. Burn loses 1 after each second of damage.",
+    "description": "Every 1.25 seconds, deal 1 damage and apply 2 Burn for 2 seconds.",
     "categories": [
       "WEAPON",
       "FIRE",

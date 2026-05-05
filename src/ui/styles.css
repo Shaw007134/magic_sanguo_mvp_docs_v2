@@ -248,6 +248,12 @@ small {
   box-shadow: inset 0 0 0 1px #d8a329;
 }
 
+.card-view.enchanted {
+  border-color: #7b4fd6;
+  background: #fbf8ff;
+  box-shadow: inset 0 0 0 1px #9a79df;
+}
+
 .card-title {
   font-weight: 800;
 }
@@ -273,6 +279,29 @@ small {
 .empty-copy {
   color: #596170;
   font-size: 13px;
+}
+
+.loot-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #d9d2c4;
+}
+
+.panel-subheading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-subheading span {
+  color: #596170;
+  font-size: 13px;
+}
+
+.loot-card-view {
+  background: #fffaf0;
 }
 
 .formation-grid {

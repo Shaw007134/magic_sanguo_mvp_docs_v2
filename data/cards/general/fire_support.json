@@ -22,7 +22,7 @@
         "durationTicks": 240
       }
     ],
-    "description": "Every 2 seconds, deal 1 damage and apply 2 Burn for 4 seconds. Burn loses 1 after each second of damage.",
+    "description": "Every 2 seconds, deal 1 damage and apply 2 Burn for 4 seconds.",
     "categories": [
       "FIRE"
     ]
@@ -177,7 +177,7 @@
         "durationTicks": 240
       }
     ],
-    "description": "Every 2.5 seconds, gain 5 Armor and apply 2 Burn for 4 seconds. Burn loses 1 after each second of damage.",
+    "description": "Every 2.5 seconds, gain 5 Armor and apply 2 Burn for 4 seconds.",
     "categories": [
       "ARMOR",
       "DEFENSE",

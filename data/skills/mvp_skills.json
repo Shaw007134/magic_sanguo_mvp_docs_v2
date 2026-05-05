@@ -45,7 +45,7 @@
     "id": "quick-hands",
     "name": "Quick Hands",
     "tier": "SILVER",
-    "description": "Cooldowns recover 1 point faster.",
+    "description": "All your cards recharge twice as fast.",
     "modifierTemplates": [
       {
         "hook": "BeforeCooldownRecover",
@@ -59,7 +59,7 @@
     "id": "shield-craft",
     "name": "Shield Craft",
     "tier": "BRONZE",
-    "description": "Armor cards recover cooldowns 1 point faster.",
+    "description": "Armor cards recharge twice as fast.",
     "modifierTemplates": [
       {
         "hook": "BeforeCooldownRecover",
@@ -73,7 +73,7 @@
     "id": "drumline-training",
     "name": "Drumline Training",
     "tier": "SILVER",
-    "description": "Drum cards recover cooldowns 1 point faster.",
+    "description": "Drum cards recharge twice as fast.",
     "modifierTemplates": [
       {
         "hook": "BeforeCooldownRecover",

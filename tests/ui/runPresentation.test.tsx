@@ -3,17 +3,45 @@ import { describe, expect, it } from "vitest";
 
 import { getMonsterCardDefinitionsById } from "../../src/content/cards/monsterCards.js";
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
+import type { CombatResult } from "../../src/model/result.js";
 import { createNewRun } from "../../src/run/RunManager.js";
 import type { RunChoice } from "../../src/run/RunState.js";
 import { createEventChoices } from "../../src/run/nodes/EventNode.js";
-import { getEnchantmentEligibleCardIds } from "../../src/ui/App.js";
+import { getEnchantmentEligibleCardIds, NodeActions } from "../../src/ui/App.js";
 import { CardView } from "../../src/ui/components/CardView.js";
+import { ChestPanel } from "../../src/ui/components/ChestPanel.js";
 import { FormationEditor } from "../../src/ui/components/FormationEditor.js";
 import { RunStatusBar } from "../../src/ui/components/RunStatusBar.js";
 import { getChoiceDisplayInfo } from "../../src/ui/presentation/choiceDisplay.js";
 
 const cardDefinitionsById = getMonsterCardDefinitionsById();
 const activeCardsById = getActiveCardDefinitionsById();
+
+function fakeCombatResult(): CombatResult {
+  return {
+    winner: "PLAYER",
+    ticksElapsed: 60,
+    playerFinalHp: 12,
+    enemyFinalHp: 0,
+    combatLog: [],
+    replayTimeline: { events: [{ tick: 60, type: "CombatEnded" }] },
+    summary: {
+      winner: "PLAYER",
+      ticksElapsed: 60,
+      playerFinalHp: 12,
+      enemyFinalHp: 0,
+      damageByCard: {},
+      statusDamage: {},
+      statusDamageByCard: {},
+      armorGainedByCard: {},
+      healingByCard: {},
+      armorBlocked: 0,
+      activationsByCard: {},
+      triggerCountByCard: {},
+      topContributors: []
+    }
+  };
+}
 
 describe("run presentation", () => {
   it("new run status displays clear labels and values", () => {
@@ -77,7 +105,7 @@ describe("run presentation", () => {
     expect(display.title).toBe("Flame Spear");
     expect(display.meta).toEqual(expect.arrayContaining(["Active", "Bronze", "Size 1", "Cooldown 1.25s"]));
     expect(display.meta).not.toContain("Card: Flame Spear");
-    expect(display.summary).toContain("Burn: 2 for 2s; deals current Burn per sec, then loses 1");
+    expect(display.summary).toContain("Burn: 2 per second for 2s (decays by 1/sec)");
   });
 
   it("card metadata cooldown display uses seconds instead of raw ticks", () => {
@@ -189,6 +217,75 @@ describe("run presentation", () => {
 
     expect(html).toContain("Enchanted: Iron Edge");
     expect(html).toContain("+1 Armor");
+    expect(html).toContain("enchanted");
+  });
+
+  it("battle victory summary hides level-up choices until acknowledged", () => {
+    const manager = createNewRun("victory-before-level");
+    manager.gainExp(10, "test");
+    const withSummary = renderToStaticMarkup(
+      <NodeActions
+        state={manager.state}
+        combatResult={fakeCombatResult()}
+        cardDefinitionsById={activeCardsById}
+        onChoice={() => undefined}
+        onStartBattle={() => undefined}
+        onCompleteBattle={() => undefined}
+        onAcknowledgeBattleSummary={() => undefined}
+        onLeaveShop={() => undefined}
+        onContinue={() => undefined}
+      />
+    );
+    const afterSummary = renderToStaticMarkup(
+      <NodeActions
+        state={manager.state}
+        cardDefinitionsById={activeCardsById}
+        onChoice={() => undefined}
+        onStartBattle={() => undefined}
+        onCompleteBattle={() => undefined}
+        onAcknowledgeBattleSummary={() => undefined}
+        onLeaveShop={() => undefined}
+        onContinue={() => undefined}
+      />
+    );
+
+    expect(withSummary).toContain("Victory");
+    expect(withSummary).toContain("Continue to Level Up");
+    expect(withSummary).not.toContain("Level Up!");
+    expect(afterSummary).toContain("Level Up!");
+    expect(afterSummary).toContain("Choose one reward");
+  });
+
+  it("chest panel consolidates loot cards and omits an empty reward section", () => {
+    const baseProps = {
+      cards: [],
+      selectedCardId: undefined,
+      enchantmentEligibleCardIds: new Set<string>(),
+      cardDefinitionsById: activeCardsById,
+      formationSlotCount: 4,
+      chestCapacity: 16,
+      ownedCardCount: 0,
+      onCardClick: () => undefined,
+      onSell: () => undefined
+    };
+
+    const empty = renderToStaticMarkup(<ChestPanel {...baseProps} />);
+    const withLoot = renderToStaticMarkup(
+      <ChestPanel
+        {...baseProps}
+        rewardCards={[{ instanceId: "loot", definitionId: "ember-powder" }]}
+        ownedCards={[{ instanceId: "oil", definitionId: "oil-flask" }]}
+        formationSlots={[{ slotIndex: 1, cardInstanceId: "oil" }]}
+        onSellRewardCard={() => undefined}
+      />
+    );
+
+    expect(empty).toContain("Chest");
+    expect(empty).not.toContain("Reward / Loot");
+    expect(empty).not.toContain("Loot Cards");
+    expect(withLoot).toContain("Loot Cards");
+    expect(withLoot).toContain("Ember Powder");
+    expect(withLoot).not.toContain("Reward / Loot");
   });
 
   it("reward loot choice display uses loot name and sell effect", () => {

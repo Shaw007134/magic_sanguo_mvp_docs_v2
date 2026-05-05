@@ -34,7 +34,7 @@ export function getCardSummary(card: CardDefinition): string {
     return (card.triggers ?? []).map(formatTrigger).join(" · ") || "Passive";
   }
 
-  return (card.effects ?? []).map(formatEffect).join(" · ") || "No effect";
+  return formatActiveEffects(card.effects ?? []);
 }
 
 export function getCardEnhancementSummaries(card: CardInstance): readonly string[] {
@@ -168,15 +168,9 @@ function formatEffect(effect: EffectDefinition): string {
     case "GainArmor":
       return typeof effect["amount"] === "number" ? `Armor: ${effect["amount"]}` : "Armor";
     case "ApplyBurn":
-      if (typeof effect["amount"] === "number" && typeof effect["durationTicks"] === "number") {
-        return `Burn: ${effect["amount"]} for ${formatTickDuration(effect["durationTicks"])}; deals current Burn per sec, then loses 1`;
-      }
-      return "Burn";
+      return formatStatusEffect("Burn", [effect]);
     case "ApplyPoison":
-      if (typeof effect["amount"] === "number" && typeof effect["durationTicks"] === "number") {
-        return `Poison: ${effect["amount"]} damage/sec for ${formatTickDuration(effect["durationTicks"])}; does not decay`;
-      }
-      return typeof effect["amount"] === "number" ? `Poison: ${effect["amount"]} damage/sec; does not decay` : "Poison";
+      return formatStatusEffect("Poison", [effect]);
     case "HealHP":
       return typeof effect["amount"] === "number" ? `Heal: ${effect["amount"]} HP` : "Heal";
     case "ApplyHaste":
@@ -187,11 +181,68 @@ function formatEffect(effect: EffectDefinition): string {
       return formatControlEffect("Freeze", effect);
     case "ModifyCooldown":
       return typeof effect["amountTicks"] === "number"
-        ? `Cooldown: ${formatSignedTickDuration(effect["amountTicks"])}`
+        ? formatCooldownEffect(effect)
         : "Cooldown";
     default:
       return "Effect";
   }
+}
+
+function formatActiveEffects(effects: readonly EffectDefinition[]): string {
+  const visibleEffects: string[] = [];
+  const burnEffects: EffectDefinition[] = [];
+  const poisonEffects: EffectDefinition[] = [];
+  for (const effect of effects) {
+    if (effect["command"] === "ApplyBurn") {
+      burnEffects.push(effect);
+      continue;
+    }
+    if (effect["command"] === "ApplyPoison") {
+      poisonEffects.push(effect);
+      continue;
+    }
+    visibleEffects.push(formatEffect(effect));
+  }
+  if (burnEffects.length > 0) {
+    visibleEffects.push(formatStatusEffect("Burn", burnEffects));
+  }
+  if (poisonEffects.length > 0) {
+    visibleEffects.push(formatStatusEffect("Poison", poisonEffects));
+  }
+  return visibleEffects.join(" · ") || "No effect";
+}
+
+function formatStatusEffect(kind: "Burn" | "Poison", effects: readonly EffectDefinition[]): string {
+  const parts = effects.map((effect) => {
+    const amount = typeof effect["amount"] === "number" ? effect["amount"] : undefined;
+    const duration = typeof effect["durationTicks"] === "number" ? formatTickDuration(effect["durationTicks"]) : undefined;
+    if (amount !== undefined && duration) {
+      return `${amount} per second for ${duration}`;
+    }
+    if (amount !== undefined) {
+      return `${amount} per second`;
+    }
+    return duration ? `for ${duration}` : "";
+  }).filter((part) => part.length > 0);
+  const value = parts.length > 0 ? parts.join(" + ") : kind;
+  return kind === "Burn"
+    ? `${kind}: ${value} (decays by 1/sec)`
+    : `${kind}: ${value}`;
+}
+
+function formatCooldownEffect(effect: EffectDefinition): string {
+  const amountTicks = effect["amountTicks"];
+  if (typeof amountTicks !== "number") {
+    return "Cooldown";
+  }
+  const target = formatControlTarget(effect["target"]);
+  if (amountTicks < 0) {
+    return `Ready ${target} ${formatTickDuration(Math.abs(amountTicks))} sooner`;
+  }
+  if (amountTicks > 0) {
+    return `Delay ${target} by ${formatTickDuration(amountTicks)}`;
+  }
+  return "Cooldown unchanged";
 }
 
 function formatControlEffect(kind: "Haste" | "Slow" | "Freeze", effect: EffectDefinition): string {
@@ -200,8 +251,10 @@ function formatControlEffect(kind: "Haste" | "Slow" | "Freeze", effect: EffectDe
   if (kind === "Freeze") {
     return `Freeze ${target}${duration}`;
   }
-  const percent = typeof effect["percent"] === "number" ? `${effect["percent"]}%` : "";
-  return `${kind} ${target}${percent ? ` by ${percent}` : ""}${duration}`;
+  if (kind === "Haste") {
+    return `Haste ${target} (50% faster cooldown)${duration}`;
+  }
+  return `Slow ${target}${duration}`;
 }
 
 function formatControlTarget(value: unknown): string {
@@ -285,10 +338,6 @@ function formatPercent(value: number): string {
 
 function formatMultiplier(value: number): string {
   return Number.isInteger(value) ? `${value}x` : `${value.toFixed(2).replace(/0$/, "").replace(/\.$/, "")}x`;
-}
-
-function formatSignedTickDuration(value: number): string {
-  return `${value > 0 ? "+" : ""}${formatTickDuration(value)}`;
 }
 
 function formatTickDuration(value: number): string {

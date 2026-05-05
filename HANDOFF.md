@@ -207,6 +207,12 @@ Enchantment target validation now uses the shared src/content/enchantments/encha
 Attached Bronze effects are applied before combat through getEffectiveCardDefinition, alongside tier scaling and Phase 15D reward-card enhancements. CombatEngine behavior and FormationSnapshot structure are unchanged.
 Phase 15D reward-card enhancements remain separate in CardInstance.enhancements and compatible effects are additive with Bronze enchantments.
 UI highlights cards eligible for any visible enchantment event choice and CardView shows attached enchantment plus a concise effect preview.
+Phase 15E-D/E UI polish keeps completed battle summaries visible until the player acknowledges them; reward and level-up choices are generated deterministically but hidden behind the victory summary in the UI.
+Chest is now the single inventory panel for normal cards and Phase 15D sellable loot cards. Normal reward cards still enter ownedCards/chest automatically when space permits.
+Standalone Reward / Loot UI was removed. Loot cards render only as a Chest subsection when owned.
+Player-facing card summaries now use concise Burn/Poison per-second text, fixed Haste wording as 50% faster cooldown, and readable cooldown readiness text instead of raw point/tick phrasing.
+Internal-use categories COOLDOWN, CONTROL, TERMINAL, ENGINE, DEFENSE, ECONOMY, STARTER, and BOSS_REWARD must remain data-only and not appear in player-facing card/skill display.
+Cards with attached enchantments receive a persistent `enchanted` CardView highlight in formation and chest while still showing the concise enchantment effect preview.
 Venom, Swift, Binding, Frost, Obsidian, Obsidian damage doubling, and Freeze/Slow/Haste enchantment effects remain deferred.
 Phase 15C Markdown reports now include Executive Summary, Build Summary, Boss Summary, Boss Challenge Summary, Build Legitimacy Notes, Warning Hotspots with likely design causes, Outcome Attribution Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
 Phase 15D balance reports include Enhanced Build Summary and two enhanced sample builds: Enhanced Burn Terminal and Enhanced Cooldown Tempo.
@@ -214,7 +220,7 @@ Outcome Attribution Snapshot separates Player Top Contributor from Enemy Top Con
 Current report command is `pnpm balance:report`; output location is `debug/balance-reports/latest.json` and `debug/balance-reports/latest.md`.
 The current save format version is 3. Actual run battles and balance reports share the 3600 tick max combat cap, with 1 second equal to 60 logic ticks.
 Current strongest builds are Armor Terminal, Late 16-slot Combo Build, Enhanced Burn Terminal, Siege Burn, Poison + Heal, and Frequency Status Soup. Current weakest/risky builds are Haste / Drum Tempo, Control Slow / Freeze, Starter Blade into Armor-heavy enemies, and starter shells into bosses.
-Remaining Phase 15D risks: Armor Terminal, Late 16-slot Combo Build, and enhanced terminal builds still create BOSS_TOO_FRAGILE/TERMINAL_TOO_BURSTY warnings; Cinder Strategist still kills several fragile samples quickly; Haste/Drum plus cooldown enhancement needs manual activation-count review; reward-card inventory UX is placeholder-quality.
+Remaining Phase 15D risks: Armor Terminal, Late 16-slot Combo Build, and enhanced terminal builds still create BOSS_TOO_FRAGILE/TERMINAL_TOO_BURSTY warnings; Cinder Strategist still kills several fragile samples quickly; Haste/Drum plus cooldown enhancement needs manual activation-count review; reward-card inventory now shares Chest UI but still needs manual readability review.
 Phase 14A is damage type and source attribution foundation.
 Phase 14B is Poison and Heal.
 Phase 14C implemented Haste, Slow, and Freeze.
@@ -227,10 +233,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 15E-D:
+Phase 15E-F:
 
 ```text
-Manual playtest Bronze Iron/Flame/Vital enchantment pacing and reward-card enhancement stacking. Next implementation should add per-choice target preview or separate enchantment attribution if readability needs it.
+Manual playtest battle-summary acknowledgment, Chest/Loot readability, Bronze Iron/Flame/Vital enchantment pacing, and reward-card enhancement stacking. Next implementation should add per-choice target preview or separate enchantment attribution if readability needs it.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -243,9 +249,9 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 3. Confirm the run starts at level 1, 0 EXP, 10 gold, 40/40 HP, 0 owned cards, 4 formation slots, chest capacity 16, and a starter shop.
 4. Buy one or more starter shop cards, confirm the shop stays open, then click Leave Shop and confirm shop EXP is granted once.
 5. Select a chest card, click a formation slot, and confirm the card moves out of chest view.
-6. Start battle, confirm Replay and Summary populate, then click Continue to reach reward or defeat.
+6. Start battle, confirm Replay and Summary populate, then click Claim Victory / Continue and confirm the victory summary is shown before rewards or level-up choices.
 7. Choose reward and continue through repeated shop/event, battle, and reward nodes.
-8. Confirm level-up choices appear at 10 EXP, max HP increases by 10% rounded up, and current HP heals to max.
+8. Confirm level-up choices appear after acknowledging any pending battle victory summary; max HP increases by 10% rounded up, and current HP heals to max.
 9. Continue until level 10, then confirm the next battle is the final boss and boss completion shows Victory or Defeat.
 10. Toggle Dev CombatLog and confirm raw combat log is hidden until enabled; replay event times should show seconds, not T/tick labels.
 11. Click Save Run, make a visible change such as New Run, then click Load Run and confirm the saved node, shop/reward choices, formation, skills, HP, gold, and pending replay/reward state return.
@@ -257,7 +263,7 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 17. Build at least one Armor/Blade run.
 18. Build at least one Drum/Siege run.
 19. Confirm rewards sometimes show cards related to defeated monsters.
-20. Confirm card summaries are readable and show seconds, not raw ticks.
+20. Confirm card summaries are readable, show seconds, use concise Burn/Poison per-second text, and display Haste as 50% faster cooldown.
 21. Confirm passive trigger summaries do not expose internal hook names.
 22. Confirm no skills appear in chest.
 23. Confirm save/load still works after obtaining new cards, upgraded duplicates, skills, and pending rewards.
@@ -280,7 +286,7 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 40. Level a run and confirm formation slots append at levels 3, 5, 7, 8, 9, and 10 without moving existing cards.
 41. Confirm owned card capacity remains 16 even when formation reaches 16 slots.
 42. Run pnpm balance:report and inspect debug/balance-reports/latest.md for the 14 sample builds, enhanced build summary, and warning flags.
-43. Obtain a reward card from a mid/late reward, confirm it appears in Reward / Loot instead of Chest.
+43. Obtain a loot reward card from a mid/late reward, confirm it appears as a Loot Cards subsection inside Chest only when owned.
 44. Sell a gold-only reward card and confirm it grants gold without changing combat cards.
 45. Place a matching active card leftmost, sell an enhancement reward card, and confirm the card gains a readable enhancement summary.
 46. Try selling a mismatched enhancement reward card and confirm the sale fails without granting gold or removing the reward card.
@@ -314,4 +320,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use a Phase 15E-D prompt focused on manual Bronze enchantment pacing, per-choice target previews, or enchantment attribution readability. Keep Obsidian and control/cooldown enchantment effects deferred.
+Use a Phase 15E-F prompt focused on manual battle-summary/Chest-Loot/enchantment readability, per-choice target previews, or enchantment attribution clarity. Keep Obsidian and control/cooldown enchantment effects deferred.

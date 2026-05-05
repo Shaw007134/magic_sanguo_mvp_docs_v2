@@ -42,7 +42,7 @@
         "durationTicks": 180
       }
     ],
-    "description": "Every 1.5 seconds, apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "description": "Every 1.5 seconds, apply 2 Burn for 3 seconds.",
     "categories": [
       "TOOL",
       "FIRE",
@@ -143,7 +143,7 @@
         "durationTicks": 180
       }
     ],
-    "description": "Every 2 seconds, gain 2 Armor and apply 2 Burn for 3 seconds. Burn loses 1 after each second of damage.",
+    "description": "Every 2 seconds, gain 2 Armor and apply 2 Burn for 3 seconds.",
     "categories": [
       "ARMOR",
       "DEFENSE",

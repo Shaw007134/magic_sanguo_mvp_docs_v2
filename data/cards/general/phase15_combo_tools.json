@@ -93,7 +93,7 @@
         "durationTicks": 120
       }
     ],
-    "description": "Every 3 seconds, Haste this card by 20% for 2 seconds.",
+    "description": "Every 3 seconds, Haste this card for 2 seconds.",
     "categories": [
       "TOOL",
       "COOLDOWN",
@@ -146,7 +146,7 @@
         "durationTicks": 120
       }
     ],
-    "description": "Every 6 seconds, Haste all your active cards by 10% for 2 seconds.",
+    "description": "Every 6 seconds, Haste all your active cards for 2 seconds.",
     "categories": [
       "TOOL",
       "COOLDOWN",
@@ -222,7 +222,7 @@
         ]
       }
     ],
-    "description": "When your Poison deals damage, Slow the leftmost enemy active card by 10% for 1 second. Can trigger once every 3 seconds.",
+    "description": "When your Poison deals damage, Slow the leftmost enemy active card for 1 second. Can trigger once every 3 seconds.",
     "categories": [
       "TOOL",
       "POISON",

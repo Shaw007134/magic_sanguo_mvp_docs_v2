@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
 import { getRewardCardDefinitionsById } from "../../src/content/rewards/rewardCards.js";
+import { getSkillDefinitionsById } from "../../src/run/skills/skillDefinitions.js";
 import { getCardDisplayInfo, getCardEnhancementSummaries, getCardEnchantmentSummary } from "../../src/ui/presentation/cardDisplay.js";
 import { getRewardCardDisplayInfo } from "../../src/ui/presentation/rewardCardDisplay.js";
 
@@ -32,7 +33,7 @@ describe("cardDisplay", () => {
   });
 
   it("summarizes Flame Spear", () => {
-    expect(display("flame-spear").summary).toBe("Damage: 1 · Burn: 2 for 2s; deals current Burn per sec, then loses 1");
+    expect(display("flame-spear").summary).toBe("Damage: 1 · Burn: 2 per second for 2s (decays by 1/sec)");
     expect(display("flame-spear").summary).not.toMatch(/\d+t\b|tick/i);
   });
 
@@ -40,7 +41,7 @@ describe("cardDisplay", () => {
     expect(display("spark-drum")).toMatchObject({
       typeLabel: "Active",
       size: 2,
-      summary: "Cooldown: -0.5s"
+      summary: "Ready adjacent active allies 0.5s sooner"
     });
     expect(display("spark-drum").summary).not.toMatch(/\d+t\b|tick/i);
   });
@@ -55,28 +56,28 @@ describe("cardDisplay", () => {
   });
 
   it("summarizes Poison and Heal cards without raw tick labels", () => {
-    expect(display("poison-needle").summary).toBe("Poison: 1 damage/sec; does not decay");
+    expect(display("poison-needle").summary).toBe("Poison: 1 per second");
     expect(display("field-medic").summary).toBe("Heal: 5 HP");
-    expect(display("toxic-lance").summary).toBe("Physical damage: 2 · Poison: 1 damage/sec; does not decay");
-    expect(display("poison-needle").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
+    expect(display("toxic-lance").summary).toBe("Physical damage: 2 · Poison: 1 per second");
+    expect(display("poison-needle").summary).not.toMatch(/\d+t\b|tick|\bOn[A-Z]|hook/);
   });
 
   it("summarizes Haste, Slow, and Freeze cards without raw tick labels", () => {
-    expect(display("war-chant").summary).toBe("Haste adjacent active allies by 25% for 3s");
-    expect(display("command-banner").summary).toBe("Haste all your active cards by 20% for 3s");
-    expect(display("mud-trap").summary).toBe("Slow the opposite enemy active card by 25% for 2s");
+    expect(display("war-chant").summary).toBe("Haste adjacent active allies (50% faster cooldown) for 3s");
+    expect(display("command-banner").summary).toBe("Haste all your active cards (50% faster cooldown) for 3s");
+    expect(display("mud-trap").summary).toBe("Slow the opposite enemy active card for 2s");
     expect(display("frost-chain").summary).toBe("Freeze the opposite enemy active card for 1s");
     expect(display("cold-spear").summary).toBe("Physical damage: 2 · Freeze the opposite enemy active card for 1s");
-    expect(display("heavy-net").summary).toBe("Slow the leftmost enemy active card by 20% for 2s");
-    expect(display("war-chant").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
+    expect(display("heavy-net").summary).toBe("Slow the leftmost enemy active card for 2s");
+    expect(display("war-chant").summary).not.toMatch(/\d+t\b|tick|\bOn[A-Z]|hook|by \d+%/);
   });
 
   it("summarizes reaction cards with readable hooks and seconds", () => {
     expect(display("venom-leech").summary).toBe("When your Poison deals damage: Heal: 1 HP. Limited to every 1s.");
     expect(display("toxic-flame-seal").summary).toBe("When your Burn deals damage: Fire damage: 1. Limited to every 1s.");
     expect(display("field-triage").summary).toBe("When you heal: Armor: 2. Limited to every 2s.");
-    expect(display("poisoned-net").summary).toBe("When your Poison deals damage: Slow the leftmost enemy active card by 10% for 1s. Limited to every 3s.");
-    expect(display("burning-remedy").summary).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
+    expect(display("poisoned-net").summary).toBe("When your Poison deals damage: Slow the leftmost enemy active card for 1s. Limited to every 3s.");
+    expect(display("burning-remedy").summary).not.toMatch(/\d+t\b|tick|\bOn[A-Z]|hook/);
   });
 
   it("formats whole-second cooldown modifications without raw tick suffixes", () => {
@@ -85,7 +86,7 @@ describe("cardDisplay", () => {
       effects: [{ command: "ModifyCooldown", amountTicks: -60 }]
     };
 
-    expect(getCardDisplayInfo(card).summary).toBe("Cooldown: -1s");
+    expect(getCardDisplayInfo(card).summary).toBe("Ready cards 1s sooner");
   });
 
   it("summarizes crit and execution text without internal ids", () => {
@@ -165,5 +166,18 @@ describe("cardDisplay", () => {
     expect(invalid.valid).toBe(false);
     expect(invalid.targetLine).toContain("Rusty Blade is invalid");
     expect(`${valid.summary} ${invalid.targetLine}`).not.toMatch(/\d+t\b|tick|OnStatus|OnBurn|hook/i);
+  });
+
+  it("keeps card and skill descriptions concise without repeated status rules or internal categories", () => {
+    const internalCategories = /\b(COOLDOWN|CONTROL|TERMINAL|ENGINE|DEFENSE|ECONOMY|STARTER|BOSS_REWARD)\b/;
+    for (const card of cardsById.values()) {
+      expect(card.description, card.id).not.toMatch(/Burn loses|persistent Poison|Haste .* by \d+%|Slow .* by \d+%/i);
+      expect(getCardDisplayInfo(card).summary, card.id).not.toMatch(internalCategories);
+    }
+
+    for (const skill of getSkillDefinitionsById().values()) {
+      expect(skill.description, skill.id).not.toMatch(/recover 1 point/i);
+      expect(skill.description, skill.id).not.toMatch(/\btick|hook|COOLDOWN|ENGINE|STARTER\b/i);
+    }
   });
 });

@@ -14,6 +14,8 @@ WEAPON, ARMOR, TOOL, RELIC, TACTIC, FIRE, POISON, HEAL, COOLDOWN, CONTROL, TERMI
 
 Categories are uppercase data labels. Tags remain lightweight descriptive/source labels used by existing skills and modifiers, such as `fire`.
 
+Player-facing card views must not expose internal content-control categories. The display-safe category set is limited to readable build identity labels such as Weapon, Armor, Tool, Relic, Tactic, Fire, Poison, and Heal when category labels are needed. Internal categories such as `COOLDOWN`, `CONTROL`, `TERMINAL`, `ENGINE`, `DEFENSE`, `ECONOMY`, `STARTER`, and `BOSS_REWARD` stay data-only.
+
 ## Event Probability Rules
 
 Events now use `EventTemplate` data:
@@ -98,6 +100,15 @@ Attachments are persisted by save/load and displayed on card views. Bronze Iron,
 ## UI Display
 
 When an enchantment event is available, cards eligible for any shown enchantment are highlighted as eligible targets. Card views show attached enchantments with a concise effect preview, such as `Enchanted: Iron Edge (Bronze Iron) · +1 Armor`.
+
+Phase 15E-D UI polish rules:
+
+- Cards with attached enchantments receive a persistent visual highlight in formation, chest, and CardView.
+- Battle victory summary is shown and acknowledged before reward or level-up choices are displayed.
+- Chest is the single inventory panel for normal cards and sellable loot cards; normal reward cards are added to chest automatically when space permits.
+- Burn and Poison card summaries are concise and show the per-second value once per card. Burn uses `Burn: X per second ... (decays by 1/sec)`.
+- Haste display uses fixed player text: `50% faster cooldown`. The UI no longer repeats per-card Haste percentages.
+- Card and skill descriptions avoid raw ticks, internal hook names, repeated Burn/Poison mechanism text, and internal-use categories.
 
 ## Balance Risks
 

@@ -88,7 +88,7 @@ export function getChoiceDisplayInfo(
     return {
       title: enchantment?.name ?? choice.label,
       subtitle: "Enchantment study",
-      meta: enchantment ? [enchantment.tier, enchantment.type, formatTargetRule(enchantment.targetRule)] : [],
+      meta: enchantment ? [formatLabel(enchantment.tier), formatLabel(enchantment.type), formatTargetRule(enchantment.targetRule)] : [],
       summary: `${choice.description ?? enchantment?.description ?? "Choose a planned enchantment."} Select an eligible owned card first.`
     };
   }
@@ -176,7 +176,20 @@ export function getChoiceDisplayInfo(
 }
 
 function formatTargetRule(targetRule: string): string {
-  return targetRule
+  return formatLabel(targetRule)
+    .replace("Any Card", "Any card")
+    .replace("Any Active Card", "Any active card")
+    .replace("Weapon Card", "Weapon card")
+    .replace("Armor Card", "Armor card")
+    .replace("Fire Card", "Fire card")
+    .replace("Poison Card", "Poison card")
+    .replace("Cooldown Card", "Cooldown card")
+    .replace("Control Card", "Control card")
+    .replace("Terminal Card", "Terminal card");
+}
+
+function formatLabel(value: string): string {
+  return value
     .toLowerCase()
     .split("_")
     .map((word) => word[0]?.toUpperCase() + word.slice(1))

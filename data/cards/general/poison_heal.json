@@ -16,7 +16,7 @@
         "amount": 1
       }
     ],
-    "description": "Every 2 seconds, apply 1 persistent Poison.",
+    "description": "Every 2 seconds, apply 1 Poison.",
     "categories": [
       "POISON",
       "STARTER"
@@ -69,7 +69,7 @@
         "amount": 1
       }
     ],
-    "description": "Every 3 seconds, deal 2 Physical damage and apply 1 persistent Poison.",
+    "description": "Every 3 seconds, deal 2 Physical damage and apply 1 Poison.",
     "categories": [
       "WEAPON",
       "POISON"
@@ -91,7 +91,7 @@
         "amount": 2
       }
     ],
-    "description": "Every 4 seconds, apply 2 persistent Poison.",
+    "description": "Every 4 seconds, apply 2 Poison.",
     "categories": [
       "TOOL",
       "POISON"
@@ -143,7 +143,7 @@
         "amount": 3
       }
     ],
-    "description": "Every 6 seconds, apply 3 persistent Poison.",
+    "description": "Every 6 seconds, apply 3 Poison.",
     "categories": [
       "TOOL",
       "POISON"
