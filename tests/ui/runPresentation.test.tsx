@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 
 import { getMonsterCardDefinitionsById } from "../../src/content/cards/monsterCards.js";
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
-import type { CombatResult } from "../../src/model/result.js";
 import { createNewRun } from "../../src/run/RunManager.js";
 import type { RunChoice } from "../../src/run/RunState.js";
 import { createEventChoices } from "../../src/run/nodes/EventNode.js";
@@ -17,32 +16,6 @@ import { getChoiceDisplayInfo } from "../../src/ui/presentation/choiceDisplay.js
 
 const cardDefinitionsById = getMonsterCardDefinitionsById();
 const activeCardsById = getActiveCardDefinitionsById();
-
-function fakeCombatResult(): CombatResult {
-  return {
-    winner: "PLAYER",
-    ticksElapsed: 60,
-    playerFinalHp: 12,
-    enemyFinalHp: 0,
-    combatLog: [],
-    replayTimeline: { events: [{ tick: 60, type: "CombatEnded" }] },
-    summary: {
-      winner: "PLAYER",
-      ticksElapsed: 60,
-      playerFinalHp: 12,
-      enemyFinalHp: 0,
-      damageByCard: {},
-      statusDamage: {},
-      statusDamageByCard: {},
-      armorGainedByCard: {},
-      healingByCard: {},
-      armorBlocked: 0,
-      activationsByCard: {},
-      triggerCountByCard: {},
-      topContributors: []
-    }
-  };
-}
 
 describe("run presentation", () => {
   it("new run status displays clear labels and values", () => {
@@ -221,38 +194,23 @@ describe("run presentation", () => {
     expect(html).toContain("enchanted");
   });
 
-  it("battle victory summary hides level-up choices until acknowledged", () => {
-    const manager = createNewRun("victory-before-level");
+  it("level-up choices render directly without an extra post-battle continue prompt", () => {
+    const manager = createNewRun("level-choice-direct");
     manager.gainExp(10, "test");
-    const withSummary = renderToStaticMarkup(
-      <NodeActions
-        state={manager.state}
-        combatResult={fakeCombatResult()}
-        cardDefinitionsById={activeCardsById}
-        onChoice={() => undefined}
-        onStartBattle={() => undefined}
-        onCompleteBattle={() => undefined}
-        onLeaveShop={() => undefined}
-        onContinue={() => undefined}
-      />
-    );
-    const afterSummary = renderToStaticMarkup(
+    const html = renderToStaticMarkup(
       <NodeActions
         state={manager.state}
         cardDefinitionsById={activeCardsById}
         onChoice={() => undefined}
         onStartBattle={() => undefined}
-        onCompleteBattle={() => undefined}
         onLeaveShop={() => undefined}
         onContinue={() => undefined}
       />
     );
 
-    expect(withSummary).toContain("Victory");
-    expect(withSummary).toContain("Continue");
-    expect(withSummary).not.toContain("Level Up!");
-    expect(afterSummary).toContain("Level Up!");
-    expect(afterSummary).toContain("Choose one reward");
+    expect(html).toContain("Level Up!");
+    expect(html).toContain("Choose one reward");
+    expect(html).not.toContain("Review the battle summary");
   });
 
   it("learned skills render in a run status panel, not as chest or loot cards", () => {

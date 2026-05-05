@@ -1786,13 +1786,13 @@ Known issues:
 - Enchantment-derived effects still appear as normal card effects in replay/summary without separate enchantment attribution rows.
 - Haste combat data still carries per-card percent values; this phase only standardizes player-facing display text.
 Next recommended task:
-- Phase 15E-F: manual UI playtest for battle-summary acknowledgment, Chest/Loot readability, and enchantment highlight clarity before adding per-choice target previews.
+- Phase 15E-F: manual UI playtest for direct battle-to-reward flow, Chest/Loot readability, and enchantment highlight clarity before adding per-choice target previews.
 
 ---
 
 Date: 2026-05-05
 Phase: 15E-D/E UI polish follow-up
-Task: Collapsed post-battle victory to one Continue, added formation drag/drop, and clarified Run Status skill display.
+Task: Collapsed post-battle victory to direct reward/level-up display, added formation drag/drop, and clarified Run Status skill display.
 Files changed:
 - src/run/RunManager.ts
 - src/ui/App.tsx
@@ -1809,13 +1809,14 @@ Files changed:
 - PROJECT_LOG.md
 - HANDOFF.md
 Tests added/updated:
-- Battle victory summary is shown first and one Continue reveals reward or level-up choices.
+- Battle resolution completes immediately and reveals reward or level-up choices without an extra Continue button.
 - Formation cards render draggable handles for slot/activation-order adjustment.
 - Learned skills render in the Run Status panel and stay out of Chest/Loot display.
 - Haste player text uses fixed `50% faster tick speed`.
 - Internal target-rule categories stay hidden behind generic eligible-card text.
 Implementation notes:
 - Removed the extra completed-battle acknowledgment state and `RunManager.acknowledgeBattleSummary()`.
+- UI Start Battle now calls battle resolution and battle completion as one player action.
 - The UI still preserves deterministic reward/level-up choices through existing RunManager state; no combat or reward mechanics changed.
 - Click-to-select formation movement remains available alongside drag/drop.
 How to run:
@@ -1826,4 +1827,4 @@ Known issues:
 - Drag/drop is basic HTML drag/drop and has not yet had browser-level pointer QA.
 - Per-choice enchantment target mapping and enchantment-specific replay attribution remain deferred.
 Next recommended task:
-- Manual browser pass for single-click battle flow, formation drag/drop, Run Status readability, and Chest/Loot display.
+- Manual browser pass for direct battle-to-reward flow, formation drag/drop, Run Status readability, and Chest/Loot display.

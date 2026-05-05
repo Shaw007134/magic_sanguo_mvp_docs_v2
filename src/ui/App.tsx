@@ -3,7 +3,6 @@ import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import { getEnchantmentDefinitionsById } from "../content/enchantments/enchantments.js";
 import { isEligibleForEnchantment } from "../content/enchantments/enchantmentTargets.js";
 import type { CardDefinition, CardInstance } from "../model/card.js";
-import type { CombatResult } from "../model/result.js";
 import { createBattleEnemy } from "../run/nodes/BattleNode.js";
 import { RunManager } from "../run/RunManager.js";
 import { loadRunManagerFromSaveString, serializeRunState } from "../run/save/SaveManager.js";
@@ -158,10 +157,11 @@ export function App() {
   }
 
   function handleStartBattle(): void {
-    sync(manager.startBattle(), "Battle resolved. Review the result, then continue.");
-  }
-
-  function handleCompleteBattle(): void {
+    const battleResult = manager.startBattle();
+    if (!battleResult.ok) {
+      sync(battleResult, "Battle could not start.");
+      return;
+    }
     sync(manager.completeBattle(), "Battle completed.");
   }
 
@@ -206,11 +206,9 @@ export function App() {
           <div className="selection-hint">{selectedHint}</div>
           <NodeActions
             state={runState}
-            combatResult={combatResult}
             cardDefinitionsById={cardDefinitionsById}
             onChoice={handleChoice}
             onStartBattle={handleStartBattle}
-            onCompleteBattle={handleCompleteBattle}
             onLeaveShop={() => sync(manager.leaveShop(), "Left shop.")}
             onContinue={handleContinue}
           />
@@ -290,30 +288,14 @@ export function App() {
 
 export function NodeActions(props: {
   readonly state: RunState;
-  readonly combatResult?: CombatResult;
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   readonly onChoice: (choice: RunChoice) => void;
   readonly onStartBattle: () => void;
-  readonly onCompleteBattle: () => void;
   readonly onLeaveShop: () => void;
   readonly onContinue: () => void;
 }) {
   if (props.state.status !== "IN_PROGRESS") {
     return <div className="run-result">{props.state.status === "VICTORY" ? "Victory" : "Defeat"}</div>;
-  }
-  if (props.combatResult) {
-    const won = props.combatResult.winner === "PLAYER";
-    return (
-      <div className="choice-area">
-        <div className="reward-reveal">
-          <strong>{won ? "Victory" : "Defeat"}</strong>
-          <span>{won ? "Review the battle summary before choosing your next reward." : "Review the battle summary."}</span>
-        </div>
-        <button className="primary-action" type="button" onClick={props.onCompleteBattle}>
-          Continue
-        </button>
-      </div>
-    );
   }
   if (props.state.currentChoices.length > 0) {
     return (

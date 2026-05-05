@@ -104,7 +104,7 @@ When an enchantment event is available, cards eligible for any shown enchantment
 Phase 15E-D UI polish rules:
 
 - Cards with attached enchantments receive a persistent visual highlight in formation, chest, and CardView.
-- Battle victory summary is shown before reward or level-up choices, then one Continue reveals the next choice set.
+- Battle resolution immediately advances to reward or level-up choices; no extra post-battle Continue step is shown.
 - Chest is the single inventory panel for normal cards and sellable loot cards; normal reward cards are added to chest automatically when space permits.
 - Learned skills/statuses render in the Run Status panel as always-on run effects, not in Chest or loot inventory.
 - Placed formation cards can be dragged between formation slots to adjust activation sequence; click-to-select movement remains supported.

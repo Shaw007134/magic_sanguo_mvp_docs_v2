@@ -207,7 +207,7 @@ Enchantment target validation now uses the shared src/content/enchantments/encha
 Attached Bronze effects are applied before combat through getEffectiveCardDefinition, alongside tier scaling and Phase 15D reward-card enhancements. CombatEngine behavior and FormationSnapshot structure are unchanged.
 Phase 15D reward-card enhancements remain separate in CardInstance.enhancements and compatible effects are additive with Bronze enchantments.
 UI highlights cards eligible for any visible enchantment event choice and CardView shows attached enchantment plus a concise effect preview.
-Phase 15E-D/E follow-up collapsed the post-battle flow to one Continue click: the battle result/replay/summary displays first, then the same click completes the battle and reveals reward or level-up choices.
+Phase 15E-D/E follow-up now resolves and completes battles in one Start Battle action: the UI advances directly to reward or level-up choices, with no extra post-battle Continue button.
 Chest is now the single inventory panel for normal cards and Phase 15D sellable loot cards. Normal reward cards still enter ownedCards/chest automatically when space permits.
 Standalone Reward / Loot UI was removed. Loot cards render only as a Chest subsection when owned.
 Learned skills render in the Run Status panel as always-on run effects, not in Chest or loot inventory.
@@ -238,7 +238,7 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 Phase 15E-F:
 
 ```text
-Manual playtest single-click battle-summary flow, formation drag/drop, Chest/Loot readability, Bronze Iron/Flame/Vital enchantment pacing, and reward-card enhancement stacking. Next implementation should add per-choice target preview or separate enchantment attribution if readability needs it.
+Manual playtest direct battle-to-reward flow, formation drag/drop, Chest/Loot readability, Bronze Iron/Flame/Vital enchantment pacing, and reward-card enhancement stacking. Next implementation should add per-choice target preview or separate enchantment attribution if readability needs it.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -251,7 +251,7 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 3. Confirm the run starts at level 1, 0 EXP, 10 gold, 40/40 HP, 0 owned cards, 4 formation slots, chest capacity 16, and a starter shop.
 4. Buy one or more starter shop cards, confirm the shop stays open, then click Leave Shop and confirm shop EXP is granted once.
 5. Select a chest card, click a formation slot, and confirm the card moves out of chest view.
-6. Start battle, confirm Replay and Summary populate, then click Continue once and confirm rewards or level-up choices appear afterward.
+6. Start battle and confirm rewards or level-up choices appear directly afterward without an extra post-battle Continue button.
 7. Choose reward and continue through repeated shop/event, battle, and reward nodes.
 8. Confirm level-up choices appear after acknowledging any pending battle victory summary; max HP increases by 10% rounded up, and current HP heals to max.
 9. Continue until level 10, then confirm the next battle is the final boss and boss completion shows Victory or Defeat.
