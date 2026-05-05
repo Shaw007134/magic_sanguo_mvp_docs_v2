@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
 import { getRewardCardDefinitionsById } from "../../src/content/rewards/rewardCards.js";
-import { getCardDisplayInfo, getCardEnhancementSummaries } from "../../src/ui/presentation/cardDisplay.js";
+import { getCardDisplayInfo, getCardEnhancementSummaries, getCardEnchantmentSummary } from "../../src/ui/presentation/cardDisplay.js";
 import { getRewardCardDisplayInfo } from "../../src/ui/presentation/rewardCardDisplay.js";
 
 const cardsById = getActiveCardDefinitionsById();
@@ -125,6 +125,23 @@ describe("cardDisplay", () => {
 
     expect(summaries).toEqual(["+1 Burn from Ember Powder", "cooldown -4% from Balanced Gear"]);
     expect(summaries.join(" ")).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
+  });
+
+  it("summarizes attached enchantments clearly without changing effect text", () => {
+    const card = {
+      instanceId: "blade",
+      definitionId: "rusty-blade",
+      enchantment: {
+        id: "run-enchantment-event-25-enchantment-0-blade",
+        enchantmentDefinitionId: "bronze-iron-edge",
+        sourceEventChoiceId: "event-25-enchantment-0",
+        attachedAtNodeIndex: 25
+      }
+    };
+
+    expect(display("rusty-blade").summary).toBe("Damage: 2");
+    expect(getCardEnchantmentSummary(card)).toBe("Enchanted: Iron Edge (Bronze Iron)");
+    expect(getCardEnchantmentSummary(card)).not.toMatch(/\d+t\b|tick|hook/i);
   });
 
   it("describes reward card sell effects and current leftmost target", () => {

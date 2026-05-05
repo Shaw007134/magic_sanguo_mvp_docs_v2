@@ -46,6 +46,13 @@ export interface CardInstanceEnhancement {
   readonly percent?: number;
 }
 
+export interface CardInstanceEnchantment {
+  readonly id: string;
+  readonly enchantmentDefinitionId: string;
+  readonly sourceEventChoiceId: string;
+  readonly attachedAtNodeIndex: number;
+}
+
 export interface CardDefinition {
   readonly id: string;
   readonly name: string;
@@ -66,6 +73,7 @@ export interface CardInstance {
   readonly definitionId: string;
   readonly tierOverride?: CardTier;
   readonly enhancements?: readonly CardInstanceEnhancement[];
+  readonly enchantment?: CardInstanceEnchantment;
 }
 
 export interface CardRuntimeState {

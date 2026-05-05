@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import { CombatEngine } from "../../src/combat/CombatEngine.js";
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
+import type { CardInstance } from "../../src/model/card.js";
+import type { FormationSnapshot } from "../../src/model/formation.js";
 import {
   BRONZE_ENCHANTMENT_INTRO_TEMPLATE,
   getEventPoolForLevel
@@ -77,44 +80,8 @@ describe("event generation", () => {
     ]);
   });
 
-  it("pending enchantment event choices survive save/load without rerolling", () => {
+  it("enchantment event choices survive save/load without rerolling", () => {
     const manager = RunManager.createNewRun("save-enchantment-event");
-    const choices = createEventChoices({
-      seed: manager.state.seed,
-      nodeIndex: 25,
-      level: 7,
-      cardDefinitionsById: activeCardsById
-    });
-    manager.state = {
-      ...manager.state,
-      currentNodeIndex: 25,
-      level: 7,
-      currentNode: { id: "cycle-event-15", type: "EVENT", day: 11, label: "Event" },
-      currentChoices: choices,
-      pendingEnchantmentChoices: [
-        {
-          id: "pending-study",
-          enchantmentDefinitionId: "bronze-iron-edge",
-          targetRule: "WEAPON_CARD",
-          label: "Study Iron Edge",
-          description: "A planned weapon enchantment for steadier physical pressure."
-        }
-      ]
-    };
-
-    const save = serializeRunState(manager.state);
-    expect(save.ok).toBe(true);
-    const loaded = deserializeRunState(save.ok ? save.value : "");
-
-    expect(loaded.ok).toBe(true);
-    if (loaded.ok) {
-      expect(loaded.value.currentChoices).toEqual(choices);
-      expect(loaded.value.pendingEnchantmentChoices).toEqual(manager.state.pendingEnchantmentChoices);
-    }
-  });
-
-  it("choosing an enchantment event stores planned choice data without granting a combat card", () => {
-    const manager = RunManager.createNewRun("choose-enchantment-event");
     const choices = createEventChoices({
       seed: manager.state.seed,
       nodeIndex: 25,
@@ -129,14 +96,175 @@ describe("event generation", () => {
       currentChoices: choices
     };
 
-    const beforeCards = manager.state.ownedCards;
-    const result = manager.chooseEventOption(choices[0]!.id);
+    const save = serializeRunState(manager.state);
+    expect(save.ok).toBe(true);
+    const loaded = deserializeRunState(save.ok ? save.value : "");
+
+    expect(loaded.ok).toBe(true);
+    if (loaded.ok) {
+      expect(loaded.value.currentChoices).toEqual(choices);
+    }
+  });
+
+  it("choosing an enchantment event attaches the enchantment to the selected card", () => {
+    const manager = RunManager.createNewRun("choose-enchantment-event");
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    const target = manager.state.ownedCards[0]!;
+    const choices = createEventChoices({
+      seed: manager.state.seed,
+      nodeIndex: 25,
+      level: 7,
+      cardDefinitionsById: activeCardsById
+    });
+    manager.state = {
+      ...manager.state,
+      currentNodeIndex: 25,
+      level: 7,
+      currentNode: { id: "cycle-event-15", type: "EVENT", day: 11, label: "Event" },
+      currentChoices: choices
+    };
+
+    const result = manager.chooseEventOption(choices[0]!.id, target.instanceId);
 
     expect(result.ok).toBe(true);
-    expect(manager.state.ownedCards).toEqual(beforeCards);
-    expect(manager.state.pendingEnchantmentChoices?.[0]).toEqual(expect.objectContaining({
+    expect(manager.state.ownedCards).toHaveLength(1);
+    expect(manager.state.ownedCards[0]?.enchantment).toEqual(expect.objectContaining({
       enchantmentDefinitionId: "bronze-iron-edge",
-      targetRule: "WEAPON_CARD"
+      sourceEventChoiceId: choices[0]!.id,
+      attachedAtNodeIndex: 25
     }));
   });
+
+  it("Bronze Enchantment Intro cannot attach to invalid cards or already-enchanted cards", () => {
+    const manager = RunManager.createNewRun("invalid-enchantment-target");
+    expect(manager.addCardToChest("wooden-shield").ok).toBe(true);
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    const shield = manager.state.ownedCards.find((card) => card.definitionId === "wooden-shield")!;
+    const blade = manager.state.ownedCards.find((card) => card.definitionId === "rusty-blade")!;
+    const choices = createEventChoices({
+      seed: manager.state.seed,
+      nodeIndex: 25,
+      level: 7,
+      cardDefinitionsById: activeCardsById
+    });
+    manager.state = {
+      ...manager.state,
+      currentNodeIndex: 25,
+      level: 7,
+      currentNode: { id: "cycle-event-15", type: "EVENT", day: 11, label: "Event" },
+      currentChoices: choices
+    };
+
+    expect(manager.chooseEventOption(choices[0]!.id, shield.instanceId).ok).toBe(false);
+    expect(manager.state.exp).toBe(0);
+    expect(manager.state.ownedCards.find((card) => card.instanceId === shield.instanceId)?.enchantment).toBeUndefined();
+
+    expect(manager.chooseEventOption(choices[0]!.id, blade.instanceId).ok).toBe(true);
+    manager.state = {
+      ...manager.state,
+      currentNode: { id: "cycle-event-15b", type: "EVENT", day: 11, label: "Event" },
+      currentChoices: choices
+    };
+    expect(manager.chooseEventOption(choices[1]!.id, blade.instanceId).ok).toBe(false);
+    expect(manager.state.ownedCards.find((card) => card.instanceId === blade.instanceId)?.enchantment?.enchantmentDefinitionId)
+      .toBe("bronze-iron-edge");
+  });
+
+  it("save/load round trip preserves attached enchantments", () => {
+    const manager = RunManager.createNewRun("save-attached-enchantment");
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    const target = manager.state.ownedCards[0]!;
+    const choices = createEventChoices({
+      seed: manager.state.seed,
+      nodeIndex: 25,
+      level: 7,
+      cardDefinitionsById: activeCardsById
+    });
+    manager.state = {
+      ...manager.state,
+      currentNodeIndex: 25,
+      level: 7,
+      currentNode: { id: "cycle-event-15", type: "EVENT", day: 11, label: "Event" },
+      currentChoices: choices
+    };
+    expect(manager.chooseEventOption(choices[0]!.id, target.instanceId).ok).toBe(true);
+
+    const save = serializeRunState(manager.state);
+    expect(save.ok).toBe(true);
+    const loaded = deserializeRunState(save.ok ? save.value : "");
+
+    expect(loaded.ok).toBe(true);
+    if (loaded.ok) {
+      expect(loaded.value.ownedCards).toEqual(manager.state.ownedCards);
+      expect(loaded.value.ownedCards[0]?.enchantment?.enchantmentDefinitionId).toBe("bronze-iron-edge");
+    }
+  });
+
+  it("attached enchantments do not change combat results", () => {
+    const baseCard: CardInstance = { instanceId: "blade", definitionId: "rusty-blade" };
+    const enchantedCard: CardInstance = {
+      ...baseCard,
+      enchantment: {
+        id: "run-enchantment-test",
+        enchantmentDefinitionId: "bronze-iron-edge",
+        sourceEventChoiceId: "event-test",
+        attachedAtNodeIndex: 25
+      }
+    };
+    const playerBase = formationWith(baseCard);
+    const playerEnchanted = formationWith(enchantedCard);
+    const enemy = enemyFormation();
+    const engine = new CombatEngine();
+
+    const base = engine.simulate({
+      playerFormation: playerBase,
+      enemyFormation: enemy,
+      maxCombatTicks: 240,
+      cardDefinitionsById: activeCardsById,
+      cardInstancesById: new Map([
+        [baseCard.instanceId, baseCard],
+        ["enemy-card", { instanceId: "enemy-card", definitionId: "training-staff" }]
+      ])
+    });
+    const enchanted = engine.simulate({
+      playerFormation: playerEnchanted,
+      enemyFormation: enemy,
+      maxCombatTicks: 240,
+      cardDefinitionsById: activeCardsById,
+      cardInstancesById: new Map([
+        [enchantedCard.instanceId, enchantedCard],
+        ["enemy-card", { instanceId: "enemy-card", definitionId: "training-staff" }]
+      ])
+    });
+
+    expect(enchanted).toEqual(base);
+  });
 });
+
+function formationWith(card: CardInstance): FormationSnapshot {
+  return {
+    id: "player",
+    kind: "PLAYER",
+    displayName: "Player",
+    level: 1,
+    maxHp: 40,
+    startingArmor: 0,
+    slots: [{ slotIndex: 1, cardInstanceId: card.instanceId }],
+    skills: [],
+    relics: []
+  };
+}
+
+function enemyFormation(): FormationSnapshot {
+  return {
+    id: "enemy",
+    kind: "MONSTER",
+    displayName: "Enemy",
+    level: 1,
+    maxHp: 40,
+    startingArmor: 0,
+    slots: [{ slotIndex: 1, cardInstanceId: "enemy-card" }],
+    skills: [],
+    relics: []
+  };
+}

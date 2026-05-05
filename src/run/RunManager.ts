@@ -10,6 +10,7 @@ import {
 import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import type { CardDefinition, CardInstance, CardTier } from "../model/card.js";
 import { getEnchantmentDefinitionsById } from "../content/enchantments/enchantments.js";
+import type { EnchantmentDefinition, EnchantmentTargetRule } from "../model/enchantment.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
 import type { RewardCardDefinition } from "../model/rewardCard.js";
 import { getRewardCardDefinitionsById } from "../content/rewards/rewardCards.js";
@@ -378,7 +379,7 @@ export class RunManager {
     return this.continueAfterEncounter(true);
   }
 
-  chooseEventOption(optionId: string): RunActionResult {
+  chooseEventOption(optionId: string, targetCardInstanceId?: string): RunActionResult {
     const choice = this.state.currentChoices.find(
       (candidate): candidate is EventChoice => candidate.id === optionId && candidate.type.startsWith("EVENT")
     );
@@ -402,19 +403,15 @@ export class RunManager {
       if (!enchantment || !choice.targetRule) {
         return this.fail("Enchantment option is missing definition data.");
       }
-      this.state = {
-        ...this.state,
-        pendingEnchantmentChoices: [
-          ...(this.state.pendingEnchantmentChoices ?? []),
-          {
-            id: `${choice.id}-pending`,
-            enchantmentDefinitionId: enchantment.id,
-            targetRule: choice.targetRule,
-            label: choice.label,
-            description: choice.description ?? enchantment.description
-          }
-        ]
-      };
+      const attachResult = this.attachEnchantmentToCard({
+        choiceId: choice.id,
+        enchantment,
+        targetRule: choice.targetRule,
+        targetCardInstanceId
+      });
+      if (!attachResult.ok) {
+        return attachResult;
+      }
     } else {
       if (!choice.cardDefinitionId) {
         return this.fail("Event card option is missing card definition.");
@@ -426,6 +423,42 @@ export class RunManager {
     }
     this.gainExp(1, "EVENT");
     return this.continueAfterEncounter(true);
+  }
+
+  private attachEnchantmentToCard(input: {
+    readonly choiceId: string;
+    readonly enchantment: EnchantmentDefinition;
+    readonly targetRule: EnchantmentTargetRule;
+    readonly targetCardInstanceId?: string;
+  }): RunActionResult {
+    if (!input.targetCardInstanceId) {
+      return this.fail("Select an eligible card before choosing an enchantment.");
+    }
+    const card = this.state.ownedCards.find((candidate) => candidate.instanceId === input.targetCardInstanceId);
+    const definition = card ? this.cardDefinitionsById.get(card.definitionId) : undefined;
+    if (!card || !definition) {
+      return this.fail("Selected enchantment target is not an owned card.");
+    }
+    if (card.enchantment) {
+      return this.fail(`${definition.name} already has an enchantment.`);
+    }
+    if (!isValidEnchantmentTarget(definition, input.targetRule)) {
+      return this.fail(`${definition.name} is not a valid target for ${input.enchantment.name}.`);
+    }
+
+    const attachment = {
+      id: `run-enchantment-${input.choiceId}-${card.instanceId}`,
+      enchantmentDefinitionId: input.enchantment.id,
+      sourceEventChoiceId: input.choiceId,
+      attachedAtNodeIndex: this.state.currentNodeIndex
+    };
+    this.state = {
+      ...this.state,
+      ownedCards: this.state.ownedCards.map((candidate) =>
+        candidate.instanceId === card.instanceId ? { ...candidate, enchantment: attachment } : candidate
+      )
+    };
+    return this.ok(`${input.enchantment.name} attached to ${definition.name}.`);
   }
 
   chooseRewardOption(optionId: string): RunActionResult {
@@ -1151,6 +1184,35 @@ function createPlayerFormationSnapshot(state: RunState): FormationSnapshot {
     skills: state.ownedSkills.map((skill) => ({ id: skill.instanceId, definitionId: skill.definitionId })),
     relics: []
   };
+}
+
+function isValidEnchantmentTarget(
+  definition: CardDefinition,
+  targetRule: EnchantmentTargetRule
+): boolean {
+  const categories = new Set(definition.categories ?? []);
+  switch (targetRule) {
+    case "ANY_CARD":
+      return true;
+    case "ANY_ACTIVE_CARD":
+      return definition.type === "ACTIVE";
+    case "WEAPON_CARD":
+      return categories.has("WEAPON");
+    case "ARMOR_CARD":
+      return categories.has("ARMOR");
+    case "FIRE_CARD":
+      return categories.has("FIRE");
+    case "POISON_CARD":
+      return categories.has("POISON");
+    case "COOLDOWN_CARD":
+      return categories.has("COOLDOWN");
+    case "CONTROL_CARD":
+      return categories.has("CONTROL");
+    case "TERMINAL_CARD":
+      return categories.has("TERMINAL");
+    default:
+      return false;
+  }
 }
 
 function toFormationSlot(slot: RunFormationSlot): FormationSlotSnapshot {

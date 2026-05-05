@@ -1637,3 +1637,45 @@ Known issues:
 - Obsidian, Freeze/Slow/Haste enchantment effects, and any damage-doubling behavior remain deferred.
 Next recommended task:
 - Phase 15E-B: add an enchantment targeting/attachment UI and persistence only, or manually playtest reward-card/enchantment pacing before any combat effect implementation.
+
+---
+
+Date: 2026-05-05
+Phase: 15E-B
+Task: Implemented enchantment targeting and CardInstance attachment persistence without combat effects.
+Files changed:
+- src/model/card.ts
+- src/run/RunManager.ts
+- src/run/save/SaveManager.ts
+- src/ui/App.tsx
+- src/ui/components/CardView.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/ui/presentation/choiceDisplay.ts
+- tests/run/eventGenerator.test.ts
+- tests/ui/cardDisplay.test.ts
+- docs/ENCHANTMENT_DESIGN_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Bronze Enchantment Intro choices attach the selected enchantment to the selected owned CardInstance.
+- Invalid enchantment targets fail before EXP or node advancement.
+- Already-enchanted cards reject a second enchantment.
+- Save/load round trip preserves attached enchantments.
+- Event generation remains deterministic and serialized event choices do not reroll.
+- Attached enchantments do not change combat results.
+- UI card-display helpers show attached enchantments clearly.
+Implementation notes:
+- `CardInstance.enchantment` is a single optional attachment with id, enchantmentDefinitionId, sourceEventChoiceId, and attachedAtNodeIndex.
+- Target validation uses enchantment targetRule against card type/categories.
+- Reward-card enhancements remain separate in `CardInstance.enhancements` and can coexist with one enchantment.
+- Enchantments still do not change effective card definitions, combat commands, cooldowns, statuses, targeting, replay, or summaries.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+Known issues:
+- UI target selection is functional but minimal; eligible cards are not highlighted yet.
+- Enchantment attachments are visible on cards but have no replay or combat summary rows because they have no effects.
+- Obsidian, Freeze/Slow/Haste enchantment effects, and damage-doubling behavior remain deferred.
+Next recommended task:
+- Phase 15E-C: improve enchantment targeting UX and preview/readability, or implement one carefully bounded low-risk enchantment effect only after balance risks are accepted.

@@ -3,7 +3,7 @@ import {
   type CardDefinition,
   type CardInstance
 } from "../../model/card.js";
-import { ENCHANTMENT_TARGET_RULES, type EnchantmentChoice } from "../../model/enchantment.js";
+import { ENCHANTMENT_TARGET_RULES, type EnchantmentChoice, type EnchantmentTargetRule } from "../../model/enchantment.js";
 import type { FormationSnapshot } from "../../model/formation.js";
 import type { RewardCardInstance } from "../../model/rewardCard.js";
 import type { CombatResult } from "../../model/result.js";
@@ -347,8 +347,38 @@ function validateCardInstances(
       const enhancementsResult = validateCardEnhancements(card["enhancements"], `${path}[${index}].enhancements`);
       if (!enhancementsResult.ok) return enhancementsResult;
     }
+    if (card["enchantment"] !== undefined) {
+      const enchantmentResult = validateCardEnchantment(card["enchantment"], cardDefinitionsById.get(card["definitionId"])!, `${path}[${index}].enchantment`);
+      if (!enchantmentResult.ok) return enchantmentResult;
+    }
   }
   return { ok: true, value: cards as readonly CardInstance[] };
+}
+
+function validateCardEnchantment(
+  enchantment: unknown,
+  cardDefinition: CardDefinition,
+  path: string
+): SaveLoadResult<true> {
+  if (!isRecord(enchantment)) return { ok: false, error: `${path} must be an object.` };
+  if (!isNonEmptyString(enchantment["id"])) return { ok: false, error: `${path}.id is required.` };
+  if (!isNonEmptyString(enchantment["sourceEventChoiceId"])) {
+    return { ok: false, error: `${path}.sourceEventChoiceId is required.` };
+  }
+  if (!isNumber(enchantment["attachedAtNodeIndex"]) || enchantment["attachedAtNodeIndex"] < 0) {
+    return { ok: false, error: `${path}.attachedAtNodeIndex must be a nonnegative number.` };
+  }
+  const enchantmentDefinitionId = enchantment["enchantmentDefinitionId"];
+  const enchantmentDefinition = isNonEmptyString(enchantmentDefinitionId)
+    ? getEnchantmentDefinitionsById().get(enchantmentDefinitionId)
+    : undefined;
+  if (!enchantmentDefinition) {
+    return { ok: false, error: `${path}.enchantmentDefinitionId is invalid.` };
+  }
+  if (!isValidEnchantmentTarget(cardDefinition, enchantmentDefinition.targetRule)) {
+    return { ok: false, error: `${path}.enchantmentDefinitionId is not valid for this card.` };
+  }
+  return { ok: true, value: true };
 }
 
 function validateCardEnhancements(enhancements: unknown, path: string): SaveLoadResult<true> {
@@ -778,6 +808,35 @@ function requireFields(record: Readonly<Record<string, unknown>>, fields: readon
 
 function isKnownCardDefinition(value: unknown, cardDefinitionsById: ReadonlyMap<string, CardDefinition>): value is string {
   return typeof value === "string" && cardDefinitionsById.has(value);
+}
+
+function isValidEnchantmentTarget(
+  definition: CardDefinition,
+  targetRule: EnchantmentTargetRule
+): boolean {
+  const categories = new Set(definition.categories ?? []);
+  switch (targetRule) {
+    case "ANY_CARD":
+      return true;
+    case "ANY_ACTIVE_CARD":
+      return definition.type === "ACTIVE";
+    case "WEAPON_CARD":
+      return categories.has("WEAPON");
+    case "ARMOR_CARD":
+      return categories.has("ARMOR");
+    case "FIRE_CARD":
+      return categories.has("FIRE");
+    case "POISON_CARD":
+      return categories.has("POISON");
+    case "COOLDOWN_CARD":
+      return categories.has("COOLDOWN");
+    case "CONTROL_CARD":
+      return categories.has("CONTROL");
+    case "TERMINAL_CARD":
+      return categories.has("TERMINAL");
+    default:
+      return false;
+  }
 }
 
 function failMissing(field: string): SaveLoadResult<never> {

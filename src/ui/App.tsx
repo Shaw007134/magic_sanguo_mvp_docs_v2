@@ -142,11 +142,14 @@ export function App() {
       choice.type === "SHOP_CARD"
         ? manager.chooseShopOption(choice.id)
         : choice.type.startsWith("EVENT")
-          ? manager.chooseEventOption(choice.id)
+          ? manager.chooseEventOption(choice.id, choice.type === "EVENT_ENCHANTMENT" ? selection?.cardInstanceId : undefined)
           : choice.type.startsWith("REWARD")
             ? manager.chooseRewardOption(choice.id)
             : manager.chooseLevelUpReward(choice.id);
     sync(result, "Choice resolved.");
+    if (result.ok && choice.type === "EVENT_ENCHANTMENT") {
+      setSelection(undefined);
+    }
   }
 
   function handleStartBattle(): void {
@@ -349,11 +352,13 @@ function toCardInstanceMap(cards: readonly CardInstance[]): ReadonlyMap<string, 
 
 function getSelectedHint(selection: Selection, ownedCards: readonly CardInstance[]): string {
   if (!selection) {
-    return "Select a card to place or move.";
+    return "Select a card to place, move, or enchant.";
   }
   const card = ownedCards.find((candidate) => candidate.instanceId === selection.cardInstanceId);
   if (!card) {
     return "Selected card is unavailable.";
   }
-  return selection.kind === "CHEST" ? `Placing ${card.definitionId}` : `Moving ${card.definitionId}`;
+  return selection.kind === "CHEST"
+    ? `Selected ${card.definitionId} in chest`
+    : `Selected ${card.definitionId} in formation`;
 }

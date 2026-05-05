@@ -1,5 +1,6 @@
 import type { CardDefinition, EffectDefinition, TriggerDefinition } from "../../model/card.js";
 import type { CardInstance } from "../../model/card.js";
+import { getEnchantmentDefinitionsById } from "../../content/enchantments/enchantments.js";
 import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
 
@@ -48,6 +49,21 @@ export function getCardEnhancementSummaries(card: CardInstance): readonly string
         return `enhanced by ${sourceName}`;
     }
   });
+}
+
+export function getCardEnchantmentSummary(card: CardInstance): string | undefined {
+  if (!card.enchantment) {
+    return undefined;
+  }
+  const enchantment = getEnchantmentDefinitionsById().get(card.enchantment.enchantmentDefinitionId);
+  if (!enchantment) {
+    return "Enchanted";
+  }
+  return `Enchanted: ${enchantment.name} (${formatTier(enchantment.tier)} ${formatEnchantmentType(enchantment.type)})`;
+}
+
+function formatEnchantmentType(value: string): string {
+  return value[0] + value.slice(1).toLowerCase();
 }
 
 function formatTrigger(trigger: TriggerDefinition): string {

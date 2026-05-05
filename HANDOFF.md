@@ -170,7 +170,7 @@ The root debug/ folder is gitignored; browser UI does not write to the local fil
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
 Known limitation: Burn/Poison tick source attribution is summary/replay-only; fire-tagged skills affect direct damage from fire-tagged card effects but not DOT ticks.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
-Known limitation: Enchantment definitions and pending choices are data-only; no enchantment targeting UI, card attachment, replay output, or combat effect application exists yet.
+Known limitation: Enchantment definitions and CardInstance attachments are data-only; no replay output or combat effect application exists yet.
 Known limitation: save format version is 3 with fail-fast validation; old version 1 local saves are intentionally unsupported after the Phase 15A fixed chest-capacity change, and version 2 saves are intentionally unsupported after Phase 15D because reward cards and card enhancements are persisted.
 Smoke, model export, validation, enchantment validation, event generation, basic combat, ResolutionStack, Armor/Burn decay, Poison/Heal, Haste/Slow/Freeze, status reactions, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
 Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, control-status payoff conditions, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
@@ -193,11 +193,15 @@ CardInstance enhancements are persisted, apply after tierOverride scaling, and s
 Phase 15E-A added content categories to active card definitions. `CardDefinition.type` remains the mechanical type (`ACTIVE`, `PASSIVE`, `AURA`, `TACTIC`, `RELIC`), while `categories` is a separate uppercase content/shop/build-control field.
 Supported card categories are WEAPON, ARMOR, TOOL, RELIC, TACTIC, FIRE, POISON, HEAL, COOLDOWN, CONTROL, TERMINAL, ENGINE, DEFENSE, ECONOMY, STARTER, and BOSS_REWARD.
 Phase 15E-A added EnchantmentDefinition and EnchantmentChoice data stubs plus validation. Planned enchantment types are IRON, VITAL, FLAME, VENOM, SWIFT, BINDING, FROST, and OBSIDIAN.
-Enchantment definitions live in data/enchantments/enchantments.json and src/content/enchantments/enchantments.ts; they do not enter the combat card registry and are not attached to CardInstance yet.
+Enchantment definitions live in data/enchantments/enchantments.json and src/content/enchantments/enchantments.ts; they do not enter the combat card registry.
 Phase 15E-A added deterministic EventTemplate/EventGenerator support with id, name, minLevel, optional maxLevel, weight, tags, and choices.
 Starter events and level 1-3 random event pools exclude enchantment-tagged events. Level 7+ event pools can include enchantment-tagged templates when configured.
-The third non-starter major event can force the Bronze Enchantment Intro after early game; it currently stores planned pending enchantment choice data only and applies no combat effects.
-Save/load preserves serialized enchantment event choices and pending planned enchantment choice data without rerolling event generation.
+The third non-starter major event can force the Bronze Enchantment Intro after early game.
+Phase 15E-B added one optional CardInstance.enchantment attachment with id, enchantmentDefinitionId, sourceEventChoiceId, and attachedAtNodeIndex.
+Choosing an enchantment event requires selecting an eligible owned card first. Target validation uses enchantment targetRule against card type/categories, and invalid targets fail before event EXP or node advancement.
+Only one enchantment is allowed per CardInstance. Phase 15D reward-card enhancements remain separate in CardInstance.enhancements and can coexist with one enchantment.
+Save/load preserves serialized enchantment event choices and attached CardInstance enchantments without rerolling event generation.
+Attached enchantments are visible in card UI but do not affect effective card definitions, FormationSnapshot rules, CombatEngine behavior, combat commands, cooldowns, statuses, replay, or summaries.
 Phase 15C Markdown reports now include Executive Summary, Build Summary, Boss Summary, Boss Challenge Summary, Build Legitimacy Notes, Warning Hotspots with likely design causes, Outcome Attribution Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
 Phase 15D balance reports include Enhanced Build Summary and two enhanced sample builds: Enhanced Burn Terminal and Enhanced Cooldown Tempo.
 Outcome Attribution Snapshot separates Player Top Contributor from Enemy Top Contributor and resolves known source ids to readable card names.
@@ -217,10 +221,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 15E-B:
+Phase 15E-C:
 
 ```text
-Manual playtest reward-card selling plus the new Bronze Enchantment Intro pacing. Next implementation should add enchantment targeting/attachment persistence only, or polish reward/enchantment UX, before any combat enchantment effects.
+Manual playtest Bronze Enchantment Intro targeting and reward-card selling. Next implementation should polish eligible-target highlighting/preview or add one carefully bounded low-risk enchantment effect only after balance risks are accepted.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -276,8 +280,11 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 46. Try selling a mismatched enhancement reward card and confirm the sale fails without granting gold or removing the reward card.
 47. Confirm starter event choices never show enchantment study options.
 48. Reach the third non-starter event around late mid-run and confirm Bronze Enchantment Intro can appear.
-49. Pick a Bronze Enchantment Intro option and confirm it does not change combat output or add a combat card.
-50. Save/load while an enchantment event is pending and confirm the exact choices return.
+49. Select an eligible owned card, pick a Bronze Enchantment Intro option, and confirm the card shows an attached enchantment.
+50. Try selecting an invalid target and confirm the event does not advance or grant EXP.
+51. Try enchanting the same card twice and confirm the second attachment is rejected.
+52. Save/load after attaching an enchantment and confirm the attachment remains visible.
+53. Confirm attached enchantments do not change combat output yet.
 ```
 
 ## Rules For Next Agent
@@ -298,4 +305,4 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 
 ## Recommended First Prompt
 
-Use a Phase 15E-B prompt focused on manual reward/enchantment pacing, enchantment targeting UI, and persistence-only card attachment. Do not add combat enchantment effects until that foundation is reviewed.
+Use a Phase 15E-C prompt focused on manual reward/enchantment pacing and eligible-target highlighting/preview. Do not add combat enchantment effects until attachment UX and current balance risks are reviewed.

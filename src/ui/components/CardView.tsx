@@ -1,7 +1,7 @@
 import type { CardDefinition, CardInstance } from "../../model/card.js";
 import { getEffectiveCardDefinition } from "../../content/cards/effectiveCardDefinition.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
-import { getCardDisplayInfo, getCardEnhancementSummaries } from "../presentation/cardDisplay.js";
+import { getCardDisplayInfo, getCardEnhancementSummaries, getCardEnchantmentSummary } from "../presentation/cardDisplay.js";
 
 export interface CardViewProps {
   readonly card: CardInstance;
@@ -15,6 +15,7 @@ export function CardView({ card, definition, selected = false, compact = false, 
   const effectiveDefinition = getEffectiveCardDefinition(card, definition);
   const display = getCardDisplayInfo(effectiveDefinition);
   const enhancementSummaries = getCardEnhancementSummaries(card);
+  const enchantmentSummary = getCardEnchantmentSummary(card);
   const content = (
     <>
       <div className="card-title">{display.name}</div>
@@ -26,6 +27,7 @@ export function CardView({ card, definition, selected = false, compact = false, 
       {enhancementSummaries.length > 0 ? (
         <div className="card-enhancements">{enhancementSummaries.join(" · ")}</div>
       ) : null}
+      {enchantmentSummary ? <div className="card-enhancements">{enchantmentSummary}</div> : null}
       {!compact ? <p>{effectiveDefinition.description}</p> : null}
     </>
   );

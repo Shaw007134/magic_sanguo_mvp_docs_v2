@@ -1,6 +1,6 @@
 # Enchantment Design Notes
 
-Phase 15E-A adds the content and run-state foundation for enchantments. It intentionally does not add enchantment combat effects.
+Phase 15E adds the content, event, targeting, and persistence foundation for enchantments. It intentionally does not add enchantment combat effects.
 
 ## Card Categories
 
@@ -34,6 +34,7 @@ Current rules:
 - Level 1-3 random event pools exclude enchantment-tagged templates.
 - Level 7+ random event pools can include enchantment-tagged templates when configured.
 - The third non-starter major event can force the Bronze Enchantment Intro template after the early game.
+- Choosing an enchantment event requires an eligible owned card target. Invalid targets fail before event EXP or node advancement.
 
 ## Planned Enchantment Types
 
@@ -50,6 +51,27 @@ Current definitions are data stubs only:
 
 Each `EnchantmentDefinition` has `id`, `name`, `type`, `tier`, `rarity`, `minLevel`, `targetRule`, and `description`.
 
+## Attachment Rules
+
+Phase 15E-B stores one optional attachment on `CardInstance.enchantment`.
+
+Attachment fields:
+
+- `id`
+- `enchantmentDefinitionId`
+- `sourceEventChoiceId`
+- `attachedAtNodeIndex`
+
+Target rules are validated from the selected card definition:
+
+- `ANY_CARD`: any owned card.
+- `ANY_ACTIVE_CARD`: any `ACTIVE` card.
+- `WEAPON_CARD`, `ARMOR_CARD`, `FIRE_CARD`, `POISON_CARD`, `COOLDOWN_CARD`, `CONTROL_CARD`, and `TERMINAL_CARD`: card must have the matching content category.
+
+Only one enchantment can be attached to a card. Phase 15D reward-card enhancements remain separate in `CardInstance.enhancements`, so a card may have reward-card enhancements and one enchantment at the same time.
+
+Attachments are persisted by save/load and displayed on card views. They do not alter effective card definitions, combat commands, cooldowns, statuses, targeting, replay, or balance report mechanics yet.
+
 ## Balance Risks
 
 - Enchantments can multiply already-strong terminal and Armor-terminal builds if future effects are additive with Phase 15D enhancements.
@@ -59,8 +81,7 @@ Each `EnchantmentDefinition` has `id`, `name`, `type`, `tier`, `rarity`, `minLev
 
 ## Future Phases
 
-1. Add a targeting UI for pending enchantment choices and validate eligible cards by category.
-2. Persist attached enchantments on card instances without changing combat behavior.
-3. Add replay and summary text for applied enchantments.
-4. Implement one low-risk enchantment family at a time with balance reports before adding the next family.
-5. Keep Obsidian, Freeze, Slow, and Haste enchantment effects deferred until boss and control pacing are stable.
+1. Improve targeting UX with eligible-card highlighting and clearer invalid-target messaging.
+2. Add replay and summary text for applied enchantments once effects exist.
+3. Implement one low-risk enchantment family at a time with balance reports before adding the next family.
+4. Keep Obsidian, Freeze, Slow, and Haste enchantment effects deferred until boss and control pacing are stable.

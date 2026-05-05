@@ -89,7 +89,7 @@ export function getChoiceDisplayInfo(
       title: enchantment?.name ?? choice.label,
       subtitle: "Enchantment study",
       meta: enchantment ? [enchantment.tier, enchantment.type, formatTargetRule(enchantment.targetRule)] : [],
-      summary: choice.description ?? enchantment?.description
+      summary: `${choice.description ?? enchantment?.description ?? "Choose a planned enchantment."} Select an eligible owned card first.`
     };
   }
 
