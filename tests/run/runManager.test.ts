@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { RUN_MAX_COMBAT_TICKS } from "../../src/combat/CombatEngine.js";
+import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
+import { getEffectiveCardDefinition } from "../../src/content/cards/effectiveCardDefinition.js";
 import { BALANCE_REPORT_MAX_COMBAT_TICKS } from "../../src/debug/BalanceReport.js";
 import type { CombatResult } from "../../src/model/result.js";
 import { createNewRun, getFormationSlotCountForLevel, getRunNodes, RunManager } from "../../src/run/RunManager.js";
@@ -116,6 +118,7 @@ describe("RunManager", () => {
     expect(manager.state.expToNextLevel).toBe(10);
     expect(manager.state.gold).toBe(10);
     expect(manager.state.ownedCards).toEqual([]);
+    expect(manager.state.ownedRewardCards).toEqual([]);
     expect(manager.state.formationSlotCount).toBe(4);
     expect(manager.state.formationSlots).toHaveLength(4);
     expect(manager.state.chestCapacity).toBe(16);
@@ -410,6 +413,125 @@ describe("RunManager", () => {
     const beforeGoldSale = manager.state.gold;
     expect(manager.sellCardFromChest(upgraded.instanceId).ok).toBe(true);
     expect(manager.state.gold).toBe(beforeGoldSale + 4);
+  });
+
+  it("reward cards are separate loot, sell for gold, and do not count toward combat card capacity", () => {
+    const manager = createNewRun("reward-card-gold");
+    for (let index = 0; index < manager.state.chestCapacity; index += 1) {
+      expect(manager.addCardToChest(index % 2 === 0 ? "rusty-blade" : "wooden-shield").ok).toBe(true);
+    }
+
+    expect(manager.state.ownedCards).toHaveLength(16);
+    expect(manager.addRewardCardToLoot("copper-coin-pouch").ok).toBe(true);
+    expect(manager.state.ownedRewardCards).toHaveLength(1);
+    expect(manager.state.ownedCards).toHaveLength(16);
+
+    const beforeGold = manager.state.gold;
+    const rewardCard = manager.state.ownedRewardCards[0]!;
+    const result = manager.sellRewardCard(rewardCard.instanceId);
+
+    expect(result.ok).toBe(true);
+    expect(manager.state.gold).toBe(beforeGold + 2);
+    expect(manager.state.ownedRewardCards).toHaveLength(0);
+  });
+
+  it("sell-triggered reward cards enhance the leftmost active card and preserve enhancement behavior", () => {
+    const manager = createNewRun("reward-card-enhance-damage");
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    const blade = manager.state.ownedCards[0]!;
+    expect(manager.moveCardFromChestToFormation(blade.instanceId, 1).ok).toBe(true);
+    expect(manager.addRewardCardToLoot("sharpened-edge").ok).toBe(true);
+
+    const beforeGold = manager.state.gold;
+    const sale = manager.sellRewardCard(manager.state.ownedRewardCards[0]!.instanceId);
+
+    expect(sale.ok).toBe(true);
+    expect(sale.message).toContain("Rusty Blade gained +1 direct damage");
+    expect(manager.state.gold).toBe(beforeGold + 1);
+    expect(manager.state.ownedRewardCards).toEqual([]);
+    expect(manager.state.ownedCards[0]?.enhancements).toEqual([
+      expect.objectContaining({
+        sourceRewardCardDefinitionId: "sharpened-edge",
+        type: "INCREASE_DAMAGE",
+        amount: 1
+      })
+    ]);
+
+    const definition = getActiveCardDefinitionsById().get("rusty-blade")!;
+    const effective = getEffectiveCardDefinition(manager.state.ownedCards[0]!, definition);
+    expect(effective.effects?.find((effect) => effect["command"] === "DealDamage")?.["amount"]).toBe(3);
+  });
+
+  it("Burn and Poison reward enhancements require matching leftmost active card effects", () => {
+    const manager = createNewRun("reward-card-enhance-status");
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    expect(manager.addCardToChest("oil-flask").ok).toBe(true);
+    const blade = manager.state.ownedCards.find((card) => card.definitionId === "rusty-blade")!;
+    const oil = manager.state.ownedCards.find((card) => card.definitionId === "oil-flask")!;
+    expect(manager.moveCardFromChestToFormation(blade.instanceId, 1).ok).toBe(true);
+    expect(manager.addRewardCardToLoot("ember-powder").ok).toBe(true);
+
+    const invalid = manager.sellRewardCard(manager.state.ownedRewardCards[0]!.instanceId);
+    expect(invalid.ok).toBe(false);
+    expect(invalid.error).toContain("does not apply Burn");
+    expect(manager.state.ownedRewardCards).toHaveLength(1);
+
+    expect(manager.removeCardFromFormationToChest(blade.instanceId).ok).toBe(true);
+    expect(manager.moveCardFromChestToFormation(oil.instanceId, 1).ok).toBe(true);
+    const valid = manager.sellRewardCard(manager.state.ownedRewardCards[0]!.instanceId);
+    expect(valid.ok).toBe(true);
+    expect(manager.state.ownedCards.find((card) => card.instanceId === oil.instanceId)?.enhancements?.[0]).toEqual(
+      expect.objectContaining({ sourceRewardCardDefinitionId: "ember-powder", type: "INCREASE_BURN", amount: 1 })
+    );
+  });
+
+  it("cooldown reward enhancements reduce effective cooldown deterministically and respect the cap", () => {
+    const manager = createNewRun("reward-card-enhance-cooldown");
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    const blade = manager.state.ownedCards[0]!;
+    expect(manager.moveCardFromChestToFormation(blade.instanceId, 1).ok).toBe(true);
+    manager.state = {
+      ...manager.state,
+      ownedCards: [{
+        ...blade,
+        enhancements: [{
+          id: "existing-cooldown",
+          sourceRewardCardDefinitionId: "precision-gear",
+          type: "REDUCE_COOLDOWN_PERCENT",
+          percent: 39
+        }]
+      }]
+    };
+    expect(manager.addRewardCardToLoot("precision-gear").ok).toBe(true);
+
+    const sale = manager.sellRewardCard(manager.state.ownedRewardCards[0]!.instanceId);
+    expect(sale.ok).toBe(true);
+    expect(sale.message).toContain("40% cap");
+    const enhanced = manager.state.ownedCards[0]!;
+    expect(enhanced.enhancements?.filter((enhancement) => enhancement.type === "REDUCE_COOLDOWN_PERCENT")
+      .reduce((total, enhancement) => total + (enhancement.percent ?? 0), 0)).toBe(40);
+
+    const base = getActiveCardDefinitionsById().get("rusty-blade")!;
+    const effective = getEffectiveCardDefinition(enhanced, base);
+    expect(effective.cooldownTicks).toBe(30);
+  });
+
+  it("duplicate auto-upgrade preserves card enhancements and selling the combat card removes them", () => {
+    const manager = createNewRun("reward-card-enhancement-upgrade");
+    expect(manager.addCardToChest("rusty-blade").ok).toBe(true);
+    const blade = manager.state.ownedCards[0]!;
+    expect(manager.moveCardFromChestToFormation(blade.instanceId, 1).ok).toBe(true);
+    expect(manager.addRewardCardToLoot("sharpened-edge").ok).toBe(true);
+    expect(manager.sellRewardCard(manager.state.ownedRewardCards[0]!.instanceId).ok).toBe(true);
+    expect(manager.removeCardFromFormationToChest(blade.instanceId).ok).toBe(true);
+
+    expect(manager.gainCardOrUpgradeDuplicate("rusty-blade").ok).toBe(true);
+    expect(manager.state.ownedCards).toHaveLength(1);
+    expect(manager.state.ownedCards[0]?.tierOverride).toBe("SILVER");
+    expect(manager.state.ownedCards[0]?.enhancements).toHaveLength(1);
+
+    expect(manager.sellCardFromChest(manager.state.ownedCards[0]!.instanceId).ok).toBe(true);
+    expect(manager.state.ownedCards).toEqual([]);
   });
 
   it("first combat cannot start without an active card in formation, then uses MonsterGenerator and returns replay/summary", () => {

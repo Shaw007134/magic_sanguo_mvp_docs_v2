@@ -1,4 +1,6 @@
 import type { CardDefinition, EffectDefinition, TriggerDefinition } from "../../model/card.js";
+import type { CardInstance } from "../../model/card.js";
+import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
 
 export interface CardDisplayInfo {
@@ -27,6 +29,25 @@ export function getCardSummary(card: CardDefinition): string {
   }
 
   return (card.effects ?? []).map(formatEffect).join(" · ") || "No effect";
+}
+
+export function getCardEnhancementSummaries(card: CardInstance): readonly string[] {
+  const rewardCardsById = getRewardCardDefinitionsById();
+  return (card.enhancements ?? []).map((enhancement) => {
+    const sourceName = rewardCardsById.get(enhancement.sourceRewardCardDefinitionId)?.name ?? enhancement.sourceRewardCardDefinitionId;
+    switch (enhancement.type) {
+      case "INCREASE_DAMAGE":
+        return `+${enhancement.amount ?? 0} damage from ${sourceName}`;
+      case "INCREASE_BURN":
+        return `+${enhancement.amount ?? 0} Burn from ${sourceName}`;
+      case "INCREASE_POISON":
+        return `+${enhancement.amount ?? 0} Poison from ${sourceName}`;
+      case "REDUCE_COOLDOWN_PERCENT":
+        return `cooldown -${formatPercent(enhancement.percent ?? 0)} from ${sourceName}`;
+      default:
+        return `enhanced by ${sourceName}`;
+    }
+  });
 }
 
 function formatTrigger(trigger: TriggerDefinition): string {

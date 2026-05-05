@@ -431,6 +431,68 @@ Report readability changes:
 
 It is safer to consider a small future mechanic only after manual playtests confirm Phase 15C boss pacing feels good. The report still says terminal burst and boss fragility need human review before raising player card numbers again.
 
+## Phase 15D Sell-Triggered Reward Cards
+
+Phase 15D adds reward cards as run economy/progression objects. Reward cards are not combat cards, do not enter `ownedCards`, do not count against the fixed 16 combat-card capacity, cannot be placed in formation, and never enter `FormationSnapshot` or `CombatEngine`.
+
+Reward-card rules:
+
+- Reward cards live in `ownedRewardCards`.
+- `GOLD_ONLY` reward cards sell for gold and have no other effect.
+- `SELL_TRIGGER_ENHANCEMENT` reward cards sell for gold and permanently enhance the leftmost placed active card if the target is valid.
+- The only Phase 15D target rule is `LEFTMOST_FORMATION_ACTIVE_CARD`.
+- Invalid enhancement sales fail clearly and do not grant gold, remove the reward card, or mutate enhancements.
+- Reward cards are not offered in the starter shop or starter event.
+- Battle rewards can include at most 1 reward card. Level 1-2 rewards do not offer reward cards. Later normal/elite/boss-style reward sets can offer at most 1.
+- Boss loot preview slots are not implemented yet; if added later, they should remain visual/economy preview data and not enter combat snapshots.
+
+Initial reward-card list:
+
+| Reward card | Tier | Type | Sell / enhancement |
+| --- | --- | --- | --- |
+| Copper Coin Pouch | Bronze | Gold only | Sell for 2 gold |
+| Silver Tax Seal | Silver | Gold only | Sell for 5 gold |
+| Spoils Chest | Gold | Gold only | Sell for 9 gold |
+| Jade Tribute | Jade | Gold only | Sell for 14 gold |
+| Sharpened Edge | Bronze | Enhancement | +1 direct damage, sell for 1 gold |
+| Ember Powder | Bronze | Enhancement | +1 Burn, sell for 1 gold |
+| Venom Dust | Bronze | Enhancement | +1 Poison, sell for 1 gold |
+| Oiled Gear | Bronze | Enhancement | -2% cooldown, sell for 1 gold |
+| Tempered Edge | Silver | Enhancement | +2 direct damage, sell for 2 gold |
+| Fire Resin | Silver | Enhancement | +2 Burn, sell for 2 gold |
+| Toxin Flask | Silver | Enhancement | +2 Poison, sell for 2 gold |
+| Balanced Gear | Silver | Enhancement | -4% cooldown, sell for 2 gold |
+| General's Whetstone | Gold | Enhancement | +3 direct damage, sell for 4 gold |
+| Siege Pitch | Gold | Enhancement | +3 Burn, sell for 4 gold |
+| Black Venom | Gold | Enhancement | +3 Poison, sell for 4 gold |
+| Precision Gear | Gold | Enhancement | -6% cooldown, sell for 4 gold |
+
+Persistent enhancement rules:
+
+- Enhancements attach to `CardInstance.enhancements` and persist through save/load.
+- Flat damage/Burn/Poison enhancements stack additively.
+- Cooldown reduction enhancements stack additively up to a 40% total cap.
+- Enhanced cooldowns cannot go below 30 logic ticks / 0.5 seconds.
+- Enhancements apply after tierOverride scaling.
+- Enhancements affect active card effects only; they do not affect passive trigger internal cooldowns, DOT tick intervals, control status clocks, Haste/Slow/Freeze timing, or runtime modifiers.
+
+Latest deterministic report snapshot after Phase 15D:
+
+- Total fights: 98.
+- Player wins: 66/98.
+- Enhanced sample builds: Enhanced Burn Terminal and Enhanced Cooldown Tempo.
+- Enhanced Burn Terminal uses Fire Cart Battery with +3 Burn from Siege Pitch.
+- Enhanced Cooldown Tempo uses Vanguard Saber with -6% cooldown from Precision Gear.
+- Remaining common warnings are TERMINAL_TOO_BURSTY, PLAYER_DEAD_TOO_FAST, BOSS_TOO_FRAGILE, RUNAWAY_COOLDOWN_RISK, STALL_RISK, and TIMEOUT_OR_NEAR_TIMEOUT.
+
+Known reward-card risks:
+
+- High-frequency damage cards can scale sharply with flat damage enhancements.
+- Fast Burn/Poison applicators can become boss-bursty with +2/+3 status amount.
+- Cooldown reduction stacks with Haste and Drum engines, so activation outliers remain a watch item.
+- Leftmost targeting is intentionally restrictive but may need UX polish once players have larger 16-slot boards.
+- A future gold-only cash-out action for enhancement cards could reduce feel-bad invalid-target moments; Phase 15D keeps invalid enhancement sales fail-fast for clarity.
+
 ## Iron Warlord Terminal/Core Cards
 
 | Terminal | Mechanic | Support cards | Weakness |

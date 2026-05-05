@@ -1,6 +1,8 @@
 import type { CardDefinition } from "../../model/card.js";
 import { formatTicksAsSeconds } from "../../replay/time.js";
 import type { RunChoice } from "../../run/RunState.js";
+import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
+import { formatEnhancementEffect } from "./rewardCardDisplay.js";
 import { getSkillDefinitionsById } from "../../run/skills/skillDefinitions.js";
 import { getCardDisplayInfo } from "./cardDisplay.js";
 
@@ -107,6 +109,30 @@ export function getChoiceDisplayInfo(
       title: choice.label,
       subtitle: "Gold reward",
       meta: [`Gold: ${choice.gold ?? 0}`]
+    };
+  }
+
+  if (choice.type === "REWARD_LOOT_CARD") {
+    const rewardCard = choice.rewardCardDefinitionId
+      ? getRewardCardDefinitionsById().get(choice.rewardCardDefinitionId)
+      : undefined;
+    if (!rewardCard) {
+      return {
+        title: choice.label,
+        subtitle: "Loot reward",
+        meta: []
+      };
+    }
+    return {
+      title: rewardCard.name,
+      subtitle: "Loot reward",
+      meta: [
+        `${rewardCard.tier.charAt(0)}${rewardCard.tier.slice(1).toLowerCase()}`,
+        `Sell: ${rewardCard.sellGold} gold`
+      ],
+      summary: rewardCard.rewardCardType === "GOLD_ONLY"
+        ? `Sell: gain ${rewardCard.sellGold} gold.`
+        : formatEnhancementEffect(rewardCard)
     };
   }
 

@@ -2,6 +2,8 @@ import type { CardDefinition, CardInstance, CardTier, EffectDefinition } from ".
 import { formatTicksAsSeconds } from "../../replay/time.js";
 
 export const CARD_TIER_ORDER = ["BRONZE", "SILVER", "GOLD", "JADE", "CELESTIAL"] as const satisfies readonly CardTier[];
+export const REWARD_ENHANCEMENT_MIN_COOLDOWN_TICKS = 30;
+export const REWARD_ENHANCEMENT_COOLDOWN_REDUCTION_CAP_PERCENT = 40;
 
 const TIER_SCALING = {
   BRONZE: { valueMultiplier: 1, cooldownMultiplier: 1 },
@@ -13,11 +15,12 @@ const TIER_SCALING = {
 
 export function getEffectiveCardDefinition(card: CardInstance, baseDefinition: CardDefinition): CardDefinition {
   const effectiveTier = card.tierOverride ?? baseDefinition.tier;
-  if (effectiveTier === baseDefinition.tier) {
+  const hasEnhancements = (card.enhancements?.length ?? 0) > 0;
+  if (effectiveTier === baseDefinition.tier && !hasEnhancements) {
     return baseDefinition;
   }
   const scaling = TIER_SCALING[effectiveTier];
-  return {
+  const tierScaledDefinition = {
     ...baseDefinition,
     id: getEffectiveCardDefinitionId(card),
     name: baseDefinition.name,
@@ -29,10 +32,14 @@ export function getEffectiveCardDefinition(card: CardInstance, baseDefinition: C
     effects: baseDefinition.effects?.map((effect) => scaleEffect(effect, baseDefinition.tier, effectiveTier)),
     triggers: baseDefinition.triggers?.map((trigger) => scaleTrigger(trigger, baseDefinition.tier, effectiveTier))
   };
+  return applyCardInstanceEnhancements(tierScaledDefinition, card);
 }
 
 export function getEffectiveCardDefinitionId(card: CardInstance): string {
-  return card.tierOverride ? `${card.definitionId}__${card.instanceId}__${card.tierOverride}` : card.definitionId;
+  const hasEnhancements = (card.enhancements?.length ?? 0) > 0;
+  return card.tierOverride || hasEnhancements
+    ? `${card.definitionId}__${card.instanceId}__${card.tierOverride ?? "BASE"}__enh${card.enhancements?.length ?? 0}`
+    : card.definitionId;
 }
 
 export function createEffectiveCardDefinitionMap(input: {
@@ -42,7 +49,7 @@ export function createEffectiveCardDefinitionMap(input: {
   const definitions = new Map(input.baseDefinitionsById);
   for (const card of input.cardInstances) {
     const baseDefinition = input.baseDefinitionsById.get(card.definitionId);
-    if (!baseDefinition || !card.tierOverride) {
+    if (!baseDefinition || (!card.tierOverride && (card.enhancements?.length ?? 0) === 0)) {
       continue;
     }
     const effectiveDefinition = getEffectiveCardDefinition(card, baseDefinition);
@@ -53,7 +60,7 @@ export function createEffectiveCardDefinitionMap(input: {
 
 export function createEffectiveCardInstances(cards: readonly CardInstance[]): readonly CardInstance[] {
   return cards.map((card) =>
-    card.tierOverride ? { ...card, definitionId: getEffectiveCardDefinitionId(card) } : card
+    card.tierOverride || (card.enhancements?.length ?? 0) > 0 ? { ...card, definitionId: getEffectiveCardDefinitionId(card) } : card
   );
 }
 
@@ -108,6 +115,48 @@ function scaleEffect(effect: EffectDefinition, baseTier: CardTier, effectiveTier
   return effect;
 }
 
+function applyCardInstanceEnhancements(card: CardDefinition, instance: CardInstance): CardDefinition {
+  const enhancements = instance.enhancements ?? [];
+  if (enhancements.length === 0 || card.type !== "ACTIVE") {
+    return card;
+  }
+  const damageIncrease = enhancements
+    .filter((enhancement) => enhancement.type === "INCREASE_DAMAGE")
+    .reduce((total, enhancement) => total + (enhancement.amount ?? 0), 0);
+  const burnIncrease = enhancements
+    .filter((enhancement) => enhancement.type === "INCREASE_BURN")
+    .reduce((total, enhancement) => total + (enhancement.amount ?? 0), 0);
+  const poisonIncrease = enhancements
+    .filter((enhancement) => enhancement.type === "INCREASE_POISON")
+    .reduce((total, enhancement) => total + (enhancement.amount ?? 0), 0);
+  const cooldownReductionPercent = Math.min(
+    REWARD_ENHANCEMENT_COOLDOWN_REDUCTION_CAP_PERCENT,
+    enhancements
+      .filter((enhancement) => enhancement.type === "REDUCE_COOLDOWN_PERCENT")
+      .reduce((total, enhancement) => total + (enhancement.percent ?? 0), 0)
+  );
+
+  return {
+    ...card,
+    cooldownTicks:
+      card.cooldownTicks === undefined || cooldownReductionPercent <= 0
+        ? card.cooldownTicks
+        : roundCooldownTicks(card.cooldownTicks * (1 - cooldownReductionPercent / 100)),
+    effects: card.effects?.map((effect) => {
+      if (effect["command"] === "DealDamage" && typeof effect["amount"] === "number" && damageIncrease > 0) {
+        return { ...effect, amount: effect["amount"] + damageIncrease };
+      }
+      if (effect["command"] === "ApplyBurn" && typeof effect["amount"] === "number" && burnIncrease > 0) {
+        return { ...effect, amount: effect["amount"] + burnIncrease };
+      }
+      if (effect["command"] === "ApplyPoison" && typeof effect["amount"] === "number" && poisonIncrease > 0) {
+        return { ...effect, amount: effect["amount"] + poisonIncrease };
+      }
+      return effect;
+    })
+  };
+}
+
 function scaleTrigger(trigger: Readonly<Record<string, unknown>>, baseTier: CardTier, effectiveTier: CardTier) {
   if (!Array.isArray(trigger["effects"])) {
     return trigger;
@@ -139,7 +188,7 @@ function scaleAmount(baseAmount: number, baseTier: CardTier, effectiveTier: Card
 }
 
 function roundCooldownTicks(value: number): number {
-  return Math.max(30, Math.round(value / 15) * 15);
+  return Math.max(REWARD_ENHANCEMENT_MIN_COOLDOWN_TICKS, Math.round(value / 15) * 15);
 }
 
 function getKeyStats(card: CardDefinition): readonly { readonly label: string; readonly value: string }[] {

@@ -209,12 +209,14 @@ small {
   font-style: italic;
 }
 
-.card-actions {
+.card-actions,
+.loot-card {
   display: grid;
   gap: 8px;
 }
 
 .card-actions > button,
+.loot-card > button,
 .secondary-action,
 .primary-action {
   min-height: 38px;
@@ -249,6 +251,17 @@ small {
   color: #26394f;
   font-size: 13px;
   font-weight: 700;
+}
+
+.card-enhancements {
+  color: #5d3f09;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.empty-copy {
+  color: #596170;
+  font-size: 13px;
 }
 
 .formation-grid {

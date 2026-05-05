@@ -12,6 +12,7 @@ import generalPhase15ComboToolsJson from "../../data/cards/general/phase15_combo
 import generalPoisonHealJson from "../../data/cards/general/poison_heal.json" with { type: "json" };
 import generalReactionsJson from "../../data/cards/general/reactions.json" with { type: "json" };
 import monsterCardsJson from "../../data/cards/monster_cards.json" with { type: "json" };
+import rewardCardsJson from "../../data/rewards/reward_cards.json" with { type: "json" };
 import mvpSkillsJson from "../../data/skills/mvp_skills.json" with { type: "json" };
 import { CombatEngine } from "../../src/combat/CombatEngine.js";
 import {
@@ -44,6 +45,7 @@ import {
 } from "../../src/content/cards/contentPools.js";
 import { MonsterGenerator } from "../../src/content/monsters/MonsterGenerator.js";
 import { getMonsterTemplateById, MONSTER_TEMPLATES } from "../../src/content/monsters/monsterTemplates.js";
+import { getRewardCardDefinitionsById, REWARD_CARD_DEFINITIONS } from "../../src/content/rewards/rewardCards.js";
 import type { CardDefinition, CardInstance } from "../../src/model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../../src/model/formation.js";
 import { RunManager } from "../../src/run/RunManager.js";
@@ -55,6 +57,7 @@ import { SKILL_DEFINITIONS } from "../../src/run/skills/skillDefinitions.js";
 import { getCardDisplayInfo } from "../../src/ui/presentation/cardDisplay.js";
 import { validateCardDefinition } from "../../src/validation/cardValidation.js";
 import { validateFormationSnapshot } from "../../src/validation/formationValidation.js";
+import { validateRewardCardDefinition } from "../../src/validation/rewardCardValidation.js";
 
 const generalJsonCards = [
   ...generalBasicKitJson,
@@ -72,6 +75,7 @@ const ironWarlordJsonCards = [
   ...classPhase15BuildArchetypesJson
 ] as readonly CardDefinition[];
 const activeCardsById = getActiveCardDefinitionsById();
+const rewardCardsById = getRewardCardDefinitionsById();
 const PHASE_13A_CARD_IDS = new Set([...generalJsonCards, ...ironWarlordJsonCards].map((card) => card.id));
 const EARLY_REWARD_TIERS = new Set(["BRONZE", "SILVER"]);
 const EARLY_ALLOWED_TIERS = new Set(["BRONZE", "SILVER"]);
@@ -187,6 +191,31 @@ describe("active MVP content registry", () => {
     expect(SKILL_DEFINITIONS.find((skill) => skill.id === "fire-study")?.modifierTemplates[0]?.condition).toEqual({
       sourceHasTag: "fire"
     });
+  });
+
+  it("Phase 15D reward cards load, validate, and stay out of the combat card registry", () => {
+    expect(rewardCardsJson).toHaveLength(16);
+    expect(REWARD_CARD_DEFINITIONS).toEqual(rewardCardsJson);
+    expect(rewardCardsById.size).toBe(REWARD_CARD_DEFINITIONS.length);
+
+    for (const rewardCard of REWARD_CARD_DEFINITIONS) {
+      expect(validateRewardCardDefinition(rewardCard), rewardCard.id).toEqual({ valid: true, errors: [] });
+      expect(activeCardsById.has(rewardCard.id), rewardCard.id).toBe(false);
+      expect(validateCardDefinition(rewardCard as never).valid, rewardCard.id).toBe(false);
+      expect(rewardCard.description, rewardCard.id).not.toMatch(/On[A-Z]|hook|ticks?/);
+      expect(rewardCard.description, rewardCard.id).not.toMatch(/Barrier|Ward|EnergyShield|Energy Shield|absorb|Vulnerable|Silence|Mana|Spirit|Fate|Heat|morale|rage|random/i);
+      expect(rewardCard.tags.join(" "), rewardCard.id).not.toMatch(/barrier|ward|energy|absorb|vulnerable|silence|mana|spirit|fate|heat|morale|rage|random/i);
+
+      if (rewardCard.rewardCardType === "GOLD_ONLY") {
+        expect(rewardCard.sellGold, rewardCard.id).toBeGreaterThan(0);
+        expect(rewardCard.enhancementType, rewardCard.id).toBeUndefined();
+      } else {
+        expect(rewardCard.sellGold, rewardCard.id).toBeGreaterThan(0);
+        expect(rewardCard.enhancementType, rewardCard.id).toBeDefined();
+        expect(rewardCard.targetRule, rewardCard.id).toBe("LEFTMOST_FORMATION_ACTIVE_CARD");
+        expect((rewardCard.amount ?? rewardCard.percent)!, rewardCard.id).toBeGreaterThan(0);
+      }
+    }
   });
 
   it("monster and boss templates reference known active cards and generate valid snapshots", () => {
@@ -343,6 +372,7 @@ describe("active MVP content registry", () => {
       usedCardDefinitionIds: ["training-staff"],
       cardDefinitionsById: activeCardsById
     });
+    expect(firstBattleRewards.some((choice) => choice.type === "REWARD_LOOT_CARD")).toBe(false);
     const rewardCards = firstBattleRewards
       .filter((choice) => choice.type === "REWARD_CARD")
       .map((choice) => activeCardsById.get(choice.cardDefinitionId ?? ""))
@@ -350,6 +380,33 @@ describe("active MVP content registry", () => {
     expect(rewardCards.length).toBeGreaterThan(0);
     expect(rewardCards.some((card) => EARLY_REWARD_TIERS.has(card.tier))).toBe(true);
     expect(rewardCards.every((card) => ["GOLD", "JADE", "CELESTIAL"].includes(card.tier))).toBe(false);
+  });
+
+  it("reward cards appear only after onboarding and at most once per reward set", () => {
+    const earlyReward = createRewardChoices({
+      seed: "loot-too-early",
+      nodeIndex: 3,
+      cardDefinitionsById: activeCardsById,
+      level: 2
+    });
+    expect(earlyReward.some((choice) => choice.type === "REWARD_LOOT_CARD")).toBe(false);
+
+    for (const [level, boss] of [[3, false], [6, false], [9, false], [10, true]] as const) {
+      for (let index = 0; index < 12; index += 1) {
+        const choices = createRewardChoices({
+          seed: `loot-reward-${level}-${index}`,
+          nodeIndex: index + 10,
+          cardDefinitionsById: activeCardsById,
+          level,
+          boss
+        });
+        const rewardCardChoices = choices.filter((choice) => choice.type === "REWARD_LOOT_CARD");
+        expect(rewardCardChoices.length, `${level}:${index}`).toBeLessThanOrEqual(1);
+        for (const choice of rewardCardChoices) {
+          expect(rewardCardsById.has(choice.rewardCardDefinitionId ?? ""), choice.rewardCardDefinitionId).toBe(true);
+        }
+      }
+    }
   });
 
   it("curated content pools reference known cards and expose terminal/support structure", () => {

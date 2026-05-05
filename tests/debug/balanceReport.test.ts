@@ -14,7 +14,7 @@ import { validateFormationSnapshot } from "../../src/validation/formationValidat
 
 const activeCardsById = getActiveCardDefinitionsById();
 
-describe("Phase 15A balance report", () => {
+describe("Phase 15D balance report", () => {
   it("declares every required sample build id exactly once", () => {
     const sampleIds = SAMPLE_BUILDS.map((build) => build.id);
 
@@ -50,8 +50,8 @@ describe("Phase 15A balance report", () => {
     const report = createBalanceReport("balance-report-fields");
 
     expect(report.entries.length).toBe(SAMPLE_BUILDS.length * 7);
-    expect(report.entries.length).toBe(84);
-    expect(report.sampleBuilds).toHaveLength(12);
+    expect(report.entries.length).toBe(98);
+    expect(report.sampleBuilds).toHaveLength(14);
     expect(report.entries.every((entry) => entry.seed === "balance-report-fields")).toBe(true);
     for (const buildId of REQUIRED_SAMPLE_BUILD_IDS) {
       expect(report.entries.some((entry) => entry.buildId === buildId && entry.enemyId === "gate-captain-elite"), buildId).toBe(true);
@@ -80,7 +80,7 @@ describe("Phase 15A balance report", () => {
     }
   });
 
-  it("renders the readable Phase 15C Markdown sections deterministically", () => {
+  it("renders the readable Phase 15D Markdown sections deterministically", () => {
     const report = createBalanceReport("balance-report-markdown");
     const first = renderMarkdownReport(report);
     const second = renderMarkdownReport(report);
@@ -91,6 +91,7 @@ describe("Phase 15A balance report", () => {
     expect(first).toContain("## Boss Summary");
     expect(first).toContain("## Boss Challenge Summary");
     expect(first).toContain("## Build Legitimacy Notes");
+    expect(first).toContain("## Enhanced Build Summary");
     expect(first).toContain("## Warning Hotspots");
     expect(first).toContain("## Outcome Attribution Snapshot");
     expect(first).toContain("## Trigger / Activation Outliers");
@@ -102,6 +103,8 @@ describe("Phase 15A balance report", () => {
     expect(first).toContain("Likely Design Cause");
     expect(first).toContain("Wooden Shield");
     expect(first).toContain("Iron Guard");
+    expect(first).toContain("Enhanced Burn Terminal");
+    expect(first).toContain("Fire Cart Battery has +3 Burn from Siege Pitch.");
   });
 
   it("classifies boss challenge and build legitimacy warnings", () => {

@@ -1515,3 +1515,68 @@ Known issues:
 - Haste / Drum Tempo remains an engine shell without enough output endpoint pressure.
 Next recommended task:
 - Phase 15D: run manual playtests against the Phase 15C boss suite, then either tune terminal burst/boss pressure further or add one small mechanic only if current report risks are accepted.
+
+---
+
+Date: 2026-05-05
+Phase: 15D
+Task: Implemented sell-triggered reward cards and enhancement loot foundation.
+Files changed:
+- data/rewards/reward_cards.json
+- src/model/card.ts
+- src/model/rewardCard.ts
+- src/content/rewards/rewardCards.ts
+- src/validation/rewardCardValidation.ts
+- src/content/cards/effectiveCardDefinition.ts
+- src/run/RunState.ts
+- src/run/RunManager.ts
+- src/run/rewards/RewardGenerator.ts
+- src/run/save/SaveManager.ts
+- src/ui/App.tsx
+- src/ui/components/CardView.tsx
+- src/ui/components/RewardLootPanel.tsx
+- src/ui/presentation/cardDisplay.ts
+- src/ui/presentation/choiceDisplay.ts
+- src/ui/presentation/rewardCardDisplay.ts
+- src/ui/styles.css
+- src/debug/BalanceReport.ts
+- tests/content/activeContentRegistry.test.ts
+- tests/content/effectiveCardDefinition.test.ts
+- tests/run/runManager.test.ts
+- tests/run/saveManager.test.ts
+- tests/ui/cardDisplay.test.ts
+- tests/ui/runPresentation.test.tsx
+- tests/debug/balanceReport.test.ts
+- docs/BALANCE_NOTES.md
+- PROJECT_LOG.md
+- HANDOFF.md
+Tests added/updated:
+- Reward-card definitions validate, have unique registry entries, and stay out of the combat card registry.
+- RunManager owns reward cards separately from combat cards and sells gold-only reward cards for gold.
+- Sell-triggered damage/Burn/cooldown enhancements apply to the leftmost valid active card and fail clearly for invalid targets.
+- CardInstance enhancements persist through save/load, survive duplicate auto-upgrade, and are removed when the enhanced combat card is sold.
+- Effective card definitions apply enhancements after tier scaling and cap cooldown reduction.
+- Reward generation avoids starter reward cards and includes at most one reward-card choice in a reward set.
+- UI display tests cover loot sell text, current target messaging, and readable enhanced combat-card summaries.
+- Balance report tests cover 14 sample builds, Enhanced Build Summary, and enhanced sample build fixtures.
+Implementation notes:
+- Save format is now version 3. Version 2 saves fail clearly because reward cards and CardInstance enhancements are persisted.
+- Reward cards live in ownedRewardCards and never enter ownedCards, FormationSnapshot, or CombatEngine.
+- Initial content includes 16 reward cards: 4 gold-only loot cards and 12 sell-triggered enhancement cards.
+- Supported enhancements are flat direct damage, Burn, Poison, and capped cooldown reduction.
+- Cooldown enhancement total is capped at 40% and cannot reduce a card below 30 logic ticks / 0.5 seconds.
+Report warning changes observed:
+- Latest report has 98 fights, 14 sample builds, and 66 player wins.
+- Enhanced Burn Terminal and Enhanced Cooldown Tempo are included as direct CardInstance enhancement fixtures.
+- Remaining warnings are concentrated in TERMINAL_TOO_BURSTY, PLAYER_DEAD_TOO_FAST, BOSS_TOO_FRAGILE, RUNAWAY_COOLDOWN_RISK, STALL_RISK, and TIMEOUT_OR_NEAR_TIMEOUT.
+How to run:
+- pnpm test
+- pnpm typecheck
+- pnpm build
+- pnpm balance:report
+Known issues:
+- Enhancement reward cards cannot currently be cashed out for gold-only through a separate action; invalid enhancement sale fails clearly.
+- Boss reward-preview slots are not implemented; reward cards are offered as reward choices only.
+- High-frequency cards plus flat damage/status enhancements and cooldown enhancement plus Haste/Drum need manual balance review.
+Next recommended task:
+- Phase 15E: manual playtest reward-card selling, leftmost targeting, enhanced builds, and boss pacing before adding new combat mechanics.

@@ -10,6 +10,7 @@ import {
 } from "../../content/cards/contentPools.js";
 import { getMonsterTemplateById } from "../../content/monsters/monsterTemplates.js";
 import { describeUpgradePreview, hasMeaningfulUpgrade } from "../../content/cards/effectiveCardDefinition.js";
+import { REWARD_CARD_DEFINITIONS } from "../../content/rewards/rewardCards.js";
 import { shuffleDeterministic } from "../deterministic.js";
 import type { LevelUpRewardChoice, RewardChoice } from "../RunState.js";
 import { SKILL_DEFINITIONS } from "../skills/skillDefinitions.js";
@@ -87,6 +88,18 @@ export function createRewardChoices(input: {
   });
 
   if (choices.length < 3) {
+    const rewardCard = findRewardCardChoice({
+      seed: input.seed,
+      nodeIndex: input.nodeIndex,
+      level,
+      boss: input.boss === true
+    });
+    if (rewardCard) {
+      choices.push(rewardCard);
+    }
+  }
+
+  if (choices.length < 3) {
     const skillDefinition = findUnownedSkill(input.ownedSkills ?? []);
     if (skillDefinition) {
       choices.push({
@@ -122,6 +135,52 @@ export function createRewardChoices(input: {
   }
 
   return choices.slice(0, 3);
+}
+
+function findRewardCardChoice(input: {
+  readonly seed: string;
+  readonly nodeIndex: number;
+  readonly level: number;
+  readonly boss: boolean;
+}): RewardChoice | undefined {
+  if (!shouldOfferRewardCard(input)) {
+    return undefined;
+  }
+  const allowedTiers = input.level >= 8
+    ? ["BRONZE", "SILVER", "GOLD", "JADE"]
+    : input.level >= 5
+      ? ["BRONZE", "SILVER", "GOLD"]
+      : ["BRONZE", "SILVER"];
+  const candidates = REWARD_CARD_DEFINITIONS.filter((rewardCard) =>
+    allowedTiers.includes(rewardCard.tier) &&
+    (input.level >= 5 || rewardCard.rewardCardType === "GOLD_ONLY" || rewardCard.tier === "BRONZE")
+  );
+  const rewardCard = shuffleDeterministic(candidates, `${input.seed}:reward-loot-card:${input.nodeIndex}:${input.level}`)[0];
+  if (!rewardCard) {
+    return undefined;
+  }
+  return {
+    id: `reward-${input.nodeIndex}-loot-card`,
+    type: "REWARD_LOOT_CARD",
+    label: `Take ${rewardCard.name}`,
+    rewardCardDefinitionId: rewardCard.id,
+    preview: rewardCard.description
+  };
+}
+
+function shouldOfferRewardCard(input: {
+  readonly seed: string;
+  readonly nodeIndex: number;
+  readonly level: number;
+  readonly boss: boolean;
+}): boolean {
+  if (input.level < 3) {
+    return false;
+  }
+  if (input.boss || input.level >= 8) {
+    return true;
+  }
+  return (input.nodeIndex + input.seed.length + input.level) % 2 === 0;
 }
 
 export function createLevelUpRewardChoices(input: {

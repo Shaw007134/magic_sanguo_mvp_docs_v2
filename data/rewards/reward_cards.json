@@ -1,0 +1,182 @@
+[
+  {
+    "id": "copper-coin-pouch",
+    "name": "Copper Coin Pouch",
+    "tier": "BRONZE",
+    "rewardCardType": "GOLD_ONLY",
+    "sellGold": 2,
+    "tags": ["loot", "gold"],
+    "description": "Sell: gain 2 gold."
+  },
+  {
+    "id": "silver-tax-seal",
+    "name": "Silver Tax Seal",
+    "tier": "SILVER",
+    "rewardCardType": "GOLD_ONLY",
+    "sellGold": 5,
+    "tags": ["loot", "gold"],
+    "description": "Sell: gain 5 gold."
+  },
+  {
+    "id": "spoils-chest",
+    "name": "Spoils Chest",
+    "tier": "GOLD",
+    "rewardCardType": "GOLD_ONLY",
+    "sellGold": 9,
+    "tags": ["loot", "gold"],
+    "description": "Sell: gain 9 gold."
+  },
+  {
+    "id": "jade-tribute",
+    "name": "Jade Tribute",
+    "tier": "JADE",
+    "rewardCardType": "GOLD_ONLY",
+    "sellGold": 14,
+    "tags": ["loot", "gold"],
+    "description": "Sell: gain 14 gold."
+  },
+  {
+    "id": "sharpened-edge",
+    "name": "Sharpened Edge",
+    "tier": "BRONZE",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 1,
+    "enhancementType": "INCREASE_LEFTMOST_DAMAGE",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 1,
+    "tags": ["loot", "enhancement", "damage"],
+    "description": "Sell: gain 1 gold and give the leftmost active card +1 direct damage."
+  },
+  {
+    "id": "ember-powder",
+    "name": "Ember Powder",
+    "tier": "BRONZE",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 1,
+    "enhancementType": "INCREASE_LEFTMOST_BURN",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 1,
+    "tags": ["loot", "enhancement", "burn"],
+    "description": "Sell: gain 1 gold and give the leftmost active Burn card +1 Burn."
+  },
+  {
+    "id": "venom-dust",
+    "name": "Venom Dust",
+    "tier": "BRONZE",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 1,
+    "enhancementType": "INCREASE_LEFTMOST_POISON",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 1,
+    "tags": ["loot", "enhancement", "poison"],
+    "description": "Sell: gain 1 gold and give the leftmost active Poison card +1 Poison."
+  },
+  {
+    "id": "oiled-gear",
+    "name": "Oiled Gear",
+    "tier": "BRONZE",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 1,
+    "enhancementType": "REDUCE_LEFTMOST_COOLDOWN_PERCENT",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "percent": 2,
+    "tags": ["loot", "enhancement", "cooldown"],
+    "description": "Sell: gain 1 gold and reduce the leftmost active card's cooldown by 2%."
+  },
+  {
+    "id": "tempered-edge",
+    "name": "Tempered Edge",
+    "tier": "SILVER",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 2,
+    "enhancementType": "INCREASE_LEFTMOST_DAMAGE",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 2,
+    "tags": ["loot", "enhancement", "damage"],
+    "description": "Sell: gain 2 gold and give the leftmost active card +2 direct damage."
+  },
+  {
+    "id": "fire-resin",
+    "name": "Fire Resin",
+    "tier": "SILVER",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 2,
+    "enhancementType": "INCREASE_LEFTMOST_BURN",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 2,
+    "tags": ["loot", "enhancement", "burn"],
+    "description": "Sell: gain 2 gold and give the leftmost active Burn card +2 Burn."
+  },
+  {
+    "id": "toxin-flask",
+    "name": "Toxin Flask",
+    "tier": "SILVER",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 2,
+    "enhancementType": "INCREASE_LEFTMOST_POISON",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 2,
+    "tags": ["loot", "enhancement", "poison"],
+    "description": "Sell: gain 2 gold and give the leftmost active Poison card +2 Poison."
+  },
+  {
+    "id": "balanced-gear",
+    "name": "Balanced Gear",
+    "tier": "SILVER",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 2,
+    "enhancementType": "REDUCE_LEFTMOST_COOLDOWN_PERCENT",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "percent": 4,
+    "tags": ["loot", "enhancement", "cooldown"],
+    "description": "Sell: gain 2 gold and reduce the leftmost active card's cooldown by 4%."
+  },
+  {
+    "id": "generals-whetstone",
+    "name": "General's Whetstone",
+    "tier": "GOLD",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 4,
+    "enhancementType": "INCREASE_LEFTMOST_DAMAGE",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 3,
+    "tags": ["loot", "enhancement", "damage"],
+    "description": "Sell: gain 4 gold and give the leftmost active card +3 direct damage."
+  },
+  {
+    "id": "siege-pitch",
+    "name": "Siege Pitch",
+    "tier": "GOLD",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 4,
+    "enhancementType": "INCREASE_LEFTMOST_BURN",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 3,
+    "tags": ["loot", "enhancement", "burn"],
+    "description": "Sell: gain 4 gold and give the leftmost active Burn card +3 Burn."
+  },
+  {
+    "id": "black-venom",
+    "name": "Black Venom",
+    "tier": "GOLD",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 4,
+    "enhancementType": "INCREASE_LEFTMOST_POISON",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "amount": 3,
+    "tags": ["loot", "enhancement", "poison"],
+    "description": "Sell: gain 4 gold and give the leftmost active Poison card +3 Poison."
+  },
+  {
+    "id": "precision-gear",
+    "name": "Precision Gear",
+    "tier": "GOLD",
+    "rewardCardType": "SELL_TRIGGER_ENHANCEMENT",
+    "sellGold": 4,
+    "enhancementType": "REDUCE_LEFTMOST_COOLDOWN_PERCENT",
+    "targetRule": "LEFTMOST_FORMATION_ACTIVE_CARD",
+    "percent": 6,
+    "tags": ["loot", "enhancement", "cooldown"],
+    "description": "Sell: gain 4 gold and reduce the leftmost active card's cooldown by 6%."
+  }
+]

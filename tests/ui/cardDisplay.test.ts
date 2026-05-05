@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { getActiveCardDefinitionsById } from "../../src/content/cards/activeCards.js";
-import { getCardDisplayInfo } from "../../src/ui/presentation/cardDisplay.js";
+import { getRewardCardDefinitionsById } from "../../src/content/rewards/rewardCards.js";
+import { getCardDisplayInfo, getCardEnhancementSummaries } from "../../src/ui/presentation/cardDisplay.js";
+import { getRewardCardDisplayInfo } from "../../src/ui/presentation/rewardCardDisplay.js";
 
 const cardsById = getActiveCardDefinitionsById();
 
@@ -99,5 +101,52 @@ describe("cardDisplay", () => {
     expect(display("warlords-mandate").summary).toContain("20% of your max HP");
     expect(display("burning-trebuchet").summary).toContain("20% of enemy missing HP");
     expect(display("burning-trebuchet").summary).toContain("20% chance to crit for 2x");
+  });
+
+  it("summarizes card enhancements without raw ticks or internal ids", () => {
+    const summaries = getCardEnhancementSummaries({
+      instanceId: "oil",
+      definitionId: "oil-flask",
+      enhancements: [
+        {
+          id: "enh-1",
+          sourceRewardCardDefinitionId: "ember-powder",
+          type: "INCREASE_BURN",
+          amount: 1
+        },
+        {
+          id: "enh-2",
+          sourceRewardCardDefinitionId: "balanced-gear",
+          type: "REDUCE_COOLDOWN_PERCENT",
+          percent: 4
+        }
+      ]
+    });
+
+    expect(summaries).toEqual(["+1 Burn from Ember Powder", "cooldown -4% from Balanced Gear"]);
+    expect(summaries.join(" ")).not.toMatch(/\d+t\b|tick|On[A-Z]|hook/i);
+  });
+
+  it("describes reward card sell effects and current leftmost target", () => {
+    const rewardCardsById = getRewardCardDefinitionsById();
+    const valid = getRewardCardDisplayInfo({
+      rewardCard: rewardCardsById.get("ember-powder")!,
+      formationSlots: [{ slotIndex: 1, cardInstanceId: "oil" }],
+      ownedCards: [{ instanceId: "oil", definitionId: "oil-flask" }],
+      cardDefinitionsById: cardsById
+    });
+    const invalid = getRewardCardDisplayInfo({
+      rewardCard: rewardCardsById.get("ember-powder")!,
+      formationSlots: [{ slotIndex: 1, cardInstanceId: "blade" }],
+      ownedCards: [{ instanceId: "blade", definitionId: "rusty-blade" }],
+      cardDefinitionsById: cardsById
+    });
+
+    expect(valid.valid).toBe(true);
+    expect(valid.summary).toContain("give the leftmost active Burn card +1 Burn");
+    expect(valid.targetLine).toBe("Current target: Oil Flask.");
+    expect(invalid.valid).toBe(false);
+    expect(invalid.targetLine).toContain("Rusty Blade is invalid");
+    expect(`${valid.summary} ${invalid.targetLine}`).not.toMatch(/\d+t\b|tick|OnStatus|OnBurn|hook/i);
   });
 });

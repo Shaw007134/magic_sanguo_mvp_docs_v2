@@ -1,7 +1,13 @@
-import type { CardDefinition, CardInstance } from "../../model/card.js";
+import {
+  CARD_INSTANCE_ENHANCEMENT_TYPES,
+  type CardDefinition,
+  type CardInstance
+} from "../../model/card.js";
 import type { FormationSnapshot } from "../../model/formation.js";
+import type { RewardCardInstance } from "../../model/rewardCard.js";
 import type { CombatResult } from "../../model/result.js";
 import { getActiveCardDefinitionsById } from "../../content/cards/activeCards.js";
+import { getRewardCardDefinitionsById } from "../../content/rewards/rewardCards.js";
 import { validateFormationSnapshot } from "../../validation/formationValidation.js";
 import { FIXED_CHEST_CAPACITY, RunManager } from "../RunManager.js";
 import type {
@@ -19,9 +25,11 @@ import type {
 } from "../RunState.js";
 import { getSkillDefinitionsById } from "../skills/skillDefinitions.js";
 
-export const RUN_SAVE_FORMAT_VERSION = 2;
+export const RUN_SAVE_FORMAT_VERSION = 3;
 const PHASE_15A_UNSUPPORTED_V1_MESSAGE =
   "Unsupported save format version: 1. Phase 15A requires save version 2 because chest capacity changed to fixed 16.";
+const PHASE_15D_UNSUPPORTED_V2_MESSAGE =
+  "Unsupported save format version: 2. Phase 15D requires save version 3 because reward cards and card enhancements are persisted.";
 
 export interface RunSaveData {
   readonly version: typeof RUN_SAVE_FORMAT_VERSION;
@@ -107,6 +115,9 @@ export function parseRunSaveData(
   if (saveData["version"] === 1) {
     return { ok: false, error: PHASE_15A_UNSUPPORTED_V1_MESSAGE };
   }
+  if (saveData["version"] === 2) {
+    return { ok: false, error: PHASE_15D_UNSUPPORTED_V2_MESSAGE };
+  }
   if (saveData["version"] !== RUN_SAVE_FORMAT_VERSION) {
     return { ok: false, error: `Unsupported save format version: ${String(saveData["version"])}.` };
   }
@@ -149,6 +160,7 @@ export function validateRunState(
     "currentHp",
     "maxHp",
     "ownedCards",
+    "ownedRewardCards",
     "ownedSkills",
     "formationSlots",
     "formationSlotCount",
@@ -205,6 +217,9 @@ export function validateRunState(
     return { ok: false, error: "ownedCards exceeds chestCapacity." };
   }
   const ownedCardIds = new Set(ownedCards.map((card) => card.instanceId));
+
+  const ownedRewardCardsResult = validateRewardCardInstances(state["ownedRewardCards"], "ownedRewardCards");
+  if (!ownedRewardCardsResult.ok) return ownedRewardCardsResult;
 
   const skillsResult = validateSkillInstances(state["ownedSkills"]);
   if (!skillsResult.ok) return skillsResult;
@@ -321,8 +336,61 @@ function validateCardInstances(
     if (card["tierOverride"] !== undefined && !isOneOf(card["tierOverride"], CARD_TIERS)) {
       return { ok: false, error: `${path}[${index}].tierOverride is invalid.` };
     }
+    if (card["enhancements"] !== undefined) {
+      const enhancementsResult = validateCardEnhancements(card["enhancements"], `${path}[${index}].enhancements`);
+      if (!enhancementsResult.ok) return enhancementsResult;
+    }
   }
   return { ok: true, value: cards as readonly CardInstance[] };
+}
+
+function validateCardEnhancements(enhancements: unknown, path: string): SaveLoadResult<true> {
+  if (!Array.isArray(enhancements)) return { ok: false, error: `${path} must be an array.` };
+  const rewardDefinitionsById = getRewardCardDefinitionsById();
+  const seen = new Set<string>();
+  for (const [index, enhancement] of enhancements.entries()) {
+    if (!isRecord(enhancement)) return { ok: false, error: `${path}[${index}] must be an object.` };
+    if (!isNonEmptyString(enhancement["id"])) return { ok: false, error: `${path}[${index}].id is required.` };
+    if (seen.has(enhancement["id"])) return { ok: false, error: `Duplicate card enhancement id: ${enhancement["id"]}.` };
+    seen.add(enhancement["id"]);
+    if (!isNonEmptyString(enhancement["sourceRewardCardDefinitionId"]) || !rewardDefinitionsById.has(enhancement["sourceRewardCardDefinitionId"])) {
+      return { ok: false, error: `${path}[${index}].sourceRewardCardDefinitionId is invalid.` };
+    }
+    if (!isOneOf(enhancement["type"], CARD_INSTANCE_ENHANCEMENT_TYPES)) {
+      return { ok: false, error: `${path}[${index}].type is invalid.` };
+    }
+    if (enhancement["type"] === "REDUCE_COOLDOWN_PERCENT") {
+      if (typeof enhancement["percent"] !== "number" || enhancement["percent"] <= 0 || enhancement["percent"] > 40) {
+        return { ok: false, error: `${path}[${index}].percent must be > 0 and <= 40.` };
+      }
+      if (enhancement["amount"] !== undefined) return { ok: false, error: `${path}[${index}].amount must be omitted for cooldown enhancements.` };
+    } else {
+      if (!Number.isInteger(enhancement["amount"]) || (enhancement["amount"] as number) <= 0) {
+        return { ok: false, error: `${path}[${index}].amount must be a positive integer.` };
+      }
+      if (enhancement["percent"] !== undefined) return { ok: false, error: `${path}[${index}].percent must be omitted for flat enhancements.` };
+    }
+  }
+  return { ok: true, value: true };
+}
+
+function validateRewardCardInstances(
+  rewardCards: unknown,
+  path: string
+): SaveLoadResult<readonly RewardCardInstance[]> {
+  if (!Array.isArray(rewardCards)) return { ok: false, error: `${path} must be an array.` };
+  const rewardDefinitionsById = getRewardCardDefinitionsById();
+  const seen = new Set<string>();
+  for (const [index, rewardCard] of rewardCards.entries()) {
+    if (!isRecord(rewardCard)) return { ok: false, error: `${path}[${index}] must be an object.` };
+    if (!isNonEmptyString(rewardCard["instanceId"])) return { ok: false, error: `${path}[${index}].instanceId is required.` };
+    if (seen.has(rewardCard["instanceId"])) return { ok: false, error: `Duplicate reward card instance id: ${rewardCard["instanceId"]}.` };
+    seen.add(rewardCard["instanceId"]);
+    if (!isNonEmptyString(rewardCard["definitionId"]) || !rewardDefinitionsById.has(rewardCard["definitionId"])) {
+      return { ok: false, error: `Invalid reward card instance reference: ${String(rewardCard["definitionId"])}.` };
+    }
+  }
+  return { ok: true, value: rewardCards as readonly RewardCardInstance[] };
 }
 
 function validateSkillInstances(skills: unknown): SaveLoadResult<RunState["ownedSkills"]> {
@@ -562,7 +630,7 @@ function validateRewardChoice(
 ): SaveLoadResult<RewardChoice> {
   if (!isRecord(choice)) return { ok: false, error: `${path} must be an object.` };
   if (!isNonEmptyString(choice["id"])) return { ok: false, error: `${path}.id is required.` };
-  if (!["REWARD_CARD", "REWARD_GOLD", "REWARD_UPGRADE", "REWARD_SKILL"].includes(String(choice["type"]))) return { ok: false, error: `${path}.type is invalid.` };
+  if (!["REWARD_CARD", "REWARD_GOLD", "REWARD_UPGRADE", "REWARD_SKILL", "REWARD_LOOT_CARD"].includes(String(choice["type"]))) return { ok: false, error: `${path}.type is invalid.` };
   if (!isNonEmptyString(choice["label"])) return { ok: false, error: `${path}.label is required.` };
   return validateChoicePayload(choice, cardDefinitionsById, ownedCardIds, path) as SaveLoadResult<RewardChoice>;
 }
@@ -600,6 +668,13 @@ function validateChoicePayload(
   ownedCardIds: ReadonlySet<string>,
   path: string
 ): SaveLoadResult<unknown> {
+  if (choice["type"] === "REWARD_LOOT_CARD") {
+    if (!isNonEmptyString(choice["rewardCardDefinitionId"]) || !getRewardCardDefinitionsById().has(choice["rewardCardDefinitionId"])) {
+      return { ok: false, error: `${path}.rewardCardDefinitionId is invalid.` };
+    }
+    if (choice["preview"] !== undefined && typeof choice["preview"] !== "string") return { ok: false, error: `${path}.preview must be a string.` };
+    return { ok: true, value: choice };
+  }
   if (String(choice["type"]).endsWith("_CARD") && !isKnownCardDefinition(choice["cardDefinitionId"], cardDefinitionsById)) {
     return { ok: false, error: `${path}.cardDefinitionId is invalid.` };
   }

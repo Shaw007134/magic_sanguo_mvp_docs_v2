@@ -110,13 +110,13 @@ function completeFakeBattleWin(manager: RunManager) {
 }
 
 describe("SaveManager", () => {
-  it("serializeRunState creates version 2 save data and deserializeRunState accepts it", () => {
-    const manager = createNewRun("save-version-2");
+  it("serializeRunState creates version 3 save data and deserializeRunState accepts it", () => {
+    const manager = createNewRun("save-version-3");
     const save = serializeRunState(manager.state);
 
     expect(save.ok).toBe(true);
     const parsed = JSON.parse(save.ok ? save.value : "{}") as { readonly version: number };
-    expect(parsed.version).toBe(2);
+    expect(parsed.version).toBe(3);
     expect(parsed.version).toBe(RUN_SAVE_FORMAT_VERSION);
     const loaded = deserializeRunState(save.ok ? save.value : "");
     expect(loaded.ok).toBe(true);
@@ -330,6 +330,22 @@ describe("SaveManager", () => {
     expect(loaded.state.ownedSkills).toEqual(manager.state.ownedSkills);
   });
 
+  it("reward cards and combat card enhancements survive save/load", () => {
+    const manager = createNewRun("save-reward-cards");
+    expect(manager.addCardToChest("oil-flask").ok).toBe(true);
+    const oil = manager.state.ownedCards[0]!;
+    expect(manager.moveCardFromChestToFormation(oil.instanceId, 1).ok).toBe(true);
+    expect(manager.addRewardCardToLoot("copper-coin-pouch").ok).toBe(true);
+    expect(manager.addRewardCardToLoot("ember-powder").ok).toBe(true);
+    expect(manager.sellRewardCard(manager.state.ownedRewardCards[1]!.instanceId).ok).toBe(true);
+
+    const loaded = roundTrip(manager);
+
+    expect(loaded.state.ownedRewardCards).toEqual(manager.state.ownedRewardCards);
+    expect(loaded.state.ownedCards).toEqual(manager.state.ownedCards);
+    expect(loaded.state.ownedCards[0]?.enhancements).toEqual(manager.state.ownedCards[0]?.enhancements);
+  });
+
   it("save/load preserves grown formation slot count, layout, and fixed chest capacity", () => {
     const manager = createNewRun("save-grown-formation");
     manager.addCardToChest("rusty-blade");
@@ -424,6 +440,10 @@ describe("SaveManager", () => {
     expect(deserializeRunState(JSON.stringify({ ...parsed, version: 1 }))).toEqual({
       ok: false,
       error: "Unsupported save format version: 1. Phase 15A requires save version 2 because chest capacity changed to fixed 16."
+    });
+    expect(deserializeRunState(JSON.stringify({ ...parsed, version: 2 }))).toEqual({
+      ok: false,
+      error: "Unsupported save format version: 2. Phase 15D requires save version 3 because reward cards and card enhancements are persisted."
     });
     expect(deserializeRunState(JSON.stringify({ ...parsed, version: RUN_SAVE_FORMAT_VERSION + 1 }))).toEqual({
       ok: false,

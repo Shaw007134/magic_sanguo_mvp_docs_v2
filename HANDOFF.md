@@ -170,7 +170,7 @@ The root debug/ folder is gitignored; browser UI does not write to the local fil
 Known limitation: MVP skills are minimal modifier-based rewards only; no skill tree or new trigger hook/status/resource system exists yet.
 Known limitation: Burn/Poison tick source attribution is summary/replay-only; fire-tagged skills affect direct damage from fire-tagged card effects but not DOT ticks.
 Known limitation: CardInstance.tierOverride now scales supported combat values/cooldowns and is persisted by save/load; future schema changes must preserve it exactly.
-Known limitation: save format version is 2 with fail-fast validation; old version 1 local saves are intentionally unsupported after the Phase 15A fixed chest-capacity change unless a future migration is added.
+Known limitation: save format version is 3 with fail-fast validation; old version 1 local saves are intentionally unsupported after the Phase 15A fixed chest-capacity change, and version 2 saves are intentionally unsupported after Phase 15D because reward cards and card enhancements are persisted.
 Smoke, model export, validation, basic combat, ResolutionStack, Armor/Burn decay, Poison/Heal, Haste/Slow/Freeze, status reactions, TriggerSystem, ModifierSystem, ReplayTimeline, CombatResultSummary, MonsterGenerator, active content registry, skill definition, UI state, expanded RunManager, and SaveManager tests pass.
 Formula rewriting beyond the Phase 13B terminal fields, rollback/snapshot, control-status payoff conditions, Vulnerable, Silence, Cleanse, MoveCard, DisableCard, card destruction, Barrier, Ward, Energy Shield, absorb layers, non-deterministic random chance triggers/modifiers, final art, branching map, async PvP, cloud save/account sync, and boss rotation are not implemented yet.
 docs/MVP_BUILD_SEQUENCE.md now defines Phase 14 as a status/damage foundation sequence rather than PvP snapshot export.
@@ -184,12 +184,18 @@ Phase 15C tuned boss/enemy durability and pressure while keeping enemy formation
 Gate Captain Elite now has a larger Armor-backed Blade Tempo formation so starter builds lose the final-boss diagnostic check and late builds see more of its engine.
 Siege Marshal now has more durability and a clearer Drum/Siege support shell so slow siege pressure has time to matter.
 Cinder Strategist is included in the balance report boss suite and now uses a durable Fire Echo Seal / Fire Arrow Cart / Burning Shield / Ember Banner shell instead of the sharper Cinder Seal snowball.
+Phase 15D added reward cards as non-combat run economy/progression objects in ownedRewardCards.
+Reward cards do not count toward ownedCards capacity, cannot be placed in formation, and do not enter FormationSnapshot or CombatEngine.
+Gold-only reward cards sell for gold; enhancement reward cards sell for gold and apply a persistent CardInstance enhancement to the leftmost placed active card when valid.
+Invalid reward-card enhancement sales fail clearly and do not grant gold, remove the reward card, or mutate card enhancements.
+CardInstance enhancements are persisted, apply after tierOverride scaling, and support flat damage/Burn/Poison increases plus capped cooldown reduction.
 Phase 15C Markdown reports now include Executive Summary, Build Summary, Boss Summary, Boss Challenge Summary, Build Legitimacy Notes, Warning Hotspots with likely design causes, Outcome Attribution Snapshot, Trigger / Activation Outliers, Tuning Notes, and Fight Detail.
+Phase 15D balance reports include Enhanced Build Summary and two enhanced sample builds: Enhanced Burn Terminal and Enhanced Cooldown Tempo.
 Outcome Attribution Snapshot separates Player Top Contributor from Enemy Top Contributor and resolves known source ids to readable card names.
 Current report command is `pnpm balance:report`; output location is `debug/balance-reports/latest.json` and `debug/balance-reports/latest.md`.
-The current save format version is 2. Actual run battles and balance reports share the 3600 tick max combat cap, with 1 second equal to 60 logic ticks.
-Current strongest builds are Armor Terminal, Late 16-slot Combo Build, Siege Burn, Poison + Heal, and Frequency Status Soup. Current weakest/risky builds are Haste / Drum Tempo, Control Slow / Freeze, Starter Blade into Armor-heavy enemies, and starter shells into bosses.
-Remaining Phase 15C risks: Armor Terminal and Late 16-slot Combo Build still create BOSS_TOO_FRAGILE/TERMINAL_TOO_BURSTY warnings, Cinder Strategist still kills several fragile samples quickly, Haste/Drum still has activation outliers, and Starter Blade can stall into Armor-heavy enemies.
+The current save format version is 3. Actual run battles and balance reports share the 3600 tick max combat cap, with 1 second equal to 60 logic ticks.
+Current strongest builds are Armor Terminal, Late 16-slot Combo Build, Enhanced Burn Terminal, Siege Burn, Poison + Heal, and Frequency Status Soup. Current weakest/risky builds are Haste / Drum Tempo, Control Slow / Freeze, Starter Blade into Armor-heavy enemies, and starter shells into bosses.
+Remaining Phase 15D risks: Armor Terminal, Late 16-slot Combo Build, and enhanced terminal builds still create BOSS_TOO_FRAGILE/TERMINAL_TOO_BURSTY warnings; Cinder Strategist still kills several fragile samples quickly; Haste/Drum plus cooldown enhancement needs manual activation-count review; reward-card inventory UX is placeholder-quality.
 Phase 14A is damage type and source attribution foundation.
 Phase 14B is Poison and Heal.
 Phase 14C implemented Haste, Slow, and Freeze.
@@ -202,10 +208,10 @@ PvP-ready snapshot export is deferred to a future phase after combat readability
 
 ## Next Task
 
-Phase 15D:
+Phase 15E:
 
 ```text
-Run manual playtests against the Phase 15C boss suite, then either tune terminal burst/boss pressure further or add one small mechanic only if the current report risks are accepted.
+Manual playtest reward-card selling, leftmost targeting, enhanced builds, and boss pacing. Consider boss loot preview UI or enhancement cash-out polish before adding new combat mechanics.
 ```
 
 Reminder: save/load now persists/restores RunState directly. Future schema changes should add explicit migration instead of creating a second progression model.
@@ -254,7 +260,11 @@ Reminder: save/load now persists/restores RunState directly. Future schema chang
 39. Confirm no player-facing raw ticks/internal hook names appear.
 40. Level a run and confirm formation slots append at levels 3, 5, 7, 8, 9, and 10 without moving existing cards.
 41. Confirm owned card capacity remains 16 even when formation reaches 16 slots.
-42. Run pnpm balance:report and inspect debug/balance-reports/latest.md for the 12 sample builds and warning flags.
+42. Run pnpm balance:report and inspect debug/balance-reports/latest.md for the 14 sample builds, enhanced build summary, and warning flags.
+43. Obtain a reward card from a mid/late reward, confirm it appears in Reward / Loot instead of Chest.
+44. Sell a gold-only reward card and confirm it grants gold without changing combat cards.
+45. Place a matching active card leftmost, sell an enhancement reward card, and confirm the card gains a readable enhancement summary.
+46. Try selling a mismatched enhancement reward card and confirm the sale fails without granting gold or removing the reward card.
 ```
 
 ## Rules For Next Agent

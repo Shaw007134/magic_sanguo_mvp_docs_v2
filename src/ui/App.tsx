@@ -12,6 +12,7 @@ import { CombatReplay } from "./components/CombatReplay.js";
 import { EnemyPreview } from "./components/EnemyPreview.js";
 import { FormationEditor } from "./components/FormationEditor.js";
 import { ResultSummary } from "./components/ResultSummary.js";
+import { RewardLootPanel } from "./components/RewardLootPanel.js";
 import { RunStatusBar } from "./components/RunStatusBar.js";
 import { SkillPanel } from "./components/SkillPanel.js";
 
@@ -132,6 +133,10 @@ export function App() {
     setSelection(undefined);
   }
 
+  function handleSellRewardCard(rewardCardInstanceId: string): void {
+    sync(manager.sellRewardCard(rewardCardInstanceId), "Reward card sold.");
+  }
+
   function handleChoice(choice: RunChoice): void {
     const result =
       choice.type === "SHOP_CARD"
@@ -212,6 +217,13 @@ export function App() {
           onRemove={handleRemoveFromFormation}
         />
         <SkillPanel skills={runState.ownedSkills} />
+        <RewardLootPanel
+          rewardCards={runState.ownedRewardCards}
+          ownedCards={runState.ownedCards}
+          formationSlots={runState.formationSlots}
+          cardDefinitionsById={cardDefinitionsById}
+          onSell={handleSellRewardCard}
+        />
         <ChestPanel
           cards={chestCards}
           selectedCardId={selection?.kind === "CHEST" ? selection.cardInstanceId : undefined}

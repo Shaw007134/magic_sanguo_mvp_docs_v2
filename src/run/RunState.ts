@@ -1,5 +1,6 @@
 import type { CardInstance, CardTier } from "../model/card.js";
 import type { FormationSnapshot } from "../model/formation.js";
+import type { RewardCardInstance } from "../model/rewardCard.js";
 import type { CombatResult } from "../model/result.js";
 import type { SkillInstance } from "./skills/Skill.js";
 
@@ -41,9 +42,10 @@ export interface EventChoice {
 
 export interface RewardChoice {
   readonly id: string;
-  readonly type: "REWARD_CARD" | "REWARD_GOLD" | "REWARD_UPGRADE" | "REWARD_SKILL";
+  readonly type: "REWARD_CARD" | "REWARD_GOLD" | "REWARD_UPGRADE" | "REWARD_SKILL" | "REWARD_LOOT_CARD";
   readonly label: string;
   readonly cardDefinitionId?: string;
+  readonly rewardCardDefinitionId?: string;
   readonly gold?: number;
   readonly cardInstanceId?: string;
   readonly fromTier?: CardTier;
@@ -92,6 +94,7 @@ export interface RunState {
   readonly currentHp: number;
   readonly maxHp: number;
   readonly ownedCards: readonly CardInstance[];
+  readonly ownedRewardCards: readonly RewardCardInstance[];
   readonly ownedSkills: readonly SkillInstance[];
   readonly formationSlots: readonly RunFormationSlot[];
   readonly formationSlotCount: number;

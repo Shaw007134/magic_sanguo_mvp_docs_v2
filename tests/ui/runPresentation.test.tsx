@@ -103,6 +103,48 @@ describe("run presentation", () => {
     expect(html).toContain("Silver");
   });
 
+  it("enhanced card display shows readable enhancement summary", () => {
+    const definition = cardDefinitionsById.get("flame-spear");
+    if (!definition) {
+      throw new Error("Missing flame-spear.");
+    }
+    const html = renderToStaticMarkup(
+      <CardView
+        card={{
+          instanceId: "flame",
+          definitionId: "flame-spear",
+          enhancements: [{
+            id: "enh",
+            sourceRewardCardDefinitionId: "ember-powder",
+            type: "INCREASE_BURN",
+            amount: 1
+          }]
+        }}
+        definition={definition}
+      />
+    );
+
+    expect(html).toContain("+1 Burn from Ember Powder");
+    expect(html).not.toMatch(/tick|OnStatus|OnBurn|hook/i);
+  });
+
+  it("reward loot choice display uses loot name and sell effect", () => {
+    const choice: RunChoice = {
+      id: "loot",
+      type: "REWARD_LOOT_CARD",
+      label: "Take Ember Powder",
+      rewardCardDefinitionId: "ember-powder",
+      preview: "Sell: gain 1 gold and give the leftmost active Burn card +1 Burn."
+    };
+
+    const display = getChoiceDisplayInfo(choice, cardDefinitionsById);
+
+    expect(display.title).toBe("Ember Powder");
+    expect(display.subtitle).toBe("Loot reward");
+    expect(display.meta).toContain("Sell: 1 gold");
+    expect(display.summary).toContain("+1 Burn");
+  });
+
   it("reward upgrade display shows tier transition clearly", () => {
     const choice: RunChoice = {
       id: "upgrade",

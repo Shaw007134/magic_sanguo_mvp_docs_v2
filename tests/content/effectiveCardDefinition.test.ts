@@ -64,4 +64,43 @@ describe("effective card definitions", () => {
       })
     ).toBe(false);
   });
+
+  it("card enhancements apply after tier scaling and cap cooldown reduction", () => {
+    const baseDefinition = cardDefinitionsById.get("rusty-blade");
+    if (!baseDefinition) {
+      throw new Error("Missing rusty-blade.");
+    }
+
+    const effective = getEffectiveCardDefinition(
+      {
+        instanceId: "rusty",
+        definitionId: "rusty-blade",
+        tierOverride: "SILVER",
+        enhancements: [
+          {
+            id: "damage",
+            sourceRewardCardDefinitionId: "sharpened-edge",
+            type: "INCREASE_DAMAGE",
+            amount: 1
+          },
+          {
+            id: "cooldown-a",
+            sourceRewardCardDefinitionId: "precision-gear",
+            type: "REDUCE_COOLDOWN_PERCENT",
+            percent: 30
+          },
+          {
+            id: "cooldown-b",
+            sourceRewardCardDefinitionId: "precision-gear",
+            type: "REDUCE_COOLDOWN_PERCENT",
+            percent: 30
+          }
+        ]
+      },
+      baseDefinition
+    );
+
+    expect(effective.effects?.[0]?.["amount"]).toBe(4);
+    expect(effective.cooldownTicks).toBe(30);
+  });
 });

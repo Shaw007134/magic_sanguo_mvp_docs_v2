@@ -4,11 +4,14 @@ import {
   createEffectiveCardDefinitionMap,
   createEffectiveCardInstances,
   describeUpgradePreview,
+  REWARD_ENHANCEMENT_COOLDOWN_REDUCTION_CAP_PERCENT,
   getEffectiveCardDefinitionId
 } from "../content/cards/effectiveCardDefinition.js";
 import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
 import type { CardDefinition, CardInstance, CardTier } from "../model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
+import type { RewardCardDefinition } from "../model/rewardCard.js";
+import { getRewardCardDefinitionsById } from "../content/rewards/rewardCards.js";
 import { validateFormationSnapshot } from "../validation/formationValidation.js";
 import { RUN_SELL_PRICES } from "./economy.js";
 import { createBattleEnemy } from "./nodes/BattleNode.js";
@@ -84,6 +87,7 @@ export class RunManager {
   readonly cardDefinitionsById: ReadonlyMap<string, CardDefinition>;
   state: RunState;
   #nextCardInstanceNumber = 1;
+  #nextRewardCardInstanceNumber = 1;
   #nextSkillInstanceNumber = 1;
 
   private constructor(state: RunState, cardDefinitionsById: ReadonlyMap<string, CardDefinition>) {
@@ -109,6 +113,7 @@ export class RunManager {
         currentHp: PLAYER_STARTING_MAX_HP,
         maxHp: PLAYER_STARTING_MAX_HP,
         ownedCards: [],
+        ownedRewardCards: [],
         ownedSkills: [],
         formationSlots: createEmptyFormationSlots(STARTING_FORMATION_SLOT_COUNT),
         formationSlotCount: STARTING_FORMATION_SLOT_COUNT,
@@ -135,6 +140,7 @@ export class RunManager {
   ): RunManager {
     const manager = new RunManager(state, cardDefinitionsById);
     manager.#nextCardInstanceNumber = getNextNumberFromInstances(state.ownedCards, "run-card-");
+    manager.#nextRewardCardInstanceNumber = getNextNumberFromInstances(state.ownedRewardCards, "run-reward-card-");
     manager.#nextSkillInstanceNumber = getNextNumberFromInstances(state.ownedSkills, "run-skill-");
     return manager;
   }
@@ -154,6 +160,23 @@ export class RunManager {
 
   addCardToChest(cardDefinitionId: string): RunActionResult {
     return this.addNewCardToChest(cardDefinitionId);
+  }
+
+  addRewardCardToLoot(rewardCardDefinitionId: string): RunActionResult {
+    const rewardCardDefinition = getRewardCardDefinitionsById().get(rewardCardDefinitionId);
+    if (!rewardCardDefinition) {
+      return this.fail(`Unknown reward card definition: ${rewardCardDefinitionId}`);
+    }
+    const rewardCard = {
+      instanceId: `run-reward-card-${this.#nextRewardCardInstanceNumber}`,
+      definitionId: rewardCardDefinitionId
+    };
+    this.#nextRewardCardInstanceNumber += 1;
+    this.state = {
+      ...this.state,
+      ownedRewardCards: [...this.state.ownedRewardCards, rewardCard]
+    };
+    return this.ok(`Added ${rewardCardDefinition.name} to loot.`);
   }
 
   gainCardOrUpgradeDuplicate(cardDefinitionId: string): RunActionResult {
@@ -260,6 +283,50 @@ export class RunManager {
       ownedCards: this.state.ownedCards.filter((candidate) => candidate.instanceId !== cardInstanceId)
     };
     return this.ok();
+  }
+
+  sellRewardCard(rewardCardInstanceId: string): RunActionResult {
+    const rewardCard = this.state.ownedRewardCards.find((candidate) => candidate.instanceId === rewardCardInstanceId);
+    const definition = rewardCard ? getRewardCardDefinitionsById().get(rewardCard.definitionId) : undefined;
+    if (!rewardCard || !definition) {
+      return this.fail("Reward card is not owned.");
+    }
+
+    if (definition.rewardCardType === "GOLD_ONLY") {
+      this.state = {
+        ...this.state,
+        gold: this.state.gold + definition.sellGold,
+        ownedRewardCards: this.state.ownedRewardCards.filter((candidate) => candidate.instanceId !== rewardCardInstanceId)
+      };
+      return this.ok(`Sold ${definition.name}. Gained ${definition.sellGold} gold.`);
+    }
+
+    const target = findLeftmostActiveFormationCard(this.state, this.cardDefinitionsById);
+    if (!target) {
+      return this.fail(`Cannot sell ${definition.name} for enhancement: no active card is placed in formation.`);
+    }
+    const enhancementResult = createEnhancementForRewardCard({
+      rewardCard,
+      definition,
+      targetCard: target.card,
+      targetDefinition: target.definition
+    });
+    if (!enhancementResult.ok) {
+      return this.fail(`Cannot sell ${definition.name} for enhancement: ${enhancementResult.error}`);
+    }
+
+    this.state = {
+      ...this.state,
+      gold: this.state.gold + definition.sellGold,
+      ownedRewardCards: this.state.ownedRewardCards.filter((candidate) => candidate.instanceId !== rewardCardInstanceId),
+      ownedCards: this.state.ownedCards.map((card) =>
+        card.instanceId === target.card.instanceId
+          ? { ...card, enhancements: [...(card.enhancements ?? []), enhancementResult.enhancement] }
+          : card
+      )
+    };
+    const cappedNote = enhancementResult.capped ? " Cooldown reduction reached the 40% cap." : "";
+    return this.ok(`Sold ${definition.name}. Gained ${definition.sellGold} gold. ${target.definition.name} gained ${enhancementResult.label}.${cappedNote}`);
   }
 
   chooseShopOption(optionId: string): RunActionResult {
@@ -595,6 +662,12 @@ export class RunManager {
     if (choice.type === "REWARD_SKILL") {
       return this.addSkill(choice.skillDefinitionId);
     }
+    if (choice.type === "REWARD_LOOT_CARD") {
+      if (!choice.rewardCardDefinitionId) {
+        return this.fail("Reward loot option is missing reward card definition.");
+      }
+      return this.addRewardCardToLoot(choice.rewardCardDefinitionId);
+    }
     if (!choice.cardDefinitionId) {
       return this.fail("Reward card option is missing card definition.");
     }
@@ -698,6 +771,108 @@ export class RunManager {
 
   private fail(error: string): RunActionResult {
     return { ok: false, state: this.state, error };
+  }
+}
+
+function findLeftmostActiveFormationCard(
+  state: RunState,
+  cardDefinitionsById: ReadonlyMap<string, CardDefinition>
+): { readonly card: CardInstance; readonly definition: CardDefinition } | undefined {
+  const cardsById = new Map(state.ownedCards.map((card) => [card.instanceId, card]));
+  for (const slot of [...state.formationSlots].sort((left, right) => left.slotIndex - right.slotIndex)) {
+    if (!slot.cardInstanceId) {
+      continue;
+    }
+    const card = cardsById.get(slot.cardInstanceId);
+    const definition = card ? cardDefinitionsById.get(card.definitionId) : undefined;
+    if (card && definition?.type === "ACTIVE") {
+      return { card, definition };
+    }
+  }
+  return undefined;
+}
+
+function createEnhancementForRewardCard(input: {
+  readonly rewardCard: { readonly instanceId: string; readonly definitionId: string };
+  readonly definition: RewardCardDefinition;
+  readonly targetCard: CardInstance;
+  readonly targetDefinition: CardDefinition;
+}): {
+  readonly ok: true;
+  readonly enhancement: NonNullable<CardInstance["enhancements"]>[number];
+  readonly label: string;
+  readonly capped?: boolean;
+} | { readonly ok: false; readonly error: string } {
+  const { definition, targetCard, targetDefinition } = input;
+  switch (definition.enhancementType) {
+    case "INCREASE_LEFTMOST_DAMAGE":
+      if (!targetDefinition.effects?.some((effect) => effect["command"] === "DealDamage" && typeof effect["amount"] === "number")) {
+        return { ok: false, error: "leftmost active card does not deal direct damage." };
+      }
+      return {
+        ok: true,
+        enhancement: {
+          id: `enhancement:${input.rewardCard.instanceId}`,
+          sourceRewardCardDefinitionId: definition.id,
+          type: "INCREASE_DAMAGE",
+          amount: definition.amount
+        },
+        label: `+${definition.amount ?? 0} direct damage`
+      };
+    case "INCREASE_LEFTMOST_BURN":
+      if (!targetDefinition.effects?.some((effect) => effect["command"] === "ApplyBurn" && typeof effect["amount"] === "number")) {
+        return { ok: false, error: "leftmost active card does not apply Burn." };
+      }
+      return {
+        ok: true,
+        enhancement: {
+          id: `enhancement:${input.rewardCard.instanceId}`,
+          sourceRewardCardDefinitionId: definition.id,
+          type: "INCREASE_BURN",
+          amount: definition.amount
+        },
+        label: `+${definition.amount ?? 0} Burn`
+      };
+    case "INCREASE_LEFTMOST_POISON":
+      if (!targetDefinition.effects?.some((effect) => effect["command"] === "ApplyPoison" && typeof effect["amount"] === "number")) {
+        return { ok: false, error: "leftmost active card does not apply Poison." };
+      }
+      return {
+        ok: true,
+        enhancement: {
+          id: `enhancement:${input.rewardCard.instanceId}`,
+          sourceRewardCardDefinitionId: definition.id,
+          type: "INCREASE_POISON",
+          amount: definition.amount
+        },
+        label: `+${definition.amount ?? 0} Poison`
+      };
+    case "REDUCE_LEFTMOST_COOLDOWN_PERCENT": {
+      if (targetDefinition.cooldownTicks === undefined) {
+        return { ok: false, error: "leftmost active card has no cooldown." };
+      }
+      const currentReduction = (targetCard.enhancements ?? [])
+        .filter((enhancement) => enhancement.type === "REDUCE_COOLDOWN_PERCENT")
+        .reduce((total, enhancement) => total + (enhancement.percent ?? 0), 0);
+      const remaining = Math.max(0, REWARD_ENHANCEMENT_COOLDOWN_REDUCTION_CAP_PERCENT - currentReduction);
+      const appliedPercent = Math.min(definition.percent ?? 0, remaining);
+      if (appliedPercent <= 0) {
+        return { ok: false, error: "leftmost active card has reached the 40% cooldown reduction cap." };
+      }
+      return {
+        ok: true,
+        enhancement: {
+          id: `enhancement:${input.rewardCard.instanceId}`,
+          sourceRewardCardDefinitionId: definition.id,
+          type: "REDUCE_COOLDOWN_PERCENT",
+          percent: appliedPercent
+        },
+        label: `${appliedPercent}% cooldown reduction`,
+        capped: appliedPercent < (definition.percent ?? 0)
+      };
+    }
+    default:
+      return { ok: false, error: "reward card enhancement type is unsupported." };
   }
 }
 

@@ -10,6 +10,23 @@ export type ResourceCost = Readonly<Record<string, unknown>>;
 export type EffectDefinition = Readonly<Record<string, unknown>>;
 export type TriggerDefinition = Readonly<Record<string, unknown>>;
 
+export const CARD_INSTANCE_ENHANCEMENT_TYPES = [
+  "INCREASE_DAMAGE",
+  "INCREASE_BURN",
+  "INCREASE_POISON",
+  "REDUCE_COOLDOWN_PERCENT"
+] as const;
+
+export type CardInstanceEnhancementType = (typeof CARD_INSTANCE_ENHANCEMENT_TYPES)[number];
+
+export interface CardInstanceEnhancement {
+  readonly id: string;
+  readonly sourceRewardCardDefinitionId: string;
+  readonly type: CardInstanceEnhancementType;
+  readonly amount?: number;
+  readonly percent?: number;
+}
+
 export interface CardDefinition {
   readonly id: string;
   readonly name: string;
@@ -28,6 +45,7 @@ export interface CardInstance {
   readonly instanceId: string;
   readonly definitionId: string;
   readonly tierOverride?: CardTier;
+  readonly enhancements?: readonly CardInstanceEnhancement[];
 }
 
 export interface CardRuntimeState {

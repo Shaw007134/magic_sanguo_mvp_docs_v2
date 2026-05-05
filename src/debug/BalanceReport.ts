@@ -1,9 +1,10 @@
 import { CombatEngine, LOGIC_TICKS_PER_SECOND, RUN_MAX_COMBAT_TICKS } from "../combat/CombatEngine.js";
 import { createSkillModifiers } from "../run/skills/skillDefinitions.js";
 import { getActiveCardDefinitionsById } from "../content/cards/activeCards.js";
+import { createEffectiveCardDefinitionMap, createEffectiveCardInstances } from "../content/cards/effectiveCardDefinition.js";
 import { MonsterGenerator } from "../content/monsters/MonsterGenerator.js";
 import { getMonsterTemplateById } from "../content/monsters/monsterTemplates.js";
-import type { CardDefinition, CardInstance } from "../model/card.js";
+import type { CardDefinition, CardInstance, CardInstanceEnhancement } from "../model/card.js";
 import type { FormationSnapshot, FormationSlotSnapshot } from "../model/formation.js";
 import type { CombatResult, CombatResultSummary } from "../model/result.js";
 import type { SkillInstance } from "../run/skills/Skill.js";
@@ -46,7 +47,12 @@ export interface BalanceSampleBuild {
   readonly maxHp: number;
   readonly formationSlotCount: number;
   readonly cardIds: readonly string[];
+  readonly cardEnhancements?: readonly {
+    readonly cardIndex: number;
+    readonly enhancements: readonly CardInstanceEnhancement[];
+  }[];
   readonly skillIds?: readonly string[];
+  readonly enhancementSummary?: string;
   readonly explanation: string;
 }
 
@@ -83,7 +89,7 @@ export interface BalanceReportEntry {
 export interface BalanceReport {
   readonly generatedAt: string;
   readonly seed: string;
-  readonly sampleBuilds: readonly Pick<BalanceSampleBuild, "id" | "name" | "archetype" | "intendedPhase" | "expectedBossViable" | "expectedWeakness" | "level" | "formationSlotCount" | "explanation">[];
+  readonly sampleBuilds: readonly Pick<BalanceSampleBuild, "id" | "name" | "archetype" | "intendedPhase" | "expectedBossViable" | "expectedWeakness" | "level" | "formationSlotCount" | "enhancementSummary" | "explanation">[];
   readonly entries: readonly BalanceReportEntry[];
 }
 
@@ -99,7 +105,9 @@ export const REQUIRED_SAMPLE_BUILD_IDS = [
   "haste-drum-tempo",
   "control-slow-freeze",
   "frequency-status-soup",
-  "late-16-slot-combo"
+  "late-16-slot-combo",
+  "enhanced-burn-terminal",
+  "enhanced-cooldown-tempo"
 ] as const;
 
 export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
@@ -275,6 +283,62 @@ export const SAMPLE_BUILDS: readonly BalanceSampleBuild[] = [
     ],
     skillIds: ["quick-hands", "shield-craft"],
     explanation: "Stress-tests the expanded board with multiple engines, terminals, and reaction bridges."
+  },
+  {
+    id: "enhanced-burn-terminal",
+    name: "Enhanced Burn Terminal",
+    archetype: "Enhanced Siege Fire",
+    intendedPhase: "LATE",
+    expectedBossViable: true,
+    expectedWeakness: "Burn amount enhancement can become too sharp on high-value applicators if boss durability is too low.",
+    level: 8,
+    maxHp: 72,
+    formationSlotCount: 12,
+    cardIds: ["fire-cart-battery", "war-drum", "siege-brazier", "flame-ram", "burning-trebuchet", "banner-of-cinders", "guarded-torch"],
+    cardEnhancements: [
+      {
+        cardIndex: 1,
+        enhancements: [
+          {
+            id: "sample-enhanced-burn-terminal-siege-pitch",
+            sourceRewardCardDefinitionId: "siege-pitch",
+            type: "INCREASE_BURN",
+            amount: 3
+          }
+        ]
+      }
+    ],
+    skillIds: ["fire-study"],
+    enhancementSummary: "Fire Cart Battery has +3 Burn from Siege Pitch.",
+    explanation: "Checks whether sell-triggered Burn enhancements make a supported Burn terminal too boss-bursty."
+  },
+  {
+    id: "enhanced-cooldown-tempo",
+    name: "Enhanced Cooldown Tempo",
+    archetype: "Enhanced Drum Command",
+    intendedPhase: "LATE",
+    expectedBossViable: true,
+    expectedWeakness: "Cooldown enhancement stacks with Haste/Drum support and can create activation outliers.",
+    level: 8,
+    maxHp: 70,
+    formationSlotCount: 12,
+    cardIds: ["vanguard-saber", "field-drum", "war-drum", "command-runner", "cooling-fan", "battlefield-metronome", "signal-tower", "redline-finisher"],
+    cardEnhancements: [
+      {
+        cardIndex: 1,
+        enhancements: [
+          {
+            id: "sample-enhanced-cooldown-tempo-precision-gear",
+            sourceRewardCardDefinitionId: "precision-gear",
+            type: "REDUCE_COOLDOWN_PERCENT",
+            percent: 6
+          }
+        ]
+      }
+    ],
+    skillIds: ["quick-hands"],
+    enhancementSummary: "Vanguard Saber has -6% cooldown from Precision Gear.",
+    explanation: "Checks whether cooldown loot creates readable tempo without runaway activations."
   }
 ];
 
@@ -296,13 +360,18 @@ export function createBalanceReport(seed = REPORT_SEED): BalanceReport {
 
   for (const build of SAMPLE_BUILDS) {
     const player = createSampleFormation(build, cardDefinitionsById);
+    const effectivePlayerCards = createEffectiveCardInstances(player.cardInstances);
+    const effectiveDefinitionsById = createEffectiveCardDefinitionMap({
+      cardInstances: player.cardInstances,
+      baseDefinitionsById: cardDefinitionsById
+    });
     for (const enemyRef of ENEMY_SUITE) {
       const enemy = createEnemy(enemyRef.id, enemyRef.day, seed, cardDefinitionsById);
       const result = new CombatEngine().simulate({
         playerFormation: player.formation,
         enemyFormation: enemy.formation,
-        cardInstancesById: new Map([...player.cardInstances, ...enemy.cardInstances].map((card) => [card.instanceId, card])),
-        cardDefinitionsById,
+        cardInstancesById: new Map([...effectivePlayerCards, ...enemy.cardInstances].map((card) => [card.instanceId, card])),
+        cardDefinitionsById: effectiveDefinitionsById,
         modifiers: createSkillModifiers({ ownedSkills: player.skills, ownerId: "player" }),
         maxCombatTicks: BALANCE_REPORT_MAX_COMBAT_TICKS
       });
@@ -322,6 +391,7 @@ export function createBalanceReport(seed = REPORT_SEED): BalanceReport {
       expectedWeakness: build.expectedWeakness,
       level: build.level,
       formationSlotCount: build.formationSlotCount,
+      enhancementSummary: build.enhancementSummary,
       explanation: build.explanation
     })),
     entries
@@ -334,7 +404,8 @@ export function createSampleFormation(
 ): { readonly formation: FormationSnapshot; readonly cardInstances: readonly CardInstance[]; readonly skills: readonly SkillInstance[] } {
   const cardInstances = build.cardIds.map((cardId, index) => ({
     instanceId: `${build.id}-card-${index + 1}`,
-    definitionId: cardId
+    definitionId: cardId,
+    enhancements: build.cardEnhancements?.find((entry) => entry.cardIndex === index + 1)?.enhancements
   }));
   const slots = placeCardsInSlots(build.formationSlotCount, cardInstances, cardDefinitionsById);
   const skills = (build.skillIds ?? []).map((skillId, index) => ({
@@ -533,6 +604,7 @@ export function renderMarkdownReport(report: BalanceReport): string {
   const buildSummaries = summarizeByBuild(report.entries);
   const bossEntries = report.entries.filter((entry) => BOSS_ENEMY_IDS.has(entry.enemyId));
   const bossSummaries = summarizeBosses(bossEntries);
+  const enhancedBuilds = report.sampleBuilds.filter((build) => build.enhancementSummary);
   const hotspots = report.entries
     .filter((entry) => entry.warningFlags.some((flag) => isSeriousWarning(flag)))
     .sort(compareEntryRisk)
@@ -540,7 +612,7 @@ export function renderMarkdownReport(report: BalanceReport): string {
   const triggerOutliers = collectOutliers(report.entries, "triggerCountByCard", 20);
   const activationOutliers = collectOutliers(report.entries, "cardActivationsByCard", 45);
   const lines = [
-    "# Phase 15C Balance Report",
+    "# Phase 15D Balance Report",
     "",
     `Seed: ${report.seed}`,
     "",
@@ -579,6 +651,14 @@ export function renderMarkdownReport(report: BalanceReport): string {
     "",
     ...createBuildLegitimacyNotes(report),
     "",
+    ...(enhancedBuilds.length > 0 ? [
+      "## Enhanced Build Summary",
+      "",
+      "| Build | Enhancement Summary |",
+      "| --- | --- |",
+      ...enhancedBuilds.map((build) => `| ${build.name} | ${build.enhancementSummary ?? ""} |`),
+      ""
+    ] : []),
     "## Warning Hotspots",
     "",
     hotspots.length > 0 ? "| Build | Enemy | Winner | Time | Warnings | Likely Design Cause |" : "No serious warning hotspots.",
